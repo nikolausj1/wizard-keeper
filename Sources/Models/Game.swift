@@ -170,4 +170,26 @@ final class Game {
         completedAt = Date()
         status = .completed
     }
+
+    /// Reopens the most recently completed round for correction: rewinds
+    /// its phase from `.complete` back to `.results` so its bids/tricks can
+    /// be edited, and — if this game had already finished — reverts
+    /// completion too (`status` back to `.inProgress`, `completedAt`
+    /// cleared, `winnerPlayerIds` cleared). No-op if no round is
+    /// `.complete`.
+    ///
+    /// Invariant: scores are never stored, only derived from round entries
+    /// (see the type-level doc comment), so rewinding a round's phase and
+    /// letting its entries be edited is always safe — every downstream
+    /// total, standing, and winner recomputes automatically with no risk of
+    /// stale cached state.
+    func reopenLastCompletedRound() {
+        guard let round = orderedRounds.last(where: { $0.phase == .complete }) else { return }
+        round.phase = .results
+        if status == .completed {
+            status = .inProgress
+            completedAt = nil
+            winnerPlayerIds = []
+        }
+    }
 }

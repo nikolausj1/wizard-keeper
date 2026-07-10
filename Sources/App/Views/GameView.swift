@@ -8,6 +8,7 @@ import SwiftData
 struct GameView: View {
     @Bindable var game: Game
     @State private var navigateToRoundEntry = false
+    @State private var showUndoConfirm = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
@@ -40,6 +41,28 @@ struct GameView: View {
         standings.map(\.total).max() ?? 0
     }
 
+    /// Completed rounds in seating order, oldest first — feeds the Rounds
+    /// section below Standings.
+    private var completedRounds: [Round] {
+        game.orderedRounds.filter { $0.phase == .complete }
+    }
+
+    /// The most recently completed round, if any — Undo reopens exactly
+    /// this one, per `Game.reopenLastCompletedRound`.
+    private var lastCompletedRoundNumber: Int? {
+        completedRounds.last?.roundNumber
+    }
+
+    /// Whose deal it is this round, when the house dealer-rotation rule is
+    /// on — `Round.dealerPlayerId` may not exist yet for a not-yet-created
+    /// current round, so this is derived straight from the same formula
+    /// `RoundEntryView.ensureRound` uses.
+    private var dealerName: String? {
+        guard game.rulesSnapshot.dealerRotationEnabled, !game.participants.isEmpty else { return nil }
+        let index = (game.currentRoundNumber - 1) % game.participants.count
+        return game.participants[index].displayNameSnapshot
+    }
+
     private var inProgressBody: some View {
         List {
             Section {
@@ -55,6 +78,18 @@ struct GameView: View {
                 }
             } header: {
                 Text("Standings")
+            }
+
+            if !completedRounds.isEmpty {
+                Section {
+                    ForEach(completedRounds, id: \.roundNumber) { round in
+                        NavigationLink(value: round.roundNumber) {
+                            RoundSummaryRow(game: game, round: round)
+                        }
+                    }
+                } header: {
+                    Text("Rounds")
+                }
             }
         }
         .listStyle(.insetGrouped)
@@ -73,18 +108,49 @@ struct GameView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if lastCompletedRoundNumber != nil {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showUndoConfirm = true
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward")
+                    }
+                }
+            }
+        }
+        .confirmationDialog(
+            "Reopen Round \(lastCompletedRoundNumber ?? 0)?",
+            isPresented: $showUndoConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Reopen Round", role: .destructive) {
+                game.reopenLastCompletedRound()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You'll be able to re-enter its bids and tricks. Totals update automatically.")
+        }
         .navigationDestination(isPresented: $navigateToRoundEntry) {
             RoundEntryView(game: game, roundNumber: game.currentRoundNumber)
+        }
+        .navigationDestination(for: Int.self) { roundNumber in
+            RoundEntryView(game: game, roundNumber: roundNumber)
         }
     }
 
     /// "Deal **N cards** to each player" — bold only on the card-count
-    /// segment, matching the mockup's `<b>` wrapping.
+    /// segment, matching the mockup's `<b>` wrapping. When dealer rotation
+    /// is on, appends " · <Name> deals".
     private var dealHelperText: Text {
         let n = game.currentRoundNumber
-        return Text("Deal ")
+        var text = Text("Deal ")
             + Text("\(n) card\(n == 1 ? "" : "s")").fontWeight(.bold)
             + Text(" to each player")
+        if let dealerName {
+            text = text + Text(" · \(dealerName) deals")
+        }
+        return text
     }
 
     /// One standings row: rank badge, name, "Leader"/"X behind" subtitle,
@@ -142,6 +208,36 @@ struct GameView: View {
             }
             .padding(.vertical, 8)
             .frame(minHeight: 68)
+        }
+    }
+
+    /// One row in the Rounds section: round label plus every player's
+    /// delta for that round, seating order, monospaced and green/red.
+    private struct RoundSummaryRow: View {
+        let game: Game
+        let round: Round
+
+        private var deltaText: Text {
+            let parts = game.participants.map { participant -> Text in
+                let delta = round.score(for: participant.playerId) ?? 0
+                return Text(ScoreFormat.delta(delta)).foregroundStyle(delta >= 0 ? .green : .red)
+            }
+            guard var combined = parts.first else { return Text("") }
+            for part in parts.dropFirst() {
+                combined = combined + Text(" \u{00B7} ").foregroundStyle(.secondary) + part
+            }
+            return combined
+        }
+
+        var body: some View {
+            HStack {
+                Text("Round \(round.roundNumber)")
+                    .font(.system(size: 15, weight: .semibold))
+                Spacer()
+                deltaText
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+            }
+            .padding(.vertical, 4)
         }
     }
 }

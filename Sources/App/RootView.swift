@@ -8,18 +8,34 @@ import SwiftData
 /// argument (paired with the `-demo*` seeding args, which force an
 /// in-memory store) lets a screenshot land directly on any screen:
 /// `newGame`, `game`, `bidding`, `results`, `final`, `history`, `players`,
-/// `gameDetail` (pair with `-demoHistory`), or `playerProfile` (pair with
-/// `-demoHistory`).
+/// `gameDetail` (pair with `-demoHistory`), `playerProfile` (pair with
+/// `-demoHistory`), `settings`, or `editRound` (pair with `-demoMidGame`;
+/// round 5 is complete in that seed, so it lands in edit mode).
 struct RootView: View {
     private static let uiScreen = WizardKeeperApp.launchArgumentValue(
         "-uiScreen", in: ProcessInfo.processInfo.arguments
     )
+
+    // Singleton `AppSettings` record — see `AppSettings.fetchOrCreate`. A
+    // plain `@Query` (no predicate needed) is enough to observe it live so
+    // toggling "Appearance" in `SettingsView` recolors the whole app
+    // immediately.
+    @Query private var settingsRecords: [AppSettings]
+
+    private var preferredColorScheme: ColorScheme? {
+        switch settingsRecords.first?.appearance ?? .system {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
 
     var body: some View {
         NavigationStack {
             rootContent
         }
         .tint(.indigo)
+        .preferredColorScheme(preferredColorScheme)
     }
 
     @ViewBuilder
@@ -41,6 +57,10 @@ struct RootView: View {
             DemoCompletedGameHost { GameDetailView(game: $0) }
         case "playerProfile":
             DemoPlayerHost(name: "Kelly") { PlayerProfileView(player: $0) }
+        case "settings":
+            SettingsView()
+        case "editRound":
+            DemoGameHost { RoundEntryView(game: $0, roundNumber: 5) }
         default:
             HomeView()
         }

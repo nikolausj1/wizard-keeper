@@ -150,6 +150,19 @@ struct NewGameView: View {
                 quickRoundCount = min(quickRoundCount, full)
             }
         }
+        .task { applyDefaultsFromSettings() }
+    }
+
+    /// Seeds the Quick Game toggle/stepper from `AppSettings` as one-time
+    /// initial state (mirroring the model's own default-length rule) —
+    /// this never overwrites a value the player has since changed, since
+    /// `.task` runs once when this freshly pushed view first appears.
+    private func applyDefaultsFromSettings() {
+        guard let settings = try? AppSettings.fetchOrCreate(in: modelContext) else { return }
+        if !settings.useFullLength {
+            quickGame = true
+            quickRoundCount = settings.customRoundCount ?? 10
+        }
     }
 
     private func toggle(_ player: Player) {

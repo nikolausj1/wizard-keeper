@@ -11,6 +11,8 @@ import SwiftData
 struct ScorepadGridView: View {
     @Bindable var game: Game
     @State private var navigateToRoundEntry = false
+    @State private var selectedRoundNumber: Int?
+    @State private var showUndoConfirm = false
 
     /// Fixed width of the leading "RND" column, matching the mockup's
     /// `grid-template-columns` anatomy, rescaled for the iPad pane.
@@ -58,6 +60,21 @@ struct ScorepadGridView: View {
         standings.map(\.total).max() ?? 0
     }
 
+    /// The most recently completed round, if any — Undo reopens exactly
+    /// this one, per `Game.reopenLastCompletedRound`.
+    private var lastCompletedRoundNumber: Int? {
+        game.orderedRounds.last { $0.phase == .complete }?.roundNumber
+    }
+
+    /// Whose deal it is this round, when the house dealer-rotation rule is
+    /// on — derived from the same formula `RoundEntryView.ensureRound`
+    /// uses, since the current round may not be created yet.
+    private var dealerName: String? {
+        guard game.rulesSnapshot.dealerRotationEnabled, !participants.isEmpty else { return nil }
+        let index = (game.currentRoundNumber - 1) % participants.count
+        return participants[index].displayNameSnapshot
+    }
+
     /// One `RoundRow` per round number 1...totalRounds, built by walking
     /// completed rounds in order and accumulating each player's running
     /// total via `Round.score(for:)` — the same derivation `Game` itself
@@ -101,8 +118,34 @@ struct ScorepadGridView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if lastCompletedRoundNumber != nil {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showUndoConfirm = true
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward")
+                    }
+                }
+            }
+        }
+        .confirmationDialog(
+            "Reopen Round \(lastCompletedRoundNumber ?? 0)?",
+            isPresented: $showUndoConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Reopen Round", role: .destructive) {
+                game.reopenLastCompletedRound()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You'll be able to re-enter its bids and tricks. Totals update automatically.")
+        }
         .navigationDestination(isPresented: $navigateToRoundEntry) {
             RoundEntryView(game: game, roundNumber: game.currentRoundNumber)
+        }
+        .navigationDestination(item: $selectedRoundNumber) { roundNumber in
+            RoundEntryView(game: game, roundNumber: roundNumber)
         }
     }
 
@@ -113,12 +156,17 @@ struct ScorepadGridView: View {
 
     /// "Deal **N cards** to each player" — bold only on the card-count
     /// segment, matching the mockup's `<b>` wrapping (see `GameView`'s
-    /// identical helper for the iPhone footer).
+    /// identical helper for the iPhone footer). When dealer rotation is
+    /// on, appends " · <Name> deals".
     private var dealHelperText: Text {
         let n = game.currentRoundNumber
-        return Text("Deal ")
+        var text = Text("Deal ")
             + Text("\(n) card\(n == 1 ? "" : "s")").fontWeight(.bold)
             + Text(" to each player")
+        if let dealerName {
+            text = text + Text(" · \(dealerName) deals")
+        }
+        return text
     }
 
     // MARK: - Left pane: standings panel
@@ -330,22 +378,31 @@ struct ScorepadGridView: View {
         }
     }
 
+    /// A completed round: tappable (same plain-button pattern as
+    /// `currentRow`) into `RoundEntryView` for that round, which renders
+    /// its edit mode since the round's phase is already `.complete`.
     private func completedRow(roundNumber: Int, deltas: [Int], cumulative: [Int]) -> some View {
-        rowShell(roundNumber: roundNumber, tinted: false, numberColor: .secondary) {
-            ForEach(participants.indices, id: \.self) { i in
-                VStack(alignment: .center, spacing: 1) {
-                    Text(ScoreFormat.delta(deltas[i]))
-                        .font(.system(size: 18, weight: .bold))
-                        .monospacedDigit()
-                        .foregroundStyle(deltas[i] >= 0 ? .green : .red)
-                    Text(ScoreFormat.score(cumulative[i]))
-                        .font(.system(size: 13, weight: .semibold))
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
+        Button {
+            selectedRoundNumber = roundNumber
+        } label: {
+            rowShell(roundNumber: roundNumber, tinted: false, numberColor: .secondary) {
+                ForEach(participants.indices, id: \.self) { i in
+                    VStack(alignment: .center, spacing: 1) {
+                        Text(ScoreFormat.delta(deltas[i]))
+                            .font(.system(size: 18, weight: .bold))
+                            .monospacedDigit()
+                            .foregroundStyle(deltas[i] >= 0 ? .green : .red)
+                        Text(ScoreFormat.score(cumulative[i]))
+                            .font(.system(size: 13, weight: .semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
             }
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 
     /// The in-progress round: indigo tint, "—" placeholders, and the whole

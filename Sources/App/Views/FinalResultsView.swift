@@ -12,6 +12,17 @@ struct FinalResultsView: View {
     @State private var didAppear = false
     @State private var rematchGame: Game?
     @State private var navigateToRematch = false
+    @State private var showUndoConfirm = false
+    @State private var hapticsEnabled = true
+
+    /// The most recently completed round, if any — Undo reopens exactly
+    /// this one, per `Game.reopenLastCompletedRound`. Once tapped, the
+    /// game's status reverts to `.inProgress` and `GameView` (this view's
+    /// parent, which branches on `game.status`) swaps back to its
+    /// in-progress body automatically.
+    private var lastCompletedRoundNumber: Int? {
+        game.orderedRounds.last { $0.phase == .complete }?.roundNumber
+    }
 
     private struct Standing: Identifiable {
         let id: UUID
@@ -88,12 +99,36 @@ struct FinalResultsView: View {
         .navigationTitle("Final Results")
         .navigationBarTitleDisplayMode(.large)
         .navigationBarBackButtonHidden(true)
+        .toolbar {
+            if lastCompletedRoundNumber != nil {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showUndoConfirm = true
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward")
+                    }
+                }
+            }
+        }
+        .confirmationDialog(
+            "Reopen Round \(lastCompletedRoundNumber ?? 0)?",
+            isPresented: $showUndoConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Reopen Round", role: .destructive) {
+                game.reopenLastCompletedRound()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You'll be able to re-enter its bids and tricks. Totals update automatically.")
+        }
         .onAppear {
             withAnimation(.spring(response: 0.45, dampingFraction: 0.62)) {
                 didAppear = true
             }
         }
-        .sensoryFeedback(.success, trigger: didAppear)
+        .task { hapticsEnabled = HapticsGate.isEnabled(in: modelContext) }
+        .sensoryFeedback(trigger: didAppear) { _, _ in hapticsEnabled ? .success : nil }
         .navigationDestination(isPresented: $navigateToRematch) {
             if let rematchGame {
                 GameView(game: rematchGame)

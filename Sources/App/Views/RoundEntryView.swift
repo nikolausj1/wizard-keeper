@@ -4,6 +4,11 @@ import SwiftData
 /// Screens C1/C2 in one view, keyed off `Round.phase`. Creates the round
 /// on first appearance if it doesn't exist yet, walks bidding then trick
 /// entry, and pops back to `GameView` once the round is complete.
+///
+/// A round already at `.complete` when this view is pushed (edit entry
+/// points from `GameView`'s Rounds section and `ScorepadGridView`'s
+/// completed rows, plus `-uiScreen editRound`) instead renders an editable
+/// summary — see `EditRoundView` below.
 struct RoundEntryView: View {
     @Bindable var game: Game
     let roundNumber: Int
@@ -13,7 +18,10 @@ struct RoundEntryView: View {
 
     @State private var round: Round?
     @State private var showMismatchAlert = false
+    @State private var mismatchSaveAction: (() -> Void)?
+    @State private var showHookAlert = false
     @State private var didConfirm = false
+    @State private var hapticsEnabled = true
 
     var body: some View {
         Group {
@@ -23,15 +31,25 @@ struct RoundEntryView: View {
                 ProgressView()
             }
         }
-        .task { ensureRound() }
-        .sensoryFeedback(.success, trigger: didConfirm)
+        .task {
+            ensureRound()
+            hapticsEnabled = HapticsGate.isEnabled(in: modelContext)
+        }
+        .sensoryFeedback(trigger: didConfirm) { _, _ in hapticsEnabled ? .success : nil }
         .alert("Trick Count Mismatch", isPresented: $showMismatchAlert) {
             Button("Fix", role: .cancel) {}
-            Button("Save Anyway", role: .destructive) { completeRound() }
+            Button("Save Anyway", role: .destructive) { mismatchSaveAction?() }
         } message: {
             if let round {
                 let entered = round.entries.compactMap(\.tricksTaken).reduce(0, +)
                 Text("Only \(round.roundNumber) tricks exist this round — you entered \(entered).")
+            }
+        }
+        .alert("Dealer's Hook", isPresented: $showHookAlert) {
+            Button("Fix Bids", role: .cancel) {}
+        } message: {
+            if let round {
+                Text("House rule: total bids can't equal \(round.roundNumber). Someone has to be wrong.")
             }
         }
     }
@@ -44,7 +62,7 @@ struct RoundEntryView: View {
         case .results:
             ResultsView(game: game, round: round, onConfirm: attemptConfirmRound)
         case .complete:
-            Color.clear
+            EditRoundView(game: game, round: round, onSave: attemptSaveEdits)
         }
     }
 
@@ -60,21 +78,39 @@ struct RoundEntryView: View {
         // still a single tap. See BiddingView/ResultsView's nil-aware
         // stepper wiring below.
         let entries = game.participants.map { RoundEntry(playerId: $0.playerId, bid: nil, tricksTaken: nil) }
-        let newRound = Round(roundNumber: roundNumber, phase: .bidding, entries: entries)
+        let dealerId: UUID? = game.rulesSnapshot.dealerRotationEnabled && !game.participants.isEmpty
+            ? game.participants[(roundNumber - 1) % game.participants.count].playerId
+            : nil
+        let newRound = Round(roundNumber: roundNumber, phase: .bidding, entries: entries, dealerPlayerId: dealerId)
         newRound.game = game
         modelContext.insert(newRound)
         game.rounds.append(newRound)
         round = newRound
     }
 
+    /// Gates the "Confirm Bids" transition on the house "Dealer's Hook"
+    /// rule: if enabled and every bid is in, a total that exactly equals
+    /// the round number blocks the transition with a mandatory-fix alert
+    /// rather than proceeding.
     private func confirmBids() {
-        round?.phase = .results
+        guard let round else { return }
+        if game.rulesSnapshot.hookRuleEnabled {
+            let bids = round.entries.compactMap(\.bid)
+            let allIn = bids.count == round.entries.count
+            let total = bids.reduce(0, +)
+            if allIn && total == round.roundNumber {
+                showHookAlert = true
+                return
+            }
+        }
+        round.phase = .results
     }
 
     private func attemptConfirmRound() {
         guard let round else { return }
         let entered = round.entries.compactMap(\.tricksTaken).reduce(0, +)
         if game.rulesSnapshot.trickTotalCheckEnabled && entered != round.roundNumber {
+            mismatchSaveAction = completeRound
             showMismatchAlert = true
             return
         }
@@ -88,6 +124,27 @@ struct RoundEntryView: View {
         if wasFinalRound {
             game.complete()
         }
+        didConfirm.toggle()
+        dismiss()
+    }
+
+    /// Same soft trick-total check as `attemptConfirmRound`, but for saving
+    /// edits to an already-`.complete` round: the round's phase is already
+    /// `.complete` and stays there — no re-entry into `game.complete()`,
+    /// since that would incorrectly re-stamp `completedAt`/winners for a
+    /// game that may have finished on a *later* round than this one.
+    private func attemptSaveEdits() {
+        guard let round else { return }
+        let entered = round.entries.compactMap(\.tricksTaken).reduce(0, +)
+        if game.rulesSnapshot.trickTotalCheckEnabled && entered != round.roundNumber {
+            mismatchSaveAction = saveEdits
+            showMismatchAlert = true
+            return
+        }
+        saveEdits()
+    }
+
+    private func saveEdits() {
         didConfirm.toggle()
         dismiss()
     }
@@ -118,6 +175,12 @@ private struct BiddingView: View {
         return nil
     }
 
+    /// Whether `participant` deals this round — only meaningful (and only
+    /// ever `true`) when `dealerRotationEnabled`, per `Round.dealerPlayerId`.
+    private func isDealer(_ participant: Participant) -> Bool {
+        game.rulesSnapshot.dealerRotationEnabled && round.dealerPlayerId == participant.playerId
+    }
+
     var body: some View {
         List {
             Section {
@@ -138,8 +201,13 @@ private struct BiddingView: View {
                         let untouched = entry.bid == nil
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(participant.displayNameSnapshot)
-                                    .font(.system(size: 17.5, weight: .bold))
+                                HStack(spacing: 6) {
+                                    Text(participant.displayNameSnapshot)
+                                        .font(.system(size: 17.5, weight: .bold))
+                                    if isDealer(participant) {
+                                        DealerTag()
+                                    }
+                                }
                                 if untouched {
                                     Text("Bidding now")
                                         .font(.system(size: 14, weight: .semibold))
@@ -231,6 +299,12 @@ private struct ResultsView: View {
 
     private var allTricksIn: Bool { round.entries.allSatisfy { $0.tricksTaken != nil } }
 
+    /// Whether `participant` deals this round — only meaningful (and only
+    /// ever `true`) when `dealerRotationEnabled`, per `Round.dealerPlayerId`.
+    private func isDealer(_ participant: Participant) -> Bool {
+        game.rulesSnapshot.dealerRotationEnabled && round.dealerPlayerId == participant.playerId
+    }
+
     var body: some View {
         List {
             Section {
@@ -251,8 +325,13 @@ private struct ResultsView: View {
                         let untouched = entry.tricksTaken == nil
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(participant.displayNameSnapshot)
-                                    .font(.system(size: 17.5, weight: .bold))
+                                HStack(spacing: 6) {
+                                    Text(participant.displayNameSnapshot)
+                                        .font(.system(size: 17.5, weight: .bold))
+                                    if isDealer(participant) {
+                                        DealerTag()
+                                    }
+                                }
                                 Text("Bid \(entry.bid ?? 0)")
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundStyle(.secondary)
@@ -311,6 +390,135 @@ private struct ResultsView: View {
             .padding()
             .background(.bar)
         }
+    }
+
+    private func setTricks(_ value: Int, at index: Int) {
+        var updated = round.entries
+        updated[index].tricksTaken = value
+        round.entries = updated
+    }
+}
+
+/// Edit mode for an already-`.complete` round, reached from `GameView`'s
+/// Rounds section, `ScorepadGridView`'s completed rows, or
+/// `-uiScreen editRound`. One row per player with side-by-side Bid/Took
+/// steppers and a live hit/miss tag; "Save Changes" leaves `round.phase`
+/// at `.complete` and applies the same trick-total soft check C2 uses.
+/// Scores are never written here — every total recomputes automatically
+/// from the edited entries via `WizardEngine`, per `Round`'s doc comment.
+private struct EditRoundView: View {
+    @Bindable var game: Game
+    @Bindable var round: Round
+    let onSave: () -> Void
+
+    private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
+
+    /// A complete round's entries always have non-nil bid/tricks, but the
+    /// model type allows `nil` — treated defensively as 0 here.
+    private var trickTotal: Int { round.entries.reduce(0) { $0 + ($1.tricksTaken ?? 0) } }
+
+    private func isDealer(_ participant: Participant) -> Bool {
+        game.rulesSnapshot.dealerRotationEnabled && round.dealerPlayerId == participant.playerId
+    }
+
+    var body: some View {
+        List {
+            Section {
+                ScreenHeader(
+                    eyebrow: "Round \(round.roundNumber) of \(game.totalRounds)",
+                    title: "Edit Round",
+                    subtitle: "Bids and tricks · deal \(round.roundNumber) card\(round.roundNumber == 1 ? "" : "s")"
+                )
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
+            Section("Players") {
+                ForEach(game.participants, id: \.playerId) { participant in
+                    if let index = round.entries.firstIndex(where: { $0.playerId == participant.playerId }) {
+                        editRow(participant: participant, index: index)
+                    }
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: 10) {
+                (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
+                    .font(.system(size: 14.5, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                PrimaryActionButton(title: "Save Changes", action: onSave)
+            }
+            .padding()
+            .background(.bar)
+        }
+    }
+
+    private func editRow(participant: Participant, index: Int) -> some View {
+        let entry = round.entries[index]
+        let bid = entry.bid ?? 0
+        let tricks = entry.tricksTaken ?? 0
+        let hit = bid == tricks
+        let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                HStack(spacing: 6) {
+                    Text(participant.displayNameSnapshot)
+                        .font(.system(size: 17.5, weight: .bold))
+                    if isDealer(participant) {
+                        DealerTag()
+                    }
+                }
+                Spacer()
+                Text("\(hit ? "Hit" : "Miss") · \(ScoreFormat.delta(score))")
+                    .font(.system(size: 13, weight: .bold))
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(hit ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
+                    .foregroundStyle(hit ? .green : .red)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Bid")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    SegmentedStepper(
+                        displayValue: bid,
+                        minusEnabled: bid > range.lowerBound,
+                        plusEnabled: bid < range.upperBound,
+                        onMinus: { setBid(max(bid - 1, range.lowerBound), at: index) },
+                        onPlus: { setBid(min(bid + 1, range.upperBound), at: index) }
+                    )
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Took")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    SegmentedStepper(
+                        displayValue: tricks,
+                        minusEnabled: tricks > range.lowerBound,
+                        plusEnabled: tricks < range.upperBound,
+                        onMinus: { setTricks(max(tricks - 1, range.lowerBound), at: index) },
+                        onPlus: { setTricks(min(tricks + 1, range.upperBound), at: index) }
+                    )
+                }
+            }
+        }
+        .padding(.vertical, 6)
+        .listRowBackground(Color(.secondarySystemGroupedBackground))
+    }
+
+    private func setBid(_ value: Int, at index: Int) {
+        var updated = round.entries
+        updated[index].bid = value
+        round.entries = updated
     }
 
     private func setTricks(_ value: Int, at index: Int) {

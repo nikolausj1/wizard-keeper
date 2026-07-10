@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 /// Fixed 8-color palette for player avatars/rows, indexed by `Player.colorId`
 /// (and `Participant.colorIdSnapshot`). All entries are system colors so
@@ -147,6 +148,32 @@ struct SegmentedStepper: View {
         .opacity(enabled ? 1 : 0.35)
         .disabled(!enabled)
         .buttonStyle(.plain)
+    }
+}
+
+/// Reads `AppSettings.hapticsEnabled` once so `.sensoryFeedback` call sites
+/// can gate on it without threading a live binding through every view.
+/// Pair the result with the closure-based `.sensoryFeedback(trigger:_:)`
+/// overload — `{ _, _ in isEnabled ? .success : nil }` — since returning
+/// `nil` from that closure is how the API suppresses playback.
+enum HapticsGate {
+    static func isEnabled(in context: ModelContext) -> Bool {
+        (try? AppSettings.fetchOrCreate(in: context))?.hapticsEnabled ?? true
+    }
+}
+
+/// Small pill tag marking the dealer's row, matching the mockup's compact
+/// metadata-badge treatment: 11pt bold secondary text on a systemGray5
+/// capsule. Only ever shown when `RulesSnapshot.dealerRotationEnabled`.
+struct DealerTag: View {
+    var body: some View {
+        Text("DEALER")
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color(.systemGray5))
+            .clipShape(Capsule())
     }
 }
 

@@ -49,7 +49,7 @@ struct HomeView: View {
                     PlayersView()
                 }
                 NavigationLink("Settings") {
-                    ComingSoonView(title: "Settings")
+                    SettingsView()
                 }
             }
         }
@@ -110,21 +110,6 @@ private struct ResumeGameRow: View {
                 .foregroundStyle(.indigo)
         }
         .padding(.vertical, 4)
-    }
-}
-
-/// Placeholder destination for screens landing in a later phase.
-private struct ComingSoonView: View {
-    let title: String
-
-    var body: some View {
-        ContentUnavailableView(
-            title,
-            systemImage: "hourglass",
-            description: Text("Coming in a later phase.")
-        )
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
