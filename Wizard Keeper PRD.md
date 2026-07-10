@@ -173,7 +173,8 @@ Prescriptive. **Chosen direction (locked 2026-07-10): Apple Native** — pure iO
 - **Layout intent:** generous spacing, large tap targets (min 44pt), minimal chrome — one adult entering scores quickly; standings glanceable across the table. iPhone: standings-first list. iPad: the scorepad grid, rendered as a clean table.
 - **Motion:** standard iOS transitions and subtle number-change animations; a brief, restrained winner moment (confetti-free by default — a gold star and a spring animation is enough). Haptics on confirm and on winning.
 - **Reference app (inspiration, not a spec):** *Wizard Scorecery* (App Store, Coobro LLC) — good bar for fast entry and a clean scoreboard; we go further with saved profiles, lifetime stats, and house-rule toggles.
-- **Retired direction:** the handwritten-paper-scorecard concept (candidates A/B/C in `_review/`) was explored in full mockups and not chosen. Do not reintroduce paper textures, handwritten fonts, or analog flourishes.
+- **Deferred polish pass (Phase 7):** Justin likes the Apple Native button layout and hierarchy as the foundation; a **subtle design pass** may be layered on later — e.g., light textures or gentle warmth — without changing the layout, hierarchy, or system-component feel. Any such pass goes through `_review/` candidates first, stays subtle, and must survive dark mode.
+- **Retired direction:** the full handwritten-paper-scorecard concept (candidates A/B/C in `_review/`) was explored in mockups and not chosen. Do not reintroduce handwritten fonts or analog flourishes; texture, if any, arrives only via the deferred polish pass above.
 
 ## 8. Data Model
 
