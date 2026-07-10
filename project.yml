@@ -1,0 +1,35 @@
+name: WizardKeeper
+options:
+  bundleIdPrefix: com.levelup
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    DEVELOPMENT_TEAM: 6A4J2GTB6F
+    SWIFT_VERSION: "5.9"
+targets:
+  WizardKeeper:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.levelup.wizardkeeper
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "0.1.0"
+    info:
+      path: Sources/App/Info.plist
+      properties:
+        CFBundleDisplayName: Wizard Keeper
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight

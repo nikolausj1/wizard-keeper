@@ -1,0 +1,120 @@
+// Wizard Keeper engine smoke test (PRD §10 Phase 1 exit gate).
+// Run via the Build Guide engine-test recipe:
+//   xattr -cr Sources && cp Tests/SmokeTest.swift <scratch>/main.swift \
+//     && swiftc -O Sources/Engine/*.swift <scratch>/main.swift -o <scratch>/t && <scratch>/t
+import Foundation
+
+var checks = 0
+var failures = 0
+
+func check<T: Equatable>(_ name: String, _ got: T, _ want: T) {
+    checks += 1
+    if got != want {
+        failures += 1
+        print("FAIL: \(name) — got \(got), want \(want)")
+    }
+}
+
+// MARK: PRD §8 worked examples (locked)
+check("bid 2 took 2 → +40", WizardEngine.roundScore(bid: 2, tricksTaken: 2), 40)
+check("bid 0 took 0 → +20", WizardEngine.roundScore(bid: 0, tricksTaken: 0), 20)
+check("bid 3 took 1 → −20", WizardEngine.roundScore(bid: 3, tricksTaken: 1), -20)
+check("bid 1 took 4 → −30", WizardEngine.roundScore(bid: 1, tricksTaken: 4), -30)
+
+// MARK: More scoring cases
+check("bid 5 took 5 → +70", WizardEngine.roundScore(bid: 5, tricksTaken: 5), 70)
+check("bid 0 took 1 → −10", WizardEngine.roundScore(bid: 0, tricksTaken: 1), -10)
+check("bid 0 took 3 → −30", WizardEngine.roundScore(bid: 0, tricksTaken: 3), -30)
+check("bid 4 took 0 → −40", WizardEngine.roundScore(bid: 4, tricksTaken: 0), -40)
+check("bid 10 took 10 → +120", WizardEngine.roundScore(bid: 10, tricksTaken: 10), 120)
+check("bid 20 took 20 → +220 (max round, 3p)", WizardEngine.roundScore(bid: 20, tricksTaken: 20), 220)
+
+// Miss score is symmetric: over by k == under by k
+for k in 1...5 {
+    check("over by \(k) == under by \(k)",
+          WizardEngine.roundScore(bid: 3, tricksTaken: 3 + k),
+          WizardEngine.roundScore(bid: 3 + k, tricksTaken: 3))
+}
+
+// MARK: Round structure (60 ÷ players)
+check("3 players → 20 rounds", WizardEngine.totalRounds(playerCount: 3), 20)
+check("4 players → 15 rounds", WizardEngine.totalRounds(playerCount: 4), 15)
+check("5 players → 12 rounds", WizardEngine.totalRounds(playerCount: 5), 12)
+check("6 players → 10 rounds", WizardEngine.totalRounds(playerCount: 6), 10)
+check("2 players → invalid", WizardEngine.totalRounds(playerCount: 2), nil as Int?)
+check("7 players → invalid", WizardEngine.totalRounds(playerCount: 7), nil as Int?)
+check("0 players → invalid", WizardEngine.totalRounds(playerCount: 0), nil as Int?)
+
+// MARK: Valid ranges (bid/tricks bounded by cards dealt)
+check("round 1 range", WizardEngine.validRange(roundNumber: 1), 0...1)
+check("round 15 range", WizardEngine.validRange(roundNumber: 15), 0...15)
+check("range never invalid", WizardEngine.validRange(roundNumber: 0), 0...0)
+check("round 1 disallows bid 2", WizardEngine.validRange(roundNumber: 1).contains(2), false)
+
+// MARK: Running totals
+check("empty game → no totals", WizardEngine.runningTotals(entries: []), [Int]())
+check("single hit", WizardEngine.runningTotals(entries: [(bid: 1, tricksTaken: 1)]), [30])
+// Mixed 5-round line: +20, +30, −10, +50, −20 → 20, 50, 40, 90, 70
+check("5-round running line",
+      WizardEngine.runningTotals(entries: [
+          (bid: 0, tricksTaken: 0),   // +20
+          (bid: 1, tricksTaken: 1),   // +30
+          (bid: 2, tricksTaken: 3),   // −10
+          (bid: 3, tricksTaken: 3),   // +50
+          (bid: 0, tricksTaken: 2),   // −20
+      ]),
+      [20, 50, 40, 90, 70])
+// A player can go (and stay) negative
+check("negative line",
+      WizardEngine.runningTotals(entries: [
+          (bid: 1, tricksTaken: 0),   // −10
+          (bid: 2, tricksTaken: 0),   // −20
+          (bid: 0, tricksTaken: 0),   // +20
+      ]),
+      [-10, -30, -10])
+
+// MARK: Placements (standard competition ranking, ties share)
+check("distinct totals", WizardEngine.placements(totals: [120, 80, 150, -20]), [2, 3, 1, 4])
+check("two-way tie for first", WizardEngine.placements(totals: [100, 100, 80]), [1, 1, 3])
+check("tie in the middle", WizardEngine.placements(totals: [200, 90, 90, 40]), [1, 2, 2, 4])
+check("all tied", WizardEngine.placements(totals: [60, 60, 60]), [1, 1, 1])
+check("tie for last", WizardEngine.placements(totals: [50, 10, 10]), [1, 2, 2])
+check("negatives rank correctly", WizardEngine.placements(totals: [-10, -40, 0]), [2, 3, 1])
+
+// MARK: Winners (indices; >1 means a tie)
+check("single winner", WizardEngine.winners(totals: [120, 80, 150, -20]), [2])
+check("tied winners", WizardEngine.winners(totals: [100, 100, 80]), [0, 1])
+check("all-negative game still has a winner", WizardEngine.winners(totals: [-10, -40, -20]), [0])
+check("no players → no winners", WizardEngine.winners(totals: []), [Int]())
+
+// MARK: Full simulated 4-player game (15 rounds, every score cross-checked)
+// Player strategy sim: p0 always hits, p1 always misses by 1, p2 alternates,
+// p3 bids 0 and hits on even rounds only.
+var totals = [0, 0, 0, 0]
+for round in 1...15 {
+    let bids   = [min(2, round), 1, round % 2 == 0 ? 1 : 0, 0]
+    let tricks = [min(2, round), round >= 2 ? 2 : 0, round % 2 == 0 ? 1 : 1, round % 2 == 0 ? 0 : 1]
+    for p in 0..<4 {
+        totals[p] += WizardEngine.roundScore(bid: bids[p], tricksTaken: tricks[p])
+    }
+}
+// Hand-computed expectations:
+// p0: hits every round: r1 bid1(+30), r2..15 bid2(+40 ×14) = 30 + 560 = 590
+check("sim p0 total", totals[0], 590)
+// p1: r1 bid1 took0 (−10); r2..15 bid1 took2 (−10 ×14) = −150
+check("sim p1 total", totals[1], -150)
+// p2: even rounds bid1 took1 (+30 ×7); odd rounds bid0 took1 (−10 ×8) = 210 − 80 = 130
+check("sim p2 total", totals[2], 130)
+// p3: even rounds bid0 took0 (+20 ×7); odd rounds bid0 took1 (−10 ×8) = 140 − 80 = 60
+check("sim p3 total", totals[3], 60)
+check("sim placements", WizardEngine.placements(totals: totals), [1, 4, 2, 3])
+check("sim winner", WizardEngine.winners(totals: totals), [0])
+
+// MARK: Result
+if failures == 0 {
+    print("OK — all \(checks) checks passed")
+    exit(0)
+} else {
+    print("FAILED — \(failures) of \(checks) checks failed")
+    exit(1)
+}

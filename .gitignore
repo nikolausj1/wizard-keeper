@@ -1,0 +1,20 @@
+# Xcode / build (project.yml is the source of truth; .xcodeproj is generated)
+*.xcodeproj
+DerivedData/
+build/
+*.ipa
+*.xcarchive
+
+# macOS
+.DS_Store
+Icon?
+
+# Secrets — never commit
+.env
+*.p8
+
+# Per Build Guide: working channels and guides stay out of the repo
+Project Build Guide.md
+PRD Template.md
+_inbox/
+_review/
