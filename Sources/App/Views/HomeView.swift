@@ -43,10 +43,10 @@ struct HomeView: View {
 
             Section {
                 NavigationLink("History") {
-                    ComingSoonView(title: "History")
+                    HistoryView()
                 }
                 NavigationLink("Players") {
-                    ComingSoonView(title: "Players")
+                    PlayersView()
                 }
                 NavigationLink("Settings") {
                     ComingSoonView(title: "Settings")

@@ -7,7 +7,9 @@ import SwiftData
 /// Sim-verify support: `simctl` can't tap, so a `-uiScreen <name>` launch
 /// argument (paired with the `-demo*` seeding args, which force an
 /// in-memory store) lets a screenshot land directly on any screen:
-/// `newGame`, `game`, `bidding`, `results`, or `final`.
+/// `newGame`, `game`, `bidding`, `results`, `final`, `history`, `players`,
+/// `gameDetail` (pair with `-demoHistory`), or `playerProfile` (pair with
+/// `-demoHistory`).
 struct RootView: View {
     private static let uiScreen = WizardKeeperApp.launchArgumentValue(
         "-uiScreen", in: ProcessInfo.processInfo.arguments
@@ -31,6 +33,14 @@ struct RootView: View {
             DemoGameHost { RoundEntryView(game: $0, roundNumber: $0.currentRoundNumber) }
         case "results":
             DemoGameHost { RoundEntryView(game: $0, roundNumber: 8) }
+        case "history":
+            HistoryView()
+        case "players":
+            PlayersView()
+        case "gameDetail":
+            DemoCompletedGameHost { GameDetailView(game: $0) }
+        case "playerProfile":
+            DemoPlayerHost(name: "Kelly") { PlayerProfileView(player: $0) }
         default:
             HomeView()
         }
@@ -51,6 +61,52 @@ private struct DemoGameHost<Content: View>: View {
                 "No demo game seeded",
                 systemImage: "exclamationmark.triangle",
                 description: Text("Pass -demoMidGame or -demoFinal alongside -uiScreen.")
+            )
+        }
+    }
+}
+
+/// Fetches the most recently completed demo game (seeded via
+/// `-demoHistory`) and hands it to `content`. Only reachable via
+/// `-uiScreen gameDetail`; shows a clear fallback if seeding failed.
+private struct DemoCompletedGameHost<Content: View>: View {
+    @Environment(\.modelContext) private var modelContext
+    @ViewBuilder let content: (Game) -> Content
+
+    var body: some View {
+        let completed = (try? modelContext.fetch(FetchDescriptor<Game>()))?
+            .filter { $0.status == .completed }
+            .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
+
+        if let game = completed?.first {
+            content(game)
+        } else {
+            ContentUnavailableView(
+                "No completed demo game seeded",
+                systemImage: "exclamationmark.triangle",
+                description: Text("Pass -demoHistory alongside -uiScreen gameDetail.")
+            )
+        }
+    }
+}
+
+/// Fetches the demo `Player` named `name` (seeded via `-demoHistory`) and
+/// hands it to `content`. Only reachable via `-uiScreen playerProfile`;
+/// shows a clear fallback if seeding failed or the name isn't found.
+private struct DemoPlayerHost<Content: View>: View {
+    @Environment(\.modelContext) private var modelContext
+    let name: String
+    @ViewBuilder let content: (Player) -> Content
+
+    var body: some View {
+        let players = try? modelContext.fetch(FetchDescriptor<Player>())
+        if let player = players?.first(where: { $0.name == name }) {
+            content(player)
+        } else {
+            ContentUnavailableView(
+                "No demo player named \(name)",
+                systemImage: "exclamationmark.triangle",
+                description: Text("Pass -demoHistory alongside -uiScreen playerProfile.")
             )
         }
     }

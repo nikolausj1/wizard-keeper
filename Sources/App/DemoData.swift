@@ -134,4 +134,94 @@ enum DemoData {
         context.insert(round)
         game.rounds.append(round)
     }
+
+    // MARK: - History / Players / Profile demo data (`-demoHistory`)
+
+    /// Seeds the 4 demo players plus three short, *completed* games for the
+    /// History (Screen F), Players (Screen G), and PlayerProfile
+    /// screenshots. Each game uses a "one hitter takes every trick and
+    /// always hits their bid; everyone else bids/takes 0 (which is also
+    /// always a hit)" pattern, so every round's tricks trivially sum to the
+    /// round number (verified via `assert`, same discipline as
+    /// `seedMidGame`). The hitter seat rotates per game so each of the
+    /// three games has a different winner, and one round folds in a
+    /// deliberate miss for Kelly so her exact-bid-rate stat isn't a trivial
+    /// 100%. Games are stamped `daysAgo` apart (0 / 1 / 3) so History's
+    /// newest-first ordering has something to sort.
+    static func seedHistory(in context: ModelContext) {
+        let players = demoPlayerNames.enumerated().map { index, name in
+            Player(name: name, colorId: index)
+        }
+        players.forEach(context.insert)
+
+        let participants = players.map {
+            Participant(playerId: $0.id, displayNameSnapshot: $0.name, colorIdSnapshot: $0.colorId)
+        }
+        let rulesSnapshot = RulesSnapshot(
+            hookRuleEnabled: false,
+            trickTotalCheckEnabled: true,
+            dealerRotationEnabled: false
+        )
+
+        // Most recent first: Kelly wins today, Dave wins yesterday (with a
+        // folded-in miss for Kelly), Justin wins 3 days ago.
+        seedCompletedHistoryGame(hitterIndex: 1, foldInKellyMiss: false, daysAgo: 0, participants: participants, rulesSnapshot: rulesSnapshot, in: context)
+        seedCompletedHistoryGame(hitterIndex: 2, foldInKellyMiss: true, daysAgo: 1, participants: participants, rulesSnapshot: rulesSnapshot, in: context)
+        seedCompletedHistoryGame(hitterIndex: 0, foldInKellyMiss: false, daysAgo: 3, participants: participants, rulesSnapshot: rulesSnapshot, in: context)
+    }
+
+    /// Kelly is always seat index 1 (see `demoPlayerNames`).
+    private static let kellySeatIndex = 1
+
+    private static func seedCompletedHistoryGame(
+        hitterIndex: Int,
+        foldInKellyMiss: Bool,
+        daysAgo: Int,
+        participants: [Participant],
+        rulesSnapshot: RulesSnapshot,
+        in context: ModelContext
+    ) {
+        let day: TimeInterval = 86_400
+        let completedDate = Date().addingTimeInterval(-Double(daysAgo) * day)
+        let createdDate = completedDate.addingTimeInterval(-600) // a short play session
+
+        let roundCount = 3
+        let game = Game(createdAt: createdDate, participants: participants, totalRounds: roundCount, rulesSnapshot: rulesSnapshot)
+        context.insert(game)
+
+        for roundNumber in 1...roundCount {
+            var bids = [Int](repeating: 0, count: participants.count)
+            var tricks = [Int](repeating: 0, count: participants.count)
+            bids[hitterIndex] = roundNumber
+            tricks[hitterIndex] = roundNumber
+
+            // Fold a deliberate miss into round 2 for Kelly when she isn't
+            // this game's hitter: she bids 1 but the hitter still takes
+            // every trick, so tricks still legally sum to the round number.
+            if foldInKellyMiss, roundNumber == 2, hitterIndex != kellySeatIndex {
+                bids[kellySeatIndex] = 1
+            }
+
+            let range = WizardEngine.validRange(roundNumber: roundNumber)
+            assert(tricks.reduce(0, +) == roundNumber, "demo history round \(roundNumber) tricks must sum to \(roundNumber)")
+            assert(bids.allSatisfy { range.contains($0) }, "demo history round \(roundNumber) has an out-of-range bid")
+            assert(tricks.allSatisfy { range.contains($0) }, "demo history round \(roundNumber) has an out-of-range trick count")
+
+            var entries: [RoundEntry] = []
+            for (index, participant) in participants.enumerated() {
+                entries.append(RoundEntry(playerId: participant.playerId, bid: bids[index], tricksTaken: tricks[index]))
+            }
+
+            let round = Round(roundNumber: roundNumber, phase: .complete, entries: entries)
+            round.game = game
+            context.insert(round)
+            game.rounds.append(round)
+        }
+
+        // `Game.complete()` stamps `completedAt` with the real wall-clock
+        // "now" — overwrite it afterward so the three demo games land on
+        // the spaced-apart dates the screenshot needs.
+        game.complete()
+        game.completedAt = completedDate
+    }
 }
