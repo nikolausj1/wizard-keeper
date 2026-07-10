@@ -2,8 +2,8 @@
 title: "Wizard Keeper - Product Requirements Document"
 created: 2026-07-10
 modified: 2026-07-10
-version: 1.0
-author: Claude (claude-opus-4-8)
+version: 1.1
+author: Claude (claude-opus-4-8, claude-fable-5)
 tags: [prd, ios, wizard, scorekeeper]
 ---
 
@@ -13,8 +13,10 @@ tags: [prd, ios, wizard, scorekeeper]
 |---|---|
 | **Product** | Wizard Keeper — the family game-night scorepad for the Wizard card game |
 | **Platform** | iOS (universal: **iPhone-first**, also iPad) |
-| **Status** | v1.0 PRD — agreed 2026-07-10 |
+| **Status** | v1.1 PRD — agreed 2026-07-10 (v1.1: design direction locked to Apple Native) |
 | **Companion docs** | `Project Build Guide.md` (accounts, stack, iOS signing, device deployment — follow it, do not restate it) |
+
+> **Revision Notes (2026-07-10, v1.1):** The visual direction changed from the handwritten-paper-scorecard aesthetic to **Apple Native** (pure iOS system design). Six HTML mockups were produced (three paper variants, three alternatives); Justin reviewed all six and picked **E: Apple Native**. §7 was rewritten accordingly; the paper direction is retired. Functional spec, scoring, and data model are unchanged.
 
 ## 1. Overview and Vision
 
@@ -160,22 +162,18 @@ Round entry is a focused two-step flow that lives on top of the scoreboard (Scre
 
 ## 7. Visual and Design Spec
 
-Prescriptive. Placeholder-first: the app must look and feel good with programmatic art/textures **before** any generated art lands (generated art is a design-time polish pass per the Build Guide).
+Prescriptive. **Chosen direction (locked 2026-07-10): Apple Native** — pure iOS system design language, as if Apple shipped a Wizard scorekeeper. The discipline IS the design: nothing off-system, no theme, no decoration beyond what a first-party app would carry. Reference: `_review/mockup-E-apple-native.html` (Justin's pick from six candidates) — **match the mockup.**
 
-**Signature direction — a handwritten paper scorecard.** The identity is *pen on paper*, not the sleek dark neon look every other AI-era app reaches for. It should feel like a warm, well-kept physical scorepad — ruled columns, ink, a gold-star win — which is exactly what it's replacing. This is the differentiator. **Two guardrails:** (1) tasteful, not cheesy — restrained modern-analog, never a literal fake spiral notebook with coffee stains and comic fonts; (2) **never at the expense of UX** — the paper feel is a skin over a fast, legible scorekeeper; entry controls and the numbers you read at speed stay crisp and clear.
-
-- **Tone words:** analog, warm, tactile, handmade, cozy game-night. Field Notes / Moleskine scorepad and a good board-game score sheet — not a productivity dashboard, not a fantasy game UI.
-- **Color (light = the signature theme):** aged-paper background (`#F4ECD8`) with a subtle grain; **ink navy** primary text/strokes (`#26303F`); **red-pen** for misses/negatives (`#B4402F`); **pencil-graphite** for secondary marks (`#6B6357`); **gold-star** highlight for the leader/winner (`#D9A441`). Hit/made scores in a **green-ink** (`#3E7A54`).
-- **Color (dark, supported but secondary):** a "chalkboard / night desk" take — deep charcoal paper (`#1E1B17`), chalk-cream ink (`#EDE6D4`), same red/green/gold accents warmed for contrast. Light is the hero; dark is a respectful alternate, not the default identity.
-- **Texture & marks:** a faint paper grain on backgrounds; the scorepad rendered as **hand-ruled columns and thin baseline rules**; dividers and the current-round highlight drawn like pen/marker strokes; the winner "circled" or given a hand-drawn gold star (analog touches, used sparingly).
-- **Typography — the key tension, resolved deliberately:**
-  - **Handwritten accent font** for *decorative, low-frequency* elements only: the wordmark, player-name headers, section titles, the winner flourish. Gives the handwritten character.
-  - **Clean, highly legible typeface** (system / SF Rounded) for everything you read or tap at speed: the score numbers, running totals, steppers, and all entry UI. Legibility is principle #3 — the big numbers are never in a script font.
-- **Per-player colors:** each player gets a distinct "ink color" from a fixed, high-contrast palette (~8) used consistently across the scorepad for fast scanning; kept muted/inky so they read as pen colors, not neon.
-- **Layout intent:** generous spacing, large tap targets (min ~44pt, larger for steppers), minimal chrome — sized for one adult entering scores quickly and for the table to read standings at a glance. iPad leans into the ruled scorepad grid; iPhone leans into big vertical standings on paper.
-- **Motion:** subtle and analog — a score "inks in" when a round reveals; a quick, warm celebration on the winner screen (a stamped/circled feel). Haptics on confirm and on winning.
-- **Reference app (inspiration, not a spec):** *Wizard Scorecery* (App Store, Coobro LLC) — a clean iPhone Wizard scorekeeper (automatic bid/trick scoring, 3–6 players, quick round entry, history, offline). Good bar for **fast entry and a clean scoreboard**; we deliberately diverge on look (paper, not sleek/dark) and go further with saved profiles, lifetime stats, and house-rule toggles.
-- **Mockups gate:** because the paper aesthetic is easy to get wrong (cheesy vs. tasteful), Claude Code must produce a few HTML/screenshot **look-and-feel mockups of Screen D and the C1/C2 entry flow** (paper scorepad, iPhone + iPad) into `_review/` and get Justin's pick **before** committing the visual direction in code.
+- **Tone words:** first-party, crisp, quiet, instantly familiar. Apple's own simple utilities (Reminders, Fitness, Journal) — not a game UI, not a themed app.
+- **Color:** iOS system palette only. Grouped-list backgrounds (`systemGroupedBackground`), white cards/rows, label/secondaryLabel text, hairline separators. **One accent: system indigo** (`#5856D6`), used with discipline for interactive elements (buttons, steppers, current-round tint). Score semantics use system colors: **hit green** (`systemGreen`), **miss red** (`systemRed`), **leader/winner gold star** (`systemYellow`). Nothing decorative.
+- **Dark mode:** free and automatic — system colors adapt. Both modes fully supported from day one.
+- **Typography:** SF Pro via system text styles (large-title navigation headers, headline rows, `monospacedDigit`/tabular numerals for all scores). Score numbers are the biggest type on screen — semibold/bold per iOS conventions. No custom or decorative fonts anywhere.
+- **Components:** stock SwiftUI throughout — inset grouped lists, standard steppers (or stepper-styled ± controls at ≥44pt), pill/filled buttons, disabled-state conventions for incomplete input (e.g., Confirm Bids disabled until every player has a bid, per the mockup). Custom drawing only where stock has no equivalent (the iPad scorepad grid).
+- **Per-player colors:** a fixed ~8-color palette drawn from the iOS system colors (indigo, teal, orange, pink, purple, blue, green, brown) as player identity chips — used sparingly, Apple-style, not as row floods.
+- **Layout intent:** generous spacing, large tap targets (min 44pt), minimal chrome — one adult entering scores quickly; standings glanceable across the table. iPhone: standings-first list. iPad: the scorepad grid, rendered as a clean table.
+- **Motion:** standard iOS transitions and subtle number-change animations; a brief, restrained winner moment (confetti-free by default — a gold star and a spring animation is enough). Haptics on confirm and on winning.
+- **Reference app (inspiration, not a spec):** *Wizard Scorecery* (App Store, Coobro LLC) — good bar for fast entry and a clean scoreboard; we go further with saved profiles, lifetime stats, and house-rule toggles.
+- **Retired direction:** the handwritten-paper-scorecard concept (candidates A/B/C in `_review/`) was explored in full mockups and not chosen. Do not reintroduce paper textures, handwritten fonts, or analog flourishes.
 
 ## 8. Data Model
 
@@ -259,5 +257,5 @@ Verifiable against the running app:
 **Open questions (non-blocking — Claude Code should ask, not silently decide, if it reaches one):**
 - Exact set of lifetime stats to surface on the player profile (start with the §7/§8 list; confirm before adding more).
 - Whether "Quick game" should cap the number of rounds or also change which card counts are used (default assumption: play rounds 1..cap).
-- Art direction specifics for the paper/handwritten theme (resolve during the Phase 7 `_review/` pick).
+- App-icon art direction (the one remaining generated asset; resolve during the Phase 7 `_review/` pick).
 - Whether a light trump-suit memory aid is wanted after using v1 (currently deferred to v2).
