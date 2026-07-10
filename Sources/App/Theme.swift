@@ -25,6 +25,12 @@ enum ScoreFormat {
     static func delta(_ value: Int) -> String {
         value >= 0 ? "+\(value)" : "\u{2212}\(abs(value))"
     }
+
+    /// Plain score (no explicit plus), but negatives still use the true
+    /// minus sign — "−10", never "-10".
+    static func score(_ value: Int) -> String {
+        value < 0 ? "\u{2212}\(abs(value))" : "\(value)"
+    }
 }
 
 /// Shared navbar-header block matching the Apple Native mockup's `.navbar`:
@@ -39,6 +45,7 @@ struct ScreenHeader: View {
     var eyebrow: String?
     var title: String
     var subtitle: String?
+    var titleSize: CGFloat = 32
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -48,7 +55,7 @@ struct ScreenHeader: View {
                     .foregroundStyle(.indigo)
             }
             Text(title)
-                .font(.system(size: 32, weight: .heavy))
+                .font(.system(size: titleSize, weight: .heavy))
                 .foregroundStyle(.primary)
             if let subtitle {
                 Text(subtitle)

@@ -126,10 +126,6 @@ struct FinalResultsView: View {
             }
             .frame(width: 30, height: 30)
 
-            Circle()
-                .fill(PlayerPalette.color(standing.colorId))
-                .frame(width: 10, height: 10)
-
             HStack(spacing: 4) {
                 Text(standing.name)
                     .font(.body.weight(.semibold))
@@ -142,7 +138,7 @@ struct FinalResultsView: View {
 
             Spacer()
 
-            Text("\(standing.total)")
+            Text(ScoreFormat.score(standing.total))
                 .font(.system(size: 24, weight: .heavy))
                 .monospacedDigit()
         }

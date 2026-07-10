@@ -8,11 +8,16 @@ import SwiftData
 struct GameView: View {
     @Bindable var game: Game
     @State private var navigateToRoundEntry = false
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         Group {
             if game.status == .completed {
                 FinalResultsView(game: game)
+            } else if horizontalSizeClass == .regular {
+                // iPad (iPhone is portrait-locked, so regular width means iPad):
+                // the full-history scorepad grid replaces the standings list.
+                ScorepadGridView(game: game)
             } else {
                 inProgressBody
             }
@@ -160,7 +165,7 @@ struct GameView: View {
                             .foregroundStyle(delta >= 0 ? .green : .red)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
-                    Text("\(standing.total)")
+                    Text(ScoreFormat.score(standing.total))
                         .font(.system(size: 26, weight: .heavy))
                         .monospacedDigit()
                 }
