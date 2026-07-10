@@ -105,6 +105,7 @@ private struct SettingsForm: View {
             }
         }
         .listStyle(.insetGrouped)
+        .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
     }

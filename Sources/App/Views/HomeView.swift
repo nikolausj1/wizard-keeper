@@ -54,6 +54,7 @@ struct HomeView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .paperBackground()
         .navigationTitle("Wizard Keeper")
         .navigationDestination(isPresented: $navigateToNewGame) {
             NewGameView()

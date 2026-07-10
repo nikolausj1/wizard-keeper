@@ -51,6 +51,7 @@ struct HistoryView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -93,6 +93,7 @@ struct GameView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .paperBackground()
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 dealHelperText

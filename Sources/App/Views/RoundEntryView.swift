@@ -247,6 +247,7 @@ private struct BiddingView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
@@ -378,6 +379,7 @@ private struct ResultsView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
@@ -443,6 +445,7 @@ private struct EditRoundView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {

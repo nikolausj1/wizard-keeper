@@ -115,7 +115,7 @@ struct ScorepadGridView: View {
 
             scorepadPane
         }
-        .background(Color(.systemGroupedBackground))
+        .background(PaperBackground())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

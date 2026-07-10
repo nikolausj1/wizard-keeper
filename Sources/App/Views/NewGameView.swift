@@ -113,6 +113,7 @@ struct NewGameView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .paperBackground()
         .navigationTitle("New Game")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

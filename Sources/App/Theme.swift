@@ -1,5 +1,54 @@
 import SwiftUI
 import SwiftData
+import UIKit
+
+/// The page background used behind every screen's outermost List/ScrollView.
+/// Light mode gets the faintest warm paper shift (#F4F0E8) off pure system
+/// gray, matching `_review/texture-A-paper-whisper.html`'s "Paper Whisper"
+/// variant; dark mode is left byte-for-byte as `.systemGroupedBackground` —
+/// this treatment is light-mode only.
+extension Color {
+    static let paperBase = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? .systemGroupedBackground
+            : UIColor(red: 0.957, green: 0.941, blue: 0.910, alpha: 1)
+    })
+}
+
+/// The full page-background treatment: `paperBase` plus, in light mode only,
+/// a barely-there tiled paper-grain texture (3.5% opacity, multiply blend)
+/// over it. Dark mode renders as a flat `paperBase` fill only, so it's
+/// pixel-identical to today's plain system-grouped background. Never touches
+/// cards, rows, chips, or type — see `View.paperBackground()`.
+struct PaperBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        ZStack {
+            Color.paperBase
+            if colorScheme == .light {
+                Image("PaperGrain")
+                    .resizable(resizingMode: .tile)
+                    .opacity(0.035)
+                    .blendMode(.multiply)
+                    .allowsHitTesting(false)
+            }
+        }
+        .ignoresSafeArea()
+    }
+}
+
+extension View {
+    /// Applies the shared paper-whisper page background: hides the default
+    /// List/Form scroll background so `PaperBackground` shows through
+    /// instead. Apply to the outermost List/ScrollView of a screen only —
+    /// never to individual cards, rows, or sheets.
+    func paperBackground() -> some View {
+        self
+            .scrollContentBackground(.hidden)
+            .background(PaperBackground())
+    }
+}
 
 /// Fixed 8-color palette for player avatars/rows, indexed by `Player.colorId`
 /// (and `Participant.colorIdSnapshot`). All entries are system colors so

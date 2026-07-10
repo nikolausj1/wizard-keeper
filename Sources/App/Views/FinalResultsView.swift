@@ -73,6 +73,7 @@ struct FinalResultsView: View {
                 .padding(.top, 24)
                 .padding(.bottom, 12)
             }
+            .paperBackground()
 
             VStack(spacing: 12) {
                 Button(action: rematch) {
