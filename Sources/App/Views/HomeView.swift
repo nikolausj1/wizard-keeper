@@ -1,0 +1,137 @@
+import SwiftUI
+import SwiftData
+
+/// Screen A: app entry point. Offers Resume (if a game is in progress),
+/// New Game, and placeholder navigation to History/Players/Settings.
+struct HomeView: View {
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var inProgressGame: Game?
+    @State private var navigateToNewGame = false
+    @State private var showAbandonConfirm = false
+
+    var body: some View {
+        List {
+            if let game = inProgressGame {
+                Section {
+                    NavigationLink {
+                        GameView(game: game)
+                    } label: {
+                        ResumeGameRow(game: game)
+                    }
+                } header: {
+                    Text("Continue")
+                }
+            } else {
+                Section {
+                    Text("Ready to keep score for your next Wizard game?")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 4)
+                }
+            }
+
+            Section {
+                Button {
+                    startNewGameTapped()
+                } label: {
+                    Label("New Game", systemImage: "plus.circle.fill")
+                        .font(.body.weight(.semibold))
+                }
+                .tint(.indigo)
+            }
+
+            Section {
+                NavigationLink("History") {
+                    ComingSoonView(title: "History")
+                }
+                NavigationLink("Players") {
+                    ComingSoonView(title: "Players")
+                }
+                NavigationLink("Settings") {
+                    ComingSoonView(title: "Settings")
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("Wizard Keeper")
+        .navigationDestination(isPresented: $navigateToNewGame) {
+            NewGameView()
+        }
+        .confirmationDialog(
+            "End current game?",
+            isPresented: $showAbandonConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Abandon Game", role: .destructive) {
+                abandonInProgressGame()
+                navigateToNewGame = true
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Starting a new game ends the game currently in progress. This can't be undone.")
+        }
+        .onAppear(perform: refreshInProgress)
+    }
+
+    private func startNewGameTapped() {
+        if inProgressGame != nil {
+            showAbandonConfirm = true
+        } else {
+            navigateToNewGame = true
+        }
+    }
+
+    private func refreshInProgress() {
+        inProgressGame = try? Game.fetchInProgress(in: modelContext)
+    }
+
+    private func abandonInProgressGame() {
+        guard let game = inProgressGame else { return }
+        modelContext.delete(game)
+        inProgressGame = nil
+    }
+}
+
+/// Resume-card content: seated players and current round progress.
+private struct ResumeGameRow: View {
+    let game: Game
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Resume Game")
+                .font(.headline)
+            Text(game.participants.map(\.displayNameSnapshot).joined(separator: ", "))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            Text("Round \(game.currentRoundNumber) of \(game.totalRounds)")
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .foregroundStyle(.indigo)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+/// Placeholder destination for screens landing in a later phase.
+private struct ComingSoonView: View {
+    let title: String
+
+    var body: some View {
+        ContentUnavailableView(
+            title,
+            systemImage: "hourglass",
+            description: Text("Coming in a later phase.")
+        )
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+#Preview {
+    NavigationStack {
+        HomeView()
+    }
+    .tint(.indigo)
+    .modelContainer(for: [Player.self, Game.self, Round.self, AppSettings.self], inMemory: true)
+}

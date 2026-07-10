@@ -129,15 +129,16 @@ final class Game {
         return totals
     }
 
-    /// The first round number that has not yet reached `.complete`;
-    /// `totalRounds` if every dealt round is complete, or 1 if no rounds
-    /// have been created yet.
+    /// The round the table should play next: the first created round that
+    /// has not reached `.complete`, otherwise one past the last completed
+    /// round (rounds are created lazily), clamped to `totalRounds`.
     var currentRoundNumber: Int {
         let ordered = orderedRounds
         for round in ordered where round.phase != .complete {
             return round.roundNumber
         }
-        return ordered.isEmpty ? 1 : totalRounds
+        let next = (ordered.last?.roundNumber ?? 0) + 1
+        return min(next, totalRounds)
     }
 
     /// Locates the single in-progress game, if any.
