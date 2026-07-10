@@ -54,10 +54,12 @@ struct RoundEntryView: View {
             round = existing
             return
         }
-        // Bids and tricks start at an explicit 0, not nil: 0-bids are the most
-        // common bid in Wizard, so the common case costs zero taps. The C2
-        // trick-total check catches under-entry before a round can complete.
-        let entries = game.participants.map { RoundEntry(playerId: $0.playerId, bid: 0, tricksTaken: 0) }
+        // Bids and tricks start untouched (nil), not a pre-seeded 0: the row
+        // renders dimmed until the player taps a stepper button, at which
+        // point minus explicitly commits 0 and plus commits 1 — a 0 bid is
+        // still a single tap. See BiddingView/ResultsView's nil-aware
+        // stepper wiring below.
+        let entries = game.participants.map { RoundEntry(playerId: $0.playerId, bid: nil, tricksTaken: nil) }
         let newRound = Round(roundNumber: roundNumber, phase: .bidding, entries: entries)
         newRound.game = game
         modelContext.insert(newRound)
@@ -91,43 +93,10 @@ struct RoundEntryView: View {
     }
 }
 
-/// Shared − [value] + control with 44pt touch targets, used for both bids
-/// and tricks taken.
-private struct StepperControl: View {
-    let value: Int
-    let range: ClosedRange<Int>
-    let onChange: (Int) -> Void
-
-    var body: some View {
-        HStack(spacing: 0) {
-            Button {
-                onChange(max(value - 1, range.lowerBound))
-            } label: {
-                Image(systemName: "minus")
-                    .frame(width: 44, height: 44)
-            }
-            .disabled(value <= range.lowerBound)
-
-            Text("\(value)")
-                .font(.title3.weight(.bold))
-                .monospacedDigit()
-                .frame(minWidth: 26)
-
-            Button {
-                onChange(min(value + 1, range.upperBound))
-            } label: {
-                Image(systemName: "plus")
-                    .frame(width: 44, height: 44)
-            }
-            .disabled(value >= range.upperBound)
-        }
-        .buttonStyle(.bordered)
-        .tint(.indigo)
-    }
-}
-
-/// C1: place bids. One row per player with a stepper; "Confirm Bids" is
-/// disabled until every bid is non-nil.
+/// C1: place bids. One row per player with a `SegmentedStepper`; a bid
+/// starts nil ("untouched") and renders dimmed until the player taps minus
+/// (commits 0) or plus (commits 1). "Confirm Bids" is disabled until every
+/// bid is non-nil.
 private struct BiddingView: View {
     @Bindable var game: Game
     @Bindable var round: Round
@@ -135,72 +104,107 @@ private struct BiddingView: View {
 
     private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
 
-    /// PRD C1: "Bids: total so far" is the SUM of bids — the informational
+    /// PRD C1: "Bids so far" is the SUM of entered bids — the informational
     /// signal for an over/under-booked round (never a warning, by rule).
     private var bidTotal: Int { round.entries.compactMap(\.bid).reduce(0, +) }
 
+    /// First not-yet-bid participant in seating order, or nil once every
+    /// bid is in.
+    private var firstWaitingName: String? {
+        for participant in game.participants {
+            guard let entry = round.entries.first(where: { $0.playerId == participant.playerId }) else { continue }
+            if entry.bid == nil { return participant.displayNameSnapshot }
+        }
+        return nil
+    }
+
     var body: some View {
         List {
+            Section {
+                ScreenHeader(
+                    eyebrow: "Round \(round.roundNumber) of \(game.totalRounds)",
+                    title: "Place Bids",
+                    subtitle: "Deal \(round.roundNumber) card\(round.roundNumber == 1 ? "" : "s") each"
+                )
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
             Section("Players") {
                 ForEach(game.participants, id: \.playerId) { participant in
                     if let index = round.entries.firstIndex(where: { $0.playerId == participant.playerId }) {
                         let entry = round.entries[index]
+                        let untouched = entry.bid == nil
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(participant.displayNameSnapshot)
-                                    .font(.body.weight(.semibold))
-                                Text("\(game.runningTotal(for: participant.playerId)) pts")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(.system(size: 16.5, weight: .bold))
+                                if untouched {
+                                    Text("Bidding now")
+                                        .font(.system(size: 12.5, weight: .semibold))
+                                        .foregroundStyle(.indigo)
+                                } else {
+                                    Text("\(game.runningTotal(for: participant.playerId)) pts")
+                                        .font(.system(size: 12.5, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                             Spacer()
-                            StepperControl(value: entry.bid ?? range.lowerBound, range: range) { newValue in
-                                setBid(newValue, at: index)
-                            }
+                            SegmentedStepper(
+                                displayValue: entry.bid ?? 0,
+                                dimmed: untouched,
+                                minusEnabled: untouched || entry.bid! > range.lowerBound,
+                                plusEnabled: untouched || entry.bid! < range.upperBound,
+                                onMinus: {
+                                    if untouched {
+                                        setBid(range.lowerBound, at: index)
+                                    } else {
+                                        setBid(max(entry.bid! - 1, range.lowerBound), at: index)
+                                    }
+                                },
+                                onPlus: {
+                                    if untouched {
+                                        setBid(min(1, range.upperBound), at: index)
+                                    } else {
+                                        setBid(min(entry.bid! + 1, range.upperBound), at: index)
+                                    }
+                                }
+                            )
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 6)
+                        .listRowBackground(untouched ? Color.indigo.opacity(0.05) : Color(.secondarySystemGroupedBackground))
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Place Bids")
-        .navigationBarTitleDisplayMode(.large)
-        .safeAreaInset(edge: .top) {
-            header
-        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
-                Text("Bids: \(bidTotal) so far")
-                    .font(.footnote.weight(.semibold))
-                    .monospacedDigit()
+                footerText
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.secondary)
-                Button(action: onConfirm) {
-                    Text("Confirm Bids")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.indigo)
-                .controlSize(.large)
+                PrimaryActionButton(title: "Confirm Bids", isDisabled: firstWaitingName != nil, action: onConfirm)
             }
             .padding()
             .background(.bar)
         }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Round \(round.roundNumber) of \(game.totalRounds)")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.indigo)
-            Text("Deal \(round.roundNumber) card\(round.roundNumber == 1 ? "" : "s") each")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    /// "Bids so far: **S**" while any bid is nil (plus "· waiting on
+    /// <name>"), or "Bids so far: **S** of N tricks" once every bid is in.
+    private var footerText: Text {
+        if let waiting = firstWaitingName {
+            return Text("Bids so far: ")
+                + Text("\(bidTotal)").fontWeight(.bold)
+                + Text(" · waiting on \(waiting)")
+        } else {
+            return Text("Bids so far: ")
+                + Text("\(bidTotal)").fontWeight(.bold)
+                + Text(" of \(round.roundNumber) tricks")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
-        .padding(.top, 2)
     }
 
     private func setBid(_ value: Int, at index: Int) {
@@ -210,9 +214,10 @@ private struct BiddingView: View {
     }
 }
 
-/// C2: enter tricks taken. Shows a live hit/miss chip once both bid and
-/// tricks are known; "Confirm Round" is disabled until every trick count is
-/// non-nil.
+/// C2: enter tricks taken. A trick count starts nil ("untouched") and
+/// renders dimmed with no hit/miss tag until the player taps minus (commits
+/// 0) or plus (commits 1). "Confirm Round" is disabled until every trick
+/// count is non-nil.
 private struct ResultsView: View {
     @Bindable var game: Game
     @Bindable var round: Round
@@ -224,18 +229,32 @@ private struct ResultsView: View {
     /// the number of tricks that exist this round (= the round number).
     private var trickTotal: Int { round.entries.compactMap(\.tricksTaken).reduce(0, +) }
 
+    private var allTricksIn: Bool { round.entries.allSatisfy { $0.tricksTaken != nil } }
+
     var body: some View {
         List {
+            Section {
+                ScreenHeader(
+                    eyebrow: "Round \(round.roundNumber) of \(game.totalRounds)",
+                    title: "Enter Tricks",
+                    subtitle: "Tricks taken must total \(round.roundNumber)"
+                )
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
             Section("Players") {
                 ForEach(game.participants, id: \.playerId) { participant in
                     if let index = round.entries.firstIndex(where: { $0.playerId == participant.playerId }) {
                         let entry = round.entries[index]
+                        let untouched = entry.tricksTaken == nil
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(participant.displayNameSnapshot)
-                                    .font(.body.weight(.semibold))
+                                    .font(.system(size: 16.5, weight: .bold))
                                 Text("Bid \(entry.bid ?? 0)")
-                                    .font(.caption)
+                                    .font(.system(size: 12.5, weight: .medium))
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
@@ -244,61 +263,54 @@ private struct ResultsView: View {
                                     let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
                                     let hit = bid == tricks
                                     Text("\(hit ? "Hit" : "Miss") · \(ScoreFormat.delta(score))")
-                                        .font(.caption.weight(.bold))
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 3)
+                                        .font(.system(size: 11.5, weight: .bold))
+                                        .padding(.horizontal, 9)
+                                        .padding(.vertical, 4)
                                         .background(hit ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
                                         .foregroundStyle(hit ? .green : .red)
-                                        .clipShape(Capsule())
+                                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                 }
-                                StepperControl(value: entry.tricksTaken ?? range.lowerBound, range: range) { newValue in
-                                    setTricks(newValue, at: index)
-                                }
+                                SegmentedStepper(
+                                    displayValue: entry.tricksTaken ?? 0,
+                                    dimmed: untouched,
+                                    minusEnabled: untouched || entry.tricksTaken! > range.lowerBound,
+                                    plusEnabled: untouched || entry.tricksTaken! < range.upperBound,
+                                    onMinus: {
+                                        if untouched {
+                                            setTricks(range.lowerBound, at: index)
+                                        } else {
+                                            setTricks(max(entry.tricksTaken! - 1, range.lowerBound), at: index)
+                                        }
+                                    },
+                                    onPlus: {
+                                        if untouched {
+                                            setTricks(min(1, range.upperBound), at: index)
+                                        } else {
+                                            setTricks(min(entry.tricksTaken! + 1, range.upperBound), at: index)
+                                        }
+                                    }
+                                )
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 6)
+                        .listRowBackground(untouched ? Color.indigo.opacity(0.05) : Color(.secondarySystemGroupedBackground))
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Enter Tricks")
-        .navigationBarTitleDisplayMode(.large)
-        .safeAreaInset(edge: .top) {
-            header
-        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
-                Text("Tricks entered: \(trickTotal) of \(round.roundNumber)")
-                    .font(.footnote.weight(.semibold))
-                    .monospacedDigit()
+                (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.secondary)
-                Button(action: onConfirm) {
-                    Text("Confirm Round")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.indigo)
-                .controlSize(.large)
+                PrimaryActionButton(title: "Confirm Round", isDisabled: !allTricksIn, action: onConfirm)
             }
             .padding()
             .background(.bar)
         }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Round \(round.roundNumber) of \(game.totalRounds)")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.indigo)
-            Text("Tricks taken must total \(round.roundNumber)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
-        .padding(.top, 2)
     }
 
     private func setTricks(_ value: Int, at index: Int) {

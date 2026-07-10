@@ -23,7 +23,6 @@ struct GameView: View {
         let id: UUID
         let rank: Int
         let name: String
-        let colorId: Int
         let total: Int
         let delta: Int?
         let isLeader: Bool
@@ -49,7 +48,6 @@ struct GameView: View {
                 id: participant.playerId,
                 rank: ranks[index],
                 name: participant.displayNameSnapshot,
-                colorId: participant.colorIdSnapshot,
                 total: totals[index],
                 delta: lastRound?.score(for: participant.playerId),
                 isLeader: leaders.contains(index)
@@ -61,57 +59,67 @@ struct GameView: View {
         .map(\.standing)
     }
 
+    /// The current table-leading total, used to compute each non-leading
+    /// player's "X behind" subtitle.
+    private var leaderTotal: Int {
+        standings.map(\.total).max() ?? 0
+    }
+
     private var inProgressBody: some View {
-        VStack(spacing: 0) {
-            List {
-                Section {
-                    ForEach(standings) { standing in
-                        StandingRow(standing: standing)
-                    }
-                } header: {
-                    Text("Standings")
-                }
+        List {
+            Section {
+                ScreenHeader(eyebrow: nil, title: "Scoreboard", subtitle: "After Round \(completedRoundCount) of \(game.totalRounds)")
             }
-            .listStyle(.insetGrouped)
-            .safeAreaInset(edge: .top) {
-                Text("After Round \(completedRoundCount) of \(game.totalRounds)")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-                    .padding(.top, 2)
-            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
 
+            Section {
+                ForEach(standings) { standing in
+                    StandingRow(standing: standing, leaderTotal: leaderTotal)
+                }
+            } header: {
+                Text("Standings")
+            }
+        }
+        .listStyle(.insetGrouped)
+        .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
-                Text("Deal \(game.currentRoundNumber) card\(game.currentRoundNumber == 1 ? "" : "s") to each player")
-                    .font(.footnote.weight(.semibold))
+                dealHelperText
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.secondary)
 
-                Button {
+                PrimaryActionButton(title: "Enter Round \(game.currentRoundNumber)") {
                     navigateToRoundEntry = true
-                } label: {
-                    Text("Enter Round \(game.currentRoundNumber)")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.indigo)
-                .controlSize(.large)
             }
             .padding()
             .background(.bar)
         }
-        .navigationTitle("Scoreboard")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToRoundEntry) {
             RoundEntryView(game: game, roundNumber: game.currentRoundNumber)
         }
     }
 
-    /// One standings row: rank badge, color dot, name, last-round delta
-    /// chip, and the running total (the biggest text on screen).
+    /// "Deal **N cards** to each player" — bold only on the card-count
+    /// segment, matching the mockup's `<b>` wrapping.
+    private var dealHelperText: Text {
+        let n = game.currentRoundNumber
+        return Text("Deal ")
+            + Text("\(n) card\(n == 1 ? "" : "s")").fontWeight(.bold)
+            + Text(" to each player")
+    }
+
+    /// One standings row: rank badge, name, "Leader"/"X behind" subtitle,
+    /// last-round delta chip, and the running total (the biggest text on
+    /// screen).
     private struct StandingRow: View {
         let standing: Standing
+        let leaderTotal: Int
+
+        private var behind: Int { max(leaderTotal - standing.total, 0) }
 
         var body: some View {
             HStack(spacing: 12) {
@@ -119,30 +127,24 @@ struct GameView: View {
                     Circle()
                         .fill(standing.isLeader ? Color.yellow.opacity(0.22) : Color(.systemGray6))
                     Text("\(standing.rank)")
-                        .font(.subheadline.weight(.bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(standing.isLeader ? .yellow : .secondary)
                 }
-                .frame(width: 28, height: 28)
-
-                Circle()
-                    .fill(PlayerPalette.color(standing.colorId))
-                    .frame(width: 10, height: 10)
+                .frame(width: 26, height: 26)
 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 5) {
                         Text(standing.name)
-                            .font(.body.weight(.semibold))
+                            .font(.system(size: 16.5, weight: .bold))
                         if standing.isLeader {
                             Image(systemName: "star.fill")
-                                .font(.caption2)
+                                .font(.system(size: 10))
                                 .foregroundStyle(.yellow)
                         }
                     }
-                    if standing.isLeader {
-                        Text("Leader")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(standing.isLeader ? "Leader" : "\(behind) behind")
+                        .font(.system(size: 12.5, weight: .medium))
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
@@ -150,20 +152,21 @@ struct GameView: View {
                 VStack(alignment: .trailing, spacing: 3) {
                     if let delta = standing.delta {
                         Text(ScoreFormat.delta(delta))
-                            .font(.caption.weight(.bold))
+                            .font(.system(size: 12, weight: .bold))
                             .monospacedDigit()
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
                             .background(delta >= 0 ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
                             .foregroundStyle(delta >= 0 ? .green : .red)
-                            .clipShape(Capsule())
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     Text("\(standing.total)")
                         .font(.system(size: 26, weight: .heavy))
                         .monospacedDigit()
                 }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 8)
+            .frame(minHeight: 60)
         }
     }
 }

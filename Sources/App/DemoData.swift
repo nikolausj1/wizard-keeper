@@ -119,14 +119,15 @@ enum DemoData {
         }
     }
 
-    /// On top of `seedMidGame`, creates round 8 with bids locked in
-    /// (2+1+3+0 = 6, an under-booked round) and phase `.results` — the C2
-    /// "enter tricks" screenshot state.
+    /// On top of `seedMidGame`, creates round 8 in phase `.results` with the
+    /// mockup's exact frame-3 data — bids 2/3/1/2, tricks 2/2/1/3 (sum 8) —
+    /// so the C2 screenshot compares one-to-one against the mockup.
     static func seedRound8AwaitingTricks(in context: ModelContext) {
         guard let game = try? Game.fetchInProgress(in: context) else { return }
-        let bids = [2, 1, 3, 0]
-        let entries = zip(game.participants, bids).map {
-            RoundEntry(playerId: $0.playerId, bid: $1, tricksTaken: 0)
+        let bids = [2, 3, 1, 2]
+        let tricks = [2, 2, 1, 3]
+        let entries = game.participants.enumerated().map { index, participant in
+            RoundEntry(playerId: participant.playerId, bid: bids[index], tricksTaken: tricks[index])
         }
         let round = Round(roundNumber: 8, phase: .results, entries: entries)
         round.game = game
