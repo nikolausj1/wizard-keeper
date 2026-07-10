@@ -51,7 +51,7 @@ struct ScreenHeader: View {
         VStack(alignment: .leading, spacing: 4) {
             if let eyebrow {
                 Text(eyebrow)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.indigo)
             }
             Text(title)
@@ -59,7 +59,7 @@ struct ScreenHeader: View {
                 .foregroundStyle(.primary)
             if let subtitle {
                 Text(subtitle)
-                    .font(.system(size: 14.5, weight: .medium))
+                    .font(.system(size: 15.5, weight: .medium))
                     .foregroundStyle(.secondary)
             }
         }
@@ -113,22 +113,22 @@ struct SegmentedStepper: View {
     var body: some View {
         HStack(spacing: 14) {
             Text("\(displayValue)")
-                .font(.system(size: 22, weight: .heavy))
+                .font(.system(size: 26, weight: .heavy))
                 .monospacedDigit()
                 .foregroundStyle(dimmed ? Color(.tertiaryLabel) : .primary)
-                .frame(minWidth: 28, alignment: .center)
+                .frame(minWidth: 34, alignment: .center)
 
             HStack(spacing: 0) {
                 stepButton(systemName: "minus", enabled: minusEnabled, action: onMinus)
                 Rectangle()
                     .fill(Color.indigo.opacity(0.28))
-                    .frame(width: 1, height: 32)
+                    .frame(width: 1, height: 36)
                 stepButton(systemName: "plus", enabled: plusEnabled, action: onPlus)
             }
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(Color.indigo.opacity(0.12))
-                    .frame(height: 32)
+                    .frame(height: 36)
             )
         }
     }
@@ -136,16 +136,57 @@ struct SegmentedStepper: View {
     private func stepButton(systemName: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             // The frame + contentShape live INSIDE the button label so the
-            // full 38×44 area is genuinely tappable — applied outside the
+            // full 44×44 area is genuinely tappable — applied outside the
             // Button they'd only pad layout, not the hit target.
             Image(systemName: systemName)
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(.indigo)
-                .frame(width: 38, height: 44)
+                .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
         .opacity(enabled ? 1 : 0.35)
         .disabled(!enabled)
         .buttonStyle(.plain)
+    }
+}
+
+/// One ranked row in the standings: shared between `GameView`'s iPhone
+/// standings list and `ScorepadGridView`'s iPad standings panel so both
+/// panes always agree on ranks, leaders, and "X behind" math.
+struct GameStanding: Identifiable {
+    let id: UUID
+    let rank: Int
+    let name: String
+    let total: Int
+    let delta: Int?
+    let isLeader: Bool
+}
+
+/// Derives `GameStanding` rows for a `Game`: ranks via
+/// `WizardEngine.placements`, leader(s) via `WizardEngine.winners` (seeded
+/// only once at least one round has completed, so an all-zero opening board
+/// shows no star), and each player's delta from the last *completed* round.
+/// Swift's sort isn't guaranteed stable, so ties break by seating order
+/// explicitly — tied players never jump around between rounds.
+enum StandingsCalculator {
+    static func standings(for game: Game) -> [GameStanding] {
+        let participants = game.participants
+        let totals = participants.map { game.runningTotal(for: $0.playerId) }
+        let ranks = WizardEngine.placements(totals: totals)
+        let lastCompletedRound = game.orderedRounds.last { $0.phase == .complete }
+        let leaders = lastCompletedRound == nil ? [] : Set(WizardEngine.winners(totals: totals))
+
+        return participants.enumerated().map { index, participant in
+            (seat: index, standing: GameStanding(
+                id: participant.playerId,
+                rank: ranks[index],
+                name: participant.displayNameSnapshot,
+                total: totals[index],
+                delta: lastCompletedRound?.score(for: participant.playerId),
+                isLeader: leaders.contains(index)
+            ))
+        }
+        .sorted { ($0.standing.rank, $0.seat) < ($1.standing.rank, $1.seat) }
+        .map(\.standing)
     }
 }

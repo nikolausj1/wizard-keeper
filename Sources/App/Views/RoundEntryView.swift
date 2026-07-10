@@ -139,14 +139,14 @@ private struct BiddingView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(participant.displayNameSnapshot)
-                                    .font(.system(size: 16.5, weight: .bold))
+                                    .font(.system(size: 17.5, weight: .bold))
                                 if untouched {
                                     Text("Bidding now")
-                                        .font(.system(size: 12.5, weight: .semibold))
+                                        .font(.system(size: 14, weight: .semibold))
                                         .foregroundStyle(.indigo)
                                 } else {
                                     Text("\(game.runningTotal(for: participant.playerId)) pts")
-                                        .font(.system(size: 12.5, weight: .medium))
+                                        .font(.system(size: 14, weight: .medium))
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -184,7 +184,7 @@ private struct BiddingView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 footerText
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14.5, weight: .semibold))
                     .foregroundStyle(.secondary)
                 PrimaryActionButton(title: "Confirm Bids", isDisabled: firstWaitingName != nil, action: onConfirm)
             }
@@ -252,9 +252,9 @@ private struct ResultsView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(participant.displayNameSnapshot)
-                                    .font(.system(size: 16.5, weight: .bold))
+                                    .font(.system(size: 17.5, weight: .bold))
                                 Text("Bid \(entry.bid ?? 0)")
-                                    .font(.system(size: 12.5, weight: .medium))
+                                    .font(.system(size: 14, weight: .medium))
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
@@ -263,7 +263,7 @@ private struct ResultsView: View {
                                     let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
                                     let hit = bid == tricks
                                     Text("\(hit ? "Hit" : "Miss") · \(ScoreFormat.delta(score))")
-                                        .font(.system(size: 11.5, weight: .bold))
+                                        .font(.system(size: 13, weight: .bold))
                                         .padding(.horizontal, 9)
                                         .padding(.vertical, 4)
                                         .background(hit ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
@@ -304,7 +304,7 @@ private struct ResultsView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14.5, weight: .semibold))
                     .foregroundStyle(.secondary)
                 PrimaryActionButton(title: "Confirm Round", isDisabled: !allTricksIn, action: onConfirm)
             }

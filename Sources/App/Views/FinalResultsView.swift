@@ -109,7 +109,7 @@ struct FinalResultsView: View {
                 .scaleEffect(didAppear ? 1 : 0.4)
                 .opacity(didAppear ? 1 : 0)
             Text(winnerNames.isEmpty ? "Game Complete" : "\(winnerNames) Wins!")
-                .font(.title2.weight(.bold))
+                .font(.title.weight(.bold))
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal)
@@ -124,11 +124,11 @@ struct FinalResultsView: View {
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(standing.isWinner ? .yellow : .secondary)
             }
-            .frame(width: 30, height: 30)
+            .frame(width: 34, height: 34)
 
             HStack(spacing: 4) {
                 Text(standing.name)
-                    .font(.body.weight(.semibold))
+                    .font(.system(size: 18, weight: .semibold))
                 if standing.isWinner {
                     Image(systemName: "star.fill")
                         .font(.caption2)
@@ -139,7 +139,7 @@ struct FinalResultsView: View {
             Spacer()
 
             Text(ScoreFormat.score(standing.total))
-                .font(.system(size: 24, weight: .heavy))
+                .font(.system(size: 30, weight: .heavy))
                 .monospacedDigit()
         }
         .padding(12)
