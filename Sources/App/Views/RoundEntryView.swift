@@ -33,12 +33,43 @@ struct RoundEntryView: View {
             ensureRound()
             hapticsEnabled = HapticsGate.isEnabled(in: modelContext)
         }
+        // Navigation matches the table's mental model (game-night feedback):
+        // bids and tricks read as two screens, so back from Enter Tricks
+        // returns to Place Bids (bids intact — fix a mis-entered bid on the
+        // spot), and back from Place Bids exits to the Scoreboard. Both
+        // buttons are labeled so the chevron says where it goes. Edit mode
+        // (.complete) keeps the system back — it's reached from several
+        // places (Scoreboard, All Rounds).
+        .navigationBarBackButtonHidden((round?.phase ?? .complete) != .complete)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if let round, round.phase == .bidding {
+                    labeledBack("Scoreboard") { dismiss() }
+                } else if let round, round.phase == .results {
+                    labeledBack("Bids") {
+                        round.phase = .bidding
+                        modelContext.saveNow()
+                    }
+                }
+            }
+        }
         .sensoryFeedback(trigger: didConfirm) { _, _ in hapticsEnabled ? .success : nil }
         .alert("Dealer's Hook", isPresented: $showHookAlert) {
             Button("Fix Bids", role: .cancel) {}
         } message: {
             if let round {
                 Text("House rule: total bids can't equal \(round.roundNumber). Someone has to be wrong.")
+            }
+        }
+    }
+
+    /// A system-back-styled labeled button — chevron + destination name.
+    private func labeledBack(_ label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left")
+                    .fontWeight(.semibold)
+                Text(label)
             }
         }
     }

@@ -51,7 +51,10 @@ public enum GameInsights {
 
     /// Ranked insights, at most `maxCount`, at most one per player
     /// (keeping each player's most interesting one).
-    public static func insights(players: [PlayerLine], maxCount: Int = 3) -> [Insight] {
+    /// `pastTense: true` phrases every line for a finished game ("hit
+    /// every bid", "finished last with…") — used by the Game Story on the
+    /// final screen and the shared recap card.
+    public static func insights(players: [PlayerLine], maxCount: Int = 3, pastTense: Bool = false) -> [Insight] {
         guard let roundCount = players.map({ $0.entries.count }).max(),
               roundCount >= 1 else { return [] }
 
@@ -77,7 +80,7 @@ public enum GameInsights {
             if hits.allSatisfy({ $0 }) {
                 offer(player.name, Insight(
                     icon: "checkmark.seal.fill",
-                    text: "\(player.name) has hit every bid (\(entries.count) for \(entries.count))",
+                    text: pastTense ? "\(player.name) hit every bid (\(entries.count) for \(entries.count))" : "\(player.name) has hit every bid (\(entries.count) for \(entries.count))",
                     priority: 0,
                     kind: .perfect, playerName: player.name, value: entries.count
                 ))
@@ -87,7 +90,7 @@ public enum GameInsights {
                 if trailingHits >= 3 {
                     offer(player.name, Insight(
                         icon: "flame.fill",
-                        text: "\(player.name) is on a \(trailingHits)-hit streak",
+                        text: pastTense ? "\(player.name) finished on a \(trailingHits)-hit streak" : "\(player.name) is on a \(trailingHits)-hit streak",
                         priority: 1,
                         kind: .hotStreak, playerName: player.name, value: trailingHits
                     ))
@@ -97,7 +100,7 @@ public enum GameInsights {
                 if trailingMisses >= 2 {
                     offer(player.name, Insight(
                         icon: "snowflake",
-                        text: "\(player.name) has missed \(trailingMisses) in a row",
+                        text: pastTense ? "\(player.name) ended with \(trailingMisses) misses in a row" : "\(player.name) has missed \(trailingMisses) in a row",
                         priority: 2,
                         kind: .coldStreak, playerName: player.name, value: trailingMisses
                     ))
@@ -117,7 +120,7 @@ public enum GameInsights {
             if zeroHits >= 3 {
                 offer(player.name, Insight(
                     icon: "0.circle.fill",
-                    text: "\(player.name) has landed \(zeroHits) zero bids",
+                    text: pastTense ? "\(player.name) landed \(zeroHits) zero bids" : "\(player.name) has landed \(zeroHits) zero bids",
                     priority: 4,
                     kind: .zeroSpecialist, playerName: player.name, value: zeroHits
                 ))
@@ -129,7 +132,7 @@ public enum GameInsights {
         if let bigRound {
             offer(bigRound.name, Insight(
                 icon: "bolt.fill",
-                text: "\(bigRound.name)'s +\(bigRound.delta) in round \(bigRound.round) is the round of the game",
+                text: "\(bigRound.name)'s +\(bigRound.delta) in round \(bigRound.round) \(pastTense ? "was" : "is") the round of the game",
                 priority: 3,
                 kind: .bigRound, playerName: bigRound.name, value: bigRound.delta
             ))
@@ -141,7 +144,7 @@ public enum GameInsights {
             if sorted[0].total > sorted[1].total, sorted[0].total >= roundCount {
                 offer(sorted[0].name, Insight(
                     icon: "arrow.up.right.circle.fill",
-                    text: "\(sorted[0].name) is the boldest bidder (\(sorted[0].total) tricks called)",
+                    text: "\(sorted[0].name) \(pastTense ? "was" : "is") the boldest bidder (\(sorted[0].total) tricks called)",
                     priority: 5,
                     kind: .boldestBidder, playerName: sorted[0].name, value: nil
                 ))
@@ -159,7 +162,7 @@ public enum GameInsights {
             if let best = totals.max(), let leaderIndex = totals.firstIndex(of: best) {
                 offer(players[leaderIndex].name, Insight(
                     icon: "crown.fill",
-                    text: "\(players[leaderIndex].name) leads with \(best)",
+                    text: pastTense ? "\(players[leaderIndex].name) led the field with \(best)" : "\(players[leaderIndex].name) leads with \(best)",
                     priority: 6,
                     kind: .leading, playerName: players[leaderIndex].name, value: best
                 ))
@@ -170,7 +173,7 @@ public enum GameInsights {
                     let gap = best - chaser.element
                     offer(players[chaser.offset].name, Insight(
                         icon: "figure.run",
-                        text: "\(players[chaser.offset].name) is \(gap) behind the lead",
+                        text: pastTense ? "\(players[chaser.offset].name) finished \(gap) behind" : "\(players[chaser.offset].name) is \(gap) behind the lead",
                         priority: 7,
                         kind: .chasing, playerName: players[chaser.offset].name, value: gap
                     ))
@@ -181,7 +184,7 @@ public enum GameInsights {
                    let lastIndex = totals.lastIndex(of: worst) {
                     offer(players[lastIndex].name, Insight(
                         icon: "tortoise.fill",
-                        text: "\(players[lastIndex].name) is in last with \(worst)",
+                        text: pastTense ? "\(players[lastIndex].name) finished last with \(worst)" : "\(players[lastIndex].name) is in last with \(worst)",
                         priority: 8,
                         kind: .trailing, playerName: players[lastIndex].name, value: worst
                     ))

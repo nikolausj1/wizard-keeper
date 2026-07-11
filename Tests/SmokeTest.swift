@@ -183,6 +183,25 @@ let capped = GameInsights.insights(players: [
 ], maxCount: 3)
 check("insights: capped at 3", capped.count, 3)
 
+// Past-tense mode (Game Story on the final screen)
+let story = GameInsights.insights(players: [
+    Line(name: "K", entries: [(0, 0), (1, 1), (2, 2)]),
+    Line(name: "B", entries: [(0, 1), (1, 0), (2, 0)]),
+], pastTense: true)
+check("insights: past-tense perfect",
+      story.contains { $0.text == "K hit every bid (3 for 3)" }, true)
+check("insights: past-tense cold streak",
+      story.contains { $0.text == "B ended with 3 misses in a row" }, true)
+let storyTrio = GameInsights.insights(players: [
+    Line(name: "A", entries: [(1, 1)]),
+    Line(name: "B", entries: [(0, 0)]),
+    Line(name: "C", entries: [(0, 1)]),
+], pastTense: true)
+check("insights: past-tense led the field",
+      storyTrio.contains { $0.text == "A led the field with 30" }, true)
+check("insights: past-tense finished last",
+      storyTrio.contains { $0.text == "C finished last with -10" }, true)
+
 // MARK: Result
 if failures == 0 {
     print("OK — all \(checks) checks passed")

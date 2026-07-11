@@ -239,6 +239,6 @@ final class Game {
             }
             return GameInsights.PlayerLine(name: participant.displayNameSnapshot, entries: entries)
         }
-        return GameInsights.insights(players: lines, maxCount: 3)
+        return GameInsights.insights(players: lines, maxCount: 3, pastTense: true)
     }
 }
