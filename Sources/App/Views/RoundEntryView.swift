@@ -405,11 +405,22 @@ private struct ResultsView: View {
     }
 
     @ScaledMetric(relativeTo: .body) private var nameSize: CGFloat = 17.5
-    @ScaledMetric(relativeTo: .subheadline) private var subInfoSize: CGFloat = 14
-    @ScaledMetric(relativeTo: .caption) private var tagSize: CGFloat = 13
+    // Caption-sized (not subheadline 14pt): this column's intrinsic width
+    // is `max(name width, pts width)` in the leading `VStack`, and shaving
+    // the "N pts" text down a notch buys the fixed chip+slot+stepper group
+    // on the right a little more breathing room for a full 6-player table.
+    @ScaledMetric(relativeTo: .caption) private var subInfoSize: CGFloat = 12
     @ScaledMetric(relativeTo: .subheadline) private var footerSize: CGFloat = 14.5
-    @ScaledMetric(relativeTo: .body) private var needsChipSize: CGFloat = 17
-    @ScaledMetric(relativeTo: .subheadline) private var compactHeaderSize: CGFloat = 15
+    @ScaledMetric(relativeTo: .body) private var needsChipSize: CGFloat = 16
+    @ScaledMetric(relativeTo: .subheadline) private var outcomeDeltaSize: CGFloat = 15
+    // 54pt (not the ~64pt first tried): a full row — name/pts column, chip,
+    // slot, and the fixed-size `SegmentedStepper` — didn't fit on one line
+    // at 64pt even at 4 players; measured empirically against the iPhone
+    // 16 Pro Max sim until every row stopped wrapping. Still comfortably
+    // fits "+220"/"−220", the widest deltas the engine produces.
+    @ScaledMetric(relativeTo: .body) private var outcomeSlotWidth: CGFloat = 54
+    @ScaledMetric(relativeTo: .subheadline) private var tricksSubtitleBaseSize: CGFloat = 17
+    @ScaledMetric(relativeTo: .largeTitle) private var tricksSubtitleCountSize: CGFloat = 20
 
     /// Whether `participant` deals this round: the inferred dealer (last
     /// seat in bid order) once `game.firstBidderSeat` is known, otherwise
@@ -424,8 +435,8 @@ private struct ResultsView: View {
         return game.rulesSnapshot.dealerRotationEnabled && round.dealerPlayerId == participant.playerId
     }
 
-    /// The dealer's display name for the compact header line: the
-    /// inferred dealer when known, else the old toggle-driven
+    /// The dealer's display name for `tricksSubtitleText`: the inferred
+    /// dealer when known, else the old toggle-driven
     /// `Round.dealerPlayerId`, else nil — same precedence as
     /// `BiddingView.currentDealerName`.
     private var currentDealerName: String? {
@@ -438,24 +449,39 @@ private struct ResultsView: View {
         return game.participants.first(where: { $0.playerId == dealerId })?.displayNameSnapshot
     }
 
-    /// "Round N of R · deal N · <Dealer> deals" — the single compact line
-    /// that replaces the big `ScreenHeader` block now that "Enter Tricks"
-    /// lives in the navigation bar. Frees up vertical space for 5-6 player
-    /// tables, which is what this screen needs more than a hero title.
-    private var compactHeaderLine: String {
+    /// "Tricks must total **N**" with the round's trick count as the hero
+    /// (20pt heavy), appending " · <dealer> deals" once the dealer is
+    /// known — mirrors `BiddingView.dealSubtitleText`'s enlarged deal-line
+    /// treatment sibling to `ScreenHeader`. Restores the full header block
+    /// this screen had before a since-reverted pass replaced it with a
+    /// single compact line + nav-bar title; `BiddingView`'s equivalent
+    /// header was never touched, so the two screens had drifted apart.
+    private var tricksSubtitleText: Text {
         let n = round.roundNumber
-        var text = "Round \(n) of \(game.totalRounds) · deal \(n)"
+        var text = Text("Tricks must total ")
+            .font(.system(size: tricksSubtitleBaseSize, weight: .semibold))
+            .foregroundStyle(.secondary)
+            + Text("\(n)")
+            .font(.system(size: tricksSubtitleCountSize, weight: .heavy))
+            .foregroundStyle(.primary)
         if let currentDealerName {
-            text += " · \(currentDealerName) deals"
+            text = text + Text(" · \(currentDealerName) deals")
+                .font(.system(size: tricksSubtitleBaseSize, weight: .semibold))
+                .foregroundStyle(.secondary)
         }
         return text
     }
 
-    /// The reserved-size hit/miss slot: always the same tag shape at the
-    /// same padding, opacity-toggled rather than conditionally inserted, so
-    /// every row is pixel-identical in height whether or not tricks have
-    /// been entered yet — this is the screen that sits open all hand, so it
-    /// must never jump around as players tap in their tricks.
+    /// The reserved-size outcome slot: just the round delta ("+40"/"−10"),
+    /// bold and colored (felt green on a hit, terracotta on a miss) — no
+    /// "Hit ·"/"Miss ·" words, since color alone carries that meaning and
+    /// dropping them is what keeps the whole row (name, chip, slot,
+    /// stepper) on one line for a full 6-player table. Always the same
+    /// fixed-width frame, opacity-toggled rather than conditionally
+    /// inserted, so no row ever changes height or shifts its stepper
+    /// column depending on whether tricks have been entered yet — this is
+    /// the screen that sits open all hand, so it must never jump around as
+    /// players tap in their tricks.
     @ViewBuilder
     private func outcomeSlot(entry: RoundEntry) -> some View {
         let hasResult = entry.bid != nil && entry.tricksTaken != nil
@@ -463,13 +489,11 @@ private struct ResultsView: View {
         let tricks = entry.tricksTaken ?? 0
         let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
         let hit = bid == tricks
-        Text("\(hit ? "Hit" : "Miss") · \(ScoreFormat.delta(score))")
-            .font(.system(size: tagSize, weight: .bold))
-            .padding(.horizontal, 9)
-            .padding(.vertical, 4)
-            .background(hit ? Color.feltGreen.opacity(0.14) : Color.terracotta.opacity(0.13))
+        Text(ScoreFormat.delta(score))
+            .font(.system(size: outcomeDeltaSize, weight: .bold))
+            .monospacedDigit()
             .foregroundStyle(hit ? Color.feltGreen : Color.terracotta)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .frame(width: outcomeSlotWidth, alignment: .trailing)
             .opacity(hasResult ? 1 : 0)
             .animation(.easeInOut(duration: 0.18), value: hasResult)
     }
@@ -477,11 +501,19 @@ private struct ResultsView: View {
     var body: some View {
         List {
             Section {
-                Text(compactHeaderLine)
-                    .font(.system(size: compactHeaderSize, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 6)
+                VStack(alignment: .leading, spacing: 3) {
+                    ScreenHeader(
+                        eyebrow: "Round \(round.roundNumber) of \(game.totalRounds)",
+                        title: "Enter Tricks",
+                        subtitle: nil
+                    )
+                    tricksSubtitleText
+                        .padding(.horizontal, 4)
+                        // Sibling of `ScreenHeader`, so it doesn't get that
+                        // view's own bottom padding — see `BiddingView`'s
+                        // matching comment on `dealSubtitleText`.
+                        .padding(.bottom, 4)
+                }
             }
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
@@ -496,64 +528,73 @@ private struct ResultsView: View {
                         if let index = round.entries.firstIndex(where: { $0.playerId == participant.playerId }) {
                             let entry = round.entries[index]
                             let untouched = entry.tricksTaken == nil
-                            HStack {
-                                // LEFT: name + running total before this round.
-                                // The dealer tag sits ABOVE the name (not
-                                // inline beside it) so it adds height, not
-                                // width — inline, it widened this column
-                                // just for the dealer's row, which shoved
-                                // the "Needs" chip and stepper column out of
-                                // alignment with every other row.
+                            // Single line, matching `BiddingView`'s row
+                            // shape: [name + pts] [flexible gap] [Needs
+                            // chip] [reserved outcome slot] [stepper]. The
+                            // outcome tag used to stack above the stepper
+                            // in its own column — moving it inline (and
+                            // dropping its "Hit ·"/"Miss ·" words, see
+                            // `outcomeSlot`) is what makes room for that
+                            // without wrapping to a second line on a full
+                            // 6-player table.
+                            HStack(spacing: 6) {
+                                // LEFT: name + running total before this
+                                // round. The dealer tag sits ABOVE the name
+                                // (not inline beside it) so it adds height,
+                                // not width — inline, it widened this
+                                // column just for the dealer's row, which
+                                // shoved the "Needs" chip and stepper
+                                // column out of alignment with every other
+                                // row.
                                 VStack(alignment: .leading, spacing: 2) {
                                     if isDealer(participant) {
                                         DealerTag()
                                     }
                                     Text(participant.displayNameSnapshot)
                                         .font(.system(size: nameSize, weight: .bold))
+                                        .lineLimit(1)
                                     Text("\(game.runningTotal(for: participant.playerId)) pts")
                                         .font(.system(size: subInfoSize, weight: .medium))
                                         .foregroundStyle(.secondary)
                                 }
 
-                                Spacer(minLength: 8)
+                                Spacer(minLength: 4)
 
-                                // CENTER: the bid target is the visual anchor
-                                // for this "live dashboard" screen — a
+                                // The bid target is the visual anchor for
+                                // this "live dashboard" screen — a
                                 // prominent chip, not a small caption.
                                 Text("Needs \(entry.bid ?? 0)")
                                     .font(.system(size: needsChipSize, weight: .bold))
                                     .foregroundStyle(Color.feltGreen)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
+                                    .lineLimit(1)
+                                    .fixedSize()
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 5)
                                     .background(Color.feltGreen.opacity(0.12))
                                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-                                Spacer(minLength: 8)
+                                outcomeSlot(entry: entry)
 
-                                // RIGHT: reserved outcome slot + stepper.
-                                VStack(alignment: .trailing, spacing: 4) {
-                                    outcomeSlot(entry: entry)
-                                    SegmentedStepper(
-                                        displayValue: entry.tricksTaken ?? 0,
-                                        dimmed: untouched,
-                                        minusEnabled: untouched || entry.tricksTaken! > range.lowerBound,
-                                        plusEnabled: untouched || entry.tricksTaken! < range.upperBound,
-                                        onMinus: {
-                                            if untouched {
-                                                setTricks(range.lowerBound, at: index)
-                                            } else {
-                                                setTricks(max(entry.tricksTaken! - 1, range.lowerBound), at: index)
-                                            }
-                                        },
-                                        onPlus: {
-                                            if untouched {
-                                                setTricks(min(1, range.upperBound), at: index)
-                                            } else {
-                                                setTricks(min(entry.tricksTaken! + 1, range.upperBound), at: index)
-                                            }
+                                SegmentedStepper(
+                                    displayValue: entry.tricksTaken ?? 0,
+                                    dimmed: untouched,
+                                    minusEnabled: untouched || entry.tricksTaken! > range.lowerBound,
+                                    plusEnabled: untouched || entry.tricksTaken! < range.upperBound,
+                                    onMinus: {
+                                        if untouched {
+                                            setTricks(range.lowerBound, at: index)
+                                        } else {
+                                            setTricks(max(entry.tricksTaken! - 1, range.lowerBound), at: index)
                                         }
-                                    )
-                                }
+                                    },
+                                    onPlus: {
+                                        if untouched {
+                                            setTricks(min(1, range.upperBound), at: index)
+                                        } else {
+                                            setTricks(min(entry.tricksTaken! + 1, range.upperBound), at: index)
+                                        }
+                                    }
+                                )
                             }
                             .padding(.vertical, 8)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -566,7 +607,7 @@ private struct ResultsView: View {
         .listStyle(.insetGrouped)
         .listSectionSpacing(.compact)
         .paperBackground()
-        .navigationTitle("Enter Tricks")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {

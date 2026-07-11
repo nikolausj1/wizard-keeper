@@ -17,6 +17,11 @@ struct RecapData {
     let dateText: String
     let roundsText: String
     let standings: [Row]
+    /// Up to 2 game-story lines (perfect records, streaks, round-of-the-
+    /// game, etc.) — the same `Game.gameStoryInsights` computation
+    /// `FinalResultsView`'s "Game Story" section shows on-screen, trimmed
+    /// to fit the fixed card canvas.
+    let storyLines: [String]
 
     /// "\(winnerNames) Wins!" or "Game Complete" when there's no winner
     /// (e.g. an all-tie edge case with no seeded rounds).
@@ -51,6 +56,10 @@ struct RecapCardView: View {
             header
             standingsList
                 .padding(.top, 14)
+            if !data.storyLines.isEmpty {
+                storySection
+                    .padding(.top, 10)
+            }
             Spacer(minLength: 8)
             footer
         }
@@ -86,7 +95,10 @@ struct RecapCardView: View {
     }
 
     private var standingsList: some View {
-        VStack(spacing: 8) {
+        // 6pt (not 8): shrunk slightly to leave room for `storySection`
+        // below without growing the fixed 360×450 canvas — see that
+        // property's doc comment.
+        VStack(spacing: 6) {
             ForEach(visibleStandings) { row in
                 standingRow(row)
             }
@@ -122,11 +134,29 @@ struct RecapCardView: View {
                 .font(.system(size: 22, weight: .heavy, design: .monospaced))
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.vertical, 5)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(row.isWinner ? Color.brassGold.opacity(0.12) : Color(.secondarySystemGroupedBackground))
         )
+    }
+
+    /// Up to 2 game-story lines below a divider — icon-free, small, and
+    /// secondary so they read as a caption to the standings rather than
+    /// competing with them. Kept short enough (single line, truncating) to
+    /// fit the fixed canvas even with 6 standings rows above.
+    private var storySection: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Divider()
+                .padding(.bottom, 3)
+            ForEach(Array(data.storyLines.prefix(2).enumerated()), id: \.offset) { _, line in
+                Text(line)
+                    .font(.system(size: 9.5, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+        }
     }
 
     private var footer: some View {
@@ -171,7 +201,15 @@ enum RecapCardRenderer {
             )
         }
 
-        return RecapData(winnerNames: winnerNames, dateText: dateText, roundsText: roundsText, standings: rows)
+        let storyLines = game.gameStoryInsights.prefix(2).map(\.text)
+
+        return RecapData(
+            winnerNames: winnerNames,
+            dateText: dateText,
+            roundsText: roundsText,
+            standings: rows,
+            storyLines: Array(storyLines)
+        )
     }
 
     /// Renders a completed game's recap card to a `UIImage` at 1080×1350px
@@ -201,6 +239,10 @@ enum RecapCardRenderer {
             RecapData.Row(rank: 2, name: "Justin", total: 260, isWinner: false),
             RecapData.Row(rank: 3, name: "Dave", total: 150, isWinner: false),
             RecapData.Row(rank: 4, name: "Nan", total: 40, isWinner: false),
+        ],
+        storyLines: [
+            "Kelly has hit every bid (15 for 15)",
+            "Nan's +160 in round 14 is the round of the game",
         ]
     ))
     .previewLayout(.fixed(width: 360, height: 450))

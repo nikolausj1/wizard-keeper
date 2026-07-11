@@ -214,6 +214,64 @@ final class AnnouncerPlayer: ObservableObject {
         return play(urls: urls, attempted: attempted)
     }
 
+    /// Plays a completed-game wrap-up: [intro?] + winner name + winner tail
+    /// + up to 2 of `insights`' `[name, stat?, tail]` segments (the game's
+    /// "story" — perfect records, streaks, round-of-the-game, etc., same
+    /// insights `FinalResultsView`'s "Game Story" section shows) + last
+    /// place (name + tail, Spicy+ only, same gating as `announceWinner`) +
+    /// [outro?]. Replaces the bare `announceWinner` call `FinalResultsView`
+    /// used before the Game Story feature: capped at 2 insights (not 3, per
+    /// `announceRoundUpdate`) so the combined sequence stays at or under 12
+    /// segments — 1 intro + 2 winner + up to 6 for two 3-segment insights +
+    /// 2 last-place + 1 outro. Same graceful-skip and return-count behavior
+    /// as every other `announce*` method.
+    @discardableResult
+    func announceGameWrap(
+        winnerName: String,
+        lastPlaceName: String?,
+        insights: [GameInsights.Insight],
+        voice: AnnouncerVoice,
+        style: AnnouncerStyle
+    ) -> Int {
+        let voiceRaw = voice.rawValue
+        var urls: [URL] = []
+        var attempted = 0
+
+        attempted += 1
+        if let u = connectiveURL(kind: "intro", style: style, voice: voiceRaw) { urls.append(u) }
+
+        attempted += 1
+        if let u = nameURL(winnerName, voice: voiceRaw) { urls.append(u) }
+        attempted += 1
+        if let u = tailURL(kindName: "winner", style: style, voice: voiceRaw) { urls.append(u) }
+
+        let selected = Array(insights.prefix(2))
+        for insight in selected {
+            attempted += 1
+            if let u = nameURL(insight.playerName, voice: voiceRaw) { urls.append(u) }
+
+            if let statBasename = statBasename(kind: insight.kind, value: insight.value) {
+                attempted += 1
+                if let u = resolvedURL(basename: statBasename, voice: voiceRaw) { urls.append(u) }
+            }
+
+            attempted += 1
+            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voiceRaw) { urls.append(u) }
+        }
+
+        if let lastPlaceName, style.rawValue >= AnnouncerStyle.spicy.rawValue {
+            attempted += 1
+            if let u = nameURL(lastPlaceName, voice: voiceRaw) { urls.append(u) }
+            attempted += 1
+            if let u = tailURL(kindName: "lastPlace", style: style, voice: voiceRaw) { urls.append(u) }
+        }
+
+        attempted += 1
+        if let u = connectiveURL(kind: "outro", style: style, voice: voiceRaw) { urls.append(u) }
+
+        return play(urls: urls, attempted: attempted)
+    }
+
     /// Toggle helper for call sites (the Trends section's Announce/Stop
     /// button): stops playback if a broadcast is already in progress,
     /// otherwise starts one via `announceRoundUpdate`.
@@ -265,10 +323,14 @@ final class AnnouncerPlayer: ObservableObject {
             return "zeros_\(value)"
         case .boldestBidder:
             return nil
-        case .leading:
+        case .leading, .chasing, .trailing:
             // Reuses the same `points_<n>` clip family as `.bigRound` — the
-            // leader's total, not a single-round delta, but the audio just
-            // says a number, so the range/step constraint is identical.
+            // leader's total (or the chaser's gap, or the last-place
+            // total), not a single-round delta, but the audio just says a
+            // number, so the range/step constraint is identical. Chase gaps
+            // of 10-30 and negative last-place totals just fall outside the
+            // generated range and skip the stat clip, same as any other
+            // out-of-range value.
             guard (40...220).contains(value), value % 10 == 0 else { return nil }
             return "points_\(value)"
         case .reigningChamp, .freshGame:

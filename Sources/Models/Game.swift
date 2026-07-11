@@ -221,4 +221,24 @@ final class Game {
             winnerPlayerIds = []
         }
     }
+
+    /// Full-game narrative insights (perfect records, streaks, round-of-
+    /// the-game, position fallbacks) derived from every completed round —
+    /// shared by `FinalResultsView`'s "Game Story" section and
+    /// `RecapCardRenderer`'s share-card story lines so both stay in
+    /// lockstep. Same `PlayerLine`-construction pattern `GameView.
+    /// trendInsights` uses for the in-progress Trends section, just over
+    /// the whole game's rounds instead of a mid-game slice.
+    var gameStoryInsights: [GameInsights.Insight] {
+        let completedRounds = orderedRounds.filter { $0.phase == .complete }
+        let lines = participants.map { participant -> GameInsights.PlayerLine in
+            let entries = completedRounds.compactMap { round -> (bid: Int, tricksTaken: Int)? in
+                guard let entry = round.entries.first(where: { $0.playerId == participant.playerId }),
+                      let bid = entry.bid, let tricksTaken = entry.tricksTaken else { return nil }
+                return (bid, tricksTaken)
+            }
+            return GameInsights.PlayerLine(name: participant.displayNameSnapshot, entries: entries)
+        }
+        return GameInsights.insights(players: lines, maxCount: 3)
+    }
 }

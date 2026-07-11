@@ -78,6 +78,8 @@ CONNECTIVES = {
 # All name-free and number-free; never target age/looks/intelligence.
 TAILS = {
  1: {  # Classic — warm sports-caster
+  "chasing": ["Right on the leader's heels!", "The chase is ON!"],
+  "trailing": ["Bringing up the rear — plenty of game left!", "Last place... for now!"],
   "leading": ["Out in front and cruising!", "Top of the pile, folks!"],
   "reigningChamp": ["The reigning champion is at the table!", "Last game's winner is BACK!"],
   "freshGame": ["A fresh scorepad! Anything can happen!", "New game, clean slate — good luck, everyone!"],
@@ -92,6 +94,8 @@ TAILS = {
   "lastPlace": ["And hey — somebody had to come in last.", "Better luck next game, friend."],
  },
  2: {  # Spicy — the announcer has opinions
+  "chasing": ["Closing in — the leader should be nervous!", "Hot on the trail!"],
+  "trailing": ["Holding down last place like it's a job!", "The basement has a new tenant!"],
   "leading": ["Leading the pack — for now!", "First place! Enjoy it while it lasts!"],
   "reigningChamp": ["The champ is back to defend the crown!", "Reigning champion — target on their back!"],
   "freshGame": ["Clean slate! Time for some questionable bids!", "New game! Zero points, zero excuses!"],
@@ -106,6 +110,8 @@ TAILS = {
   "lastPlace": ["Dead last! But hey — great snacks tonight.", "Last place! We've alerted the authorities."],
  },
  3: {  # Scorched — full roast-battle meltdown, still clean
+  "chasing": ["The hunt is ON! Nowhere to hide!", "Breathing down the leader's NECK!"],
+  "trailing": ["ANCHORED to the bottom of this table!", "Last place and digging DEEPER!"],
   "leading": ["DOMINATING! Somebody do something!", "On TOP and rubbing it in!"],
   "reigningChamp": ["The CHAMPION walks among you! BOW!", "Back to defend the title — and talking TRASH!"],
   "freshGame": ["A NEW battle begins! May the odds ignore your history!", "Fresh scorepad — carnage incoming!"],
@@ -121,6 +127,8 @@ TAILS = {
                 "Dead last! The announcer's union says I don't have to talk about it!"],
  },
  4: {  # Vicious — mild expletives, personal edge. ADULTS ONLY.
+  "chasing": ["Coming for the throne — and the leader KNOWS it!", "The gap is shrinking, people! PANIC!"],
+  "trailing": ["Dead last — somebody stage a damn rescue!", "The basement called. They want rent!"],
   "leading": ["Leading, and frankly? Insufferable about it!", "First place! The rest of you should be embarrassed!"],
   "reigningChamp": ["The champ is HERE — act like it matters, people!", "Defending champion! Somebody take them down a damn peg!"],
   "freshGame": ["New game! Try not to embarrass yourselves this time!", "Clean slate — and some of you need it, BADLY!"],
@@ -135,6 +143,8 @@ TAILS = {
   "lastPlace": ["Dead last. At this point it's not luck — it's a personality trait!", "Last place AGAIN! The family is WATCHING!"],
  },
  5: {  # Unhinged — real profanity, R-rated roast. ADULTS ONLY, never App Store.
+  "chasing": ["Coming for BLOOD!", "The leader's ass is officially on notice!"],
+  "trailing": ["Stone. Cold. LAST. Get your shit together!", "Living in the basement rent-free — and it SHOWS!"],
   "leading": ["On TOP! Somebody knock their ass off the throne!", "Leading the whole damn table!"],
   "reigningChamp": ["The CHAMP is back — and the trash talk is EARNED!", "Reigning champion! Someone knock their ass off!"],
   "freshGame": ["FRESH game! Zero points, zero shits given — let's GO!", "New scorepad, same suspects — let the beatdown begin!"],

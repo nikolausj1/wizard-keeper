@@ -80,6 +80,15 @@ struct FinalResultsView: View {
         return last.name
     }
 
+    /// Up to 3 full-game narrative insights (perfect records, streaks,
+    /// round-of-the-game, position fallbacks) computed from every completed
+    /// round of this now-finished game — see `Game.gameStoryInsights`.
+    /// Feeds both the on-screen "Game Story" section and the "Hear the
+    /// Call" wrap-up broadcast.
+    private var gameStory: [GameInsights.Insight] {
+        game.gameStoryInsights
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -92,6 +101,10 @@ struct FinalResultsView: View {
                         }
                     }
                     .padding(.horizontal)
+                    if !gameStory.isEmpty {
+                        gameStorySection
+                            .padding(.horizontal)
+                    }
                 }
                 .padding(.top, 24)
                 .padding(.bottom, 12)
@@ -188,18 +201,20 @@ struct FinalResultsView: View {
         .padding(.horizontal)
     }
 
-    /// "Hear the Call": plays the winner announcement (and, on Spicy+
-    /// styles, a last-place roast) via `AnnouncerPlayer`. Hidden entirely
-    /// when there's no winner to announce (shouldn't happen once the game
-    /// is complete, but guards the empty-standings edge case).
+    /// "Hear the Call": plays the game wrap-up broadcast (winner callout,
+    /// up to 2 of `gameStory`'s narrative beats, and — on Spicy+ styles — a
+    /// last-place roast) via `AnnouncerPlayer.announceGameWrap`. Hidden
+    /// entirely when there's no winner to announce (shouldn't happen once
+    /// the game is complete, but guards the empty-standings edge case).
     @ViewBuilder
     private var hearTheCallButton: some View {
         if let firstWinnerName {
             Button {
                 let settings = try? AppSettings.fetchOrCreate(in: modelContext)
-                AnnouncerPlayer.shared.announceWinner(
-                    name: firstWinnerName,
+                AnnouncerPlayer.shared.announceGameWrap(
+                    winnerName: firstWinnerName,
                     lastPlaceName: lastPlaceName,
+                    insights: gameStory,
                     voice: settings?.announcerVoiceSelection ?? .charlie,
                     style: settings?.announcerStyleSelection ?? .classic
                 )
@@ -210,6 +225,41 @@ struct FinalResultsView: View {
             .buttonStyle(.bordered)
             .tint(.feltGreen)
         }
+    }
+
+    /// "Game Story": up to 3 rows of full-game narrative below the
+    /// standings, same warm-card style as `resultRow` so both read as one
+    /// section family.
+    private var gameStorySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Game Story")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 4)
+            VStack(spacing: 10) {
+                ForEach(Array(gameStory.enumerated()), id: \.offset) { _, insight in
+                    storyRow(insight)
+                }
+            }
+        }
+    }
+
+    private func storyRow(_ insight: GameInsights.Insight) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: insight.icon)
+                .foregroundStyle(Color.feltGreen)
+                .frame(width: 20)
+            Text(insight.text)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.primary)
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+        .warmCardShadow()
     }
 
     private func resultRow(_ standing: Standing) -> some View {

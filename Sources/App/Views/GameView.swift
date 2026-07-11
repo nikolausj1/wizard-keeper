@@ -108,7 +108,12 @@ struct GameView: View {
     private var pregameInsights: [GameInsights.Insight] {
         var insights: [GameInsights.Insight] = []
 
-        if let lastCompleted = mostRecentlyCompletedGame,
+        // Fetched once and shared by both the reigning-champ and
+        // table-history lines below, rather than each re-querying
+        // `modelContext` independently.
+        let completed = completedGames
+
+        if let lastCompleted = completed.first,
            let winnerId = lastCompleted.winnerPlayerIds.first(where: { id in
                game.participants.contains { $0.playerId == id }
            }),
@@ -132,20 +137,35 @@ struct GameView: View {
             value: nil
         ))
 
+        // Third pregame line: table history, once this table has played at
+        // least one completed game before. Deliberately `.freshGame` (not a
+        // new kind) so it reuses that kind's audio tails — this is another
+        // framing line, not a numeric callout.
+        if !completed.isEmpty {
+            insights.append(GameInsights.Insight(
+                icon: "book.closed.fill",
+                text: "Game #\(completed.count + 1) for this table",
+                priority: 2,
+                kind: .freshGame,
+                playerName: "",
+                value: nil
+            ))
+        }
+
         return insights
     }
 
-    /// The most recently completed game across the whole history, if any —
-    /// feeds the reigning-champ pregame insight. `Game.statusRaw` is
-    /// private to the model (see `HistoryView`'s doc comment), so this
-    /// fetches everything and filters/sorts on the public `status`
-    /// property instead; game history is small enough for that to be cheap.
-    private var mostRecentlyCompletedGame: Game? {
+    /// Every completed game across the whole history, most recent first —
+    /// feeds the reigning-champ and table-history pregame insights above.
+    /// `Game.statusRaw` is private to the model (see `HistoryView`'s doc
+    /// comment), so this fetches everything and filters/sorts on the
+    /// public `status` property instead; game history is small enough for
+    /// that to be cheap.
+    private var completedGames: [Game] {
         let allGames = (try? modelContext.fetch(FetchDescriptor<Game>())) ?? []
         return allGames
             .filter { $0.status == .completed }
             .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
-            .first
     }
 
     /// What the Trends section actually shows: pregame framing before

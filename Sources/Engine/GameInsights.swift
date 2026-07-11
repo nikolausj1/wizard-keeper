@@ -20,9 +20,10 @@ public enum GameInsights {
     /// selection off this, so every case maps to a tail-clip family.
     public enum Kind: String, Equatable {
         case perfect, hotStreak, coldStreak, bigRound, zeroSpecialist, boldestBidder
-        /// Fires from the first completed round — guarantees Trends is
-        /// never empty mid-game.
-        case leading
+        /// Position insights — fire from the first completed round, so
+        /// Trends always has up to three lines mid-game (leader, chaser,
+        /// last place). Richer stories about the same player win the dedupe.
+        case leading, chasing, trailing
         /// Pregame kinds, constructed by the app layer from game history
         /// (the engine only defines them so audio mapping stays kind-keyed).
         case reigningChamp, freshGame
@@ -147,20 +148,44 @@ public enum GameInsights {
             }
         }
 
-        // The current leader — computable from round 1, so Trends (and the
-        // announcer) always have at least one line during a game. Lowest
-        // priority: any richer insight about the leader wins the dedupe.
+        // Position insights — computable from round 1, so Trends (and the
+        // announcer) always have up to three lines during a game. Lowest
+        // priorities: any richer insight about the same player wins the
+        // dedupe, and these fill the remaining slots.
         if players.count >= 2 {
             let totals = players.map { line in
                 line.entries.reduce(0) { $0 + WizardEngine.roundScore(bid: $1.bid, tricksTaken: $1.tricksTaken) }
             }
-            if let best = totals.max(), let index = totals.firstIndex(of: best) {
-                offer(players[index].name, Insight(
+            if let best = totals.max(), let leaderIndex = totals.firstIndex(of: best) {
+                offer(players[leaderIndex].name, Insight(
                     icon: "crown.fill",
-                    text: "\(players[index].name) leads with \(best)",
+                    text: "\(players[leaderIndex].name) leads with \(best)",
                     priority: 6,
-                    kind: .leading, playerName: players[index].name, value: best
+                    kind: .leading, playerName: players[leaderIndex].name, value: best
                 ))
+
+                // Chaser: best total strictly below the lead (first seat wins ties).
+                let gaps = totals.enumerated().filter { $0.element < best }
+                if let chaser = gaps.max(by: { ($0.element, -$0.offset) < ($1.element, -$1.offset) }) {
+                    let gap = best - chaser.element
+                    offer(players[chaser.offset].name, Insight(
+                        icon: "figure.run",
+                        text: "\(players[chaser.offset].name) is \(gap) behind the lead",
+                        priority: 7,
+                        kind: .chasing, playerName: players[chaser.offset].name, value: gap
+                    ))
+                }
+
+                // Last place: strictly the lowest total, when distinct from the lead.
+                if let worst = totals.min(), worst < best,
+                   let lastIndex = totals.lastIndex(of: worst) {
+                    offer(players[lastIndex].name, Insight(
+                        icon: "tortoise.fill",
+                        text: "\(players[lastIndex].name) is in last with \(worst)",
+                        priority: 8,
+                        kind: .trailing, playerName: players[lastIndex].name, value: worst
+                    ))
+                }
             }
         }
 

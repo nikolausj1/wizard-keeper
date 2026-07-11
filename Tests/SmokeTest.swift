@@ -121,6 +121,15 @@ let oneRound = GameInsights.insights(players: [
 ])
 check("insights: leader fires from round 1",
       oneRound.contains { $0.text == "A leads with 30" }, true)
+// Position trio: leader, chaser, and last place fill three lines from round 1
+let trio = GameInsights.insights(players: [
+    Line(name: "A", entries: [(1, 1)]),   // +30 leads
+    Line(name: "B", entries: [(0, 0)]),   // +20 chases (10 behind)
+    Line(name: "C", entries: [(0, 1)]),   // −10 last
+])
+check("insights: three position lines from round 1", trio.count, 3)
+check("insights: chaser text", trio.contains { $0.text == "B is 10 behind the lead" }, true)
+check("insights: last-place text", trio.contains { $0.text == "C is in last with -10" }, true)
 // Leader loses the dedupe to a richer insight about the same player
 let richer = GameInsights.insights(players: [
     Line(name: "A", entries: [(0, 0), (1, 1), (2, 2)]),  // perfect AND leading
