@@ -59,14 +59,12 @@ private struct SettingsForm: View {
             Section {
                 Toggle("Dealer's hook", isOn: $settings.hookRuleEnabled)
                 Toggle("Trick total check", isOn: $settings.trickTotalCheckEnabled)
-                Toggle("Show dealer rotation", isOn: $settings.dealerRotationEnabled)
             } header: {
                 Text("House Rules")
             } footer: {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Bids can't total the tricks in a round.")
                     Text("Warn when tricks entered don't match the cards dealt.")
-                    Text("Highlights whose deal it is each round.")
                     Text("Rule changes apply to new games — games in progress keep the rules they started with.")
                 }
             }
@@ -113,7 +111,10 @@ private struct SettingsForm: View {
             } header: {
                 Text("Announcer")
             } footer: {
-                Text("Vicious and Unhinged are for adults-only tables. Remove before App Store submission.")
+                // Styles 4-5 (Vicious, Unhinged) use mild-to-real profanity —
+                // strip them before any App Store submission (see
+                // `AnnouncerStyle`'s doc comment in Announcer.swift).
+                Text("Vicious and Unhinged are for adult tables.")
             }
 
             Section {

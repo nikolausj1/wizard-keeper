@@ -299,9 +299,18 @@ struct FinalResultsView: View {
 
     private func rematch() {
         let freshRules = (try? AppSettings.fetchOrCreate(in: modelContext).makeRulesSnapshot()) ?? game.rulesSnapshot
+        // `game.totalRounds` can exceed the legal max for this roster if a
+        // player joined mid-game (the cap only ever grows to accommodate a
+        // bigger table, `totalRounds` itself isn't retroactively trimmed) —
+        // clamp to whatever `WizardEngine` allows for the carried-over
+        // participant count before seeding the rematch.
+        let clampedRounds = min(
+            game.totalRounds,
+            WizardEngine.totalRounds(playerCount: game.participants.count) ?? game.totalRounds
+        )
         let newGame = Game(
             participants: game.participants,
-            totalRounds: game.totalRounds,
+            totalRounds: clampedRounds,
             rulesSnapshot: freshRules
         )
         modelContext.insert(newGame)

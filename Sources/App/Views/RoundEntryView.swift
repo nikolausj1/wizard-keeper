@@ -420,14 +420,22 @@ private struct ResultsView: View {
     /// the number of tricks that exist this round (= the round number).
     private var trickTotal: Int { round.entries.compactMap(\.tricksTaken).reduce(0, +) }
 
-    /// "Confirm Round" label + enabled state, state-driven off the
-    /// trick-total tally when the house "trick total check" rule is on:
-    /// short of the round's trick count disables with an "Enter N More"
-    /// count-down, over disables with "N Too Many", and exactly on target
-    /// enables with the normal label. With the rule off, the button is
-    /// fully permissive — always enabled, always "Confirm Round" — since
-    /// there's nothing to gate.
+    /// "Confirm Round" label + enabled state. An unconditional completeness
+    /// floor — mirroring `BiddingView.allBidsIn` — always gates first: any
+    /// entry still missing a `tricksTaken` disables the button with a
+    /// "Waiting on N player(s)" label, regardless of the house "trick total
+    /// check" toggle (previously, with the rule off, the button was fully
+    /// permissive and could confirm with nil entries still on the board).
+    /// Once every entry is in, the trick-total tally takes over when the
+    /// rule is on: short of the round's trick count disables with an
+    /// "Enter N More" count-down, over disables with "N Too Many", and
+    /// exactly on target enables with the normal label. With the rule off,
+    /// that sum-vs-N gating stays off — completeness alone is enough.
     private var confirmState: (label: String, disabled: Bool) {
+        let missing = round.entries.filter { $0.tricksTaken == nil }.count
+        if missing > 0 {
+            return ("Waiting on \(missing) player\(missing == 1 ? "" : "s")", true)
+        }
         guard game.rulesSnapshot.trickTotalCheckEnabled else { return ("Confirm Round", false) }
         let diff = trickTotal - round.roundNumber
         if diff < 0 { return ("Enter \(-diff) More Trick\(-diff == 1 ? "" : "s")", true) }
@@ -684,7 +692,14 @@ private struct EditRoundView: View {
     /// "Save Changes" label + enabled state — same state-driven gating
     /// `ResultsView.confirmState` uses, just against the base "Save
     /// Changes" label instead of "Confirm Round" once the count matches.
+    /// Same unconditional completeness floor as `ResultsView.confirmState`;
+    /// a `.complete` round's entries are always non-nil in practice, so this
+    /// is purely defensive here.
     private var saveState: (label: String, disabled: Bool) {
+        let missing = round.entries.filter { $0.tricksTaken == nil }.count
+        if missing > 0 {
+            return ("Waiting on \(missing) player\(missing == 1 ? "" : "s")", true)
+        }
         guard game.rulesSnapshot.trickTotalCheckEnabled else { return ("Save Changes", false) }
         let diff = trickTotal - round.roundNumber
         if diff < 0 { return ("Enter \(-diff) More Trick\(-diff == 1 ? "" : "s")", true) }
@@ -757,6 +772,13 @@ private struct EditRoundView: View {
 
     private func editRow(participant: Participant, index: Int) -> some View {
         let entry = round.entries[index]
+        // A never-entered entry (both bid and tricksTaken nil — e.g. a
+        // player backfilled into a round that closed bidding before they
+        // joined) renders as untouched: an em dash instead of a fake
+        // "Hit · +20" tag, and dimmed-nil steppers instead of implying a
+        // real 0. An entry with only one side nil (shouldn't happen for a
+        // `.complete` round) still falls back to the `?? 0` reading below.
+        let untouched = entry.bid == nil && entry.tricksTaken == nil
         let bid = entry.bid ?? 0
         let tricks = entry.tricksTaken ?? 0
         let hit = bid == tricks
@@ -775,13 +797,19 @@ private struct EditRoundView: View {
                         .font(.system(size: nameSize, weight: .bold))
                 }
                 Spacer()
-                Text("\(hit ? "Hit" : "Miss") · \(ScoreFormat.delta(score))")
-                    .font(.system(size: tagSize, weight: .bold))
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 4)
-                    .background(hit ? Color.feltGreen.opacity(0.14) : Color.terracotta.opacity(0.13))
-                    .foregroundStyle(hit ? Color.feltGreen : Color.terracotta)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                if untouched {
+                    Text("—")
+                        .font(.system(size: tagSize, weight: .bold))
+                        .foregroundStyle(.tertiary)
+                } else {
+                    Text("\(hit ? "Hit" : "Miss") · \(ScoreFormat.delta(score))")
+                        .font(.system(size: tagSize, weight: .bold))
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .background(hit ? Color.feltGreen.opacity(0.14) : Color.terracotta.opacity(0.13))
+                        .foregroundStyle(hit ? Color.feltGreen : Color.terracotta)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
             }
 
             HStack {
@@ -791,10 +819,11 @@ private struct EditRoundView: View {
                         .foregroundStyle(.secondary)
                     SegmentedStepper(
                         displayValue: bid,
-                        minusEnabled: bid > range.lowerBound,
-                        plusEnabled: bid < range.upperBound,
-                        onMinus: { setBid(max(bid - 1, range.lowerBound), at: index) },
-                        onPlus: { setBid(min(bid + 1, range.upperBound), at: index) }
+                        dimmed: untouched,
+                        minusEnabled: untouched || bid > range.lowerBound,
+                        plusEnabled: untouched || bid < range.upperBound,
+                        onMinus: { setBid(untouched ? range.lowerBound : max(bid - 1, range.lowerBound), at: index) },
+                        onPlus: { setBid(untouched ? min(1, range.upperBound) : min(bid + 1, range.upperBound), at: index) }
                     )
                 }
                 Spacer()
@@ -804,10 +833,11 @@ private struct EditRoundView: View {
                         .foregroundStyle(.secondary)
                     SegmentedStepper(
                         displayValue: tricks,
-                        minusEnabled: tricks > range.lowerBound,
-                        plusEnabled: tricks < range.upperBound,
-                        onMinus: { setTricks(max(tricks - 1, range.lowerBound), at: index) },
-                        onPlus: { setTricks(min(tricks + 1, range.upperBound), at: index) }
+                        dimmed: untouched,
+                        minusEnabled: untouched || tricks > range.lowerBound,
+                        plusEnabled: untouched || tricks < range.upperBound,
+                        onMinus: { setTricks(untouched ? range.lowerBound : max(tricks - 1, range.lowerBound), at: index) },
+                        onPlus: { setTricks(untouched ? min(1, range.upperBound) : min(tricks + 1, range.upperBound), at: index) }
                     )
                 }
             }

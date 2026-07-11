@@ -147,7 +147,14 @@ private struct GameLengthSheet: View {
         self.game = game
         self.minRoundCount = minRoundCount
         self.maxRoundCount = maxRoundCount
-        _roundCount = State(initialValue: game.totalRounds)
+        // Clamp the seed value into this sheet's own safeRange up front:
+        // `game.totalRounds` can exceed `maxRoundCount` after a mid-game
+        // player add inflates it past this seating's cap (e.g. 20 rounds
+        // seeded, but 60÷newPlayerCount caps lower), which would otherwise
+        // hand `Stepper` an out-of-range initial value.
+        let lower = min(minRoundCount, maxRoundCount)
+        let clampedInitial = min(max(game.totalRounds, lower), maxRoundCount)
+        _roundCount = State(initialValue: clampedInitial)
     }
 
     private var completedRoundCount: Int {
@@ -246,7 +253,7 @@ private struct AddPlayerToGameSheet: View {
             List {
                 Section {
                     ScreenHeader(eyebrow: nil, title: "Add Player", subtitle: nil)
-                    Text("Joins at 0 points starting this round.")
+                    Text("Joins at 0 points — bidding from the next round.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -302,9 +309,12 @@ private struct AddPlayerToGameSheet: View {
     }
 
     /// Seats `player` into the live game: appends their `Participant`
-    /// snapshot, backfills a blank entry into every round that hasn't
-    /// reached `.complete` yet (so they can be scored starting the current
-    /// round), saves, and dismisses.
+    /// snapshot, backfills a blank entry into every round still in
+    /// `.bidding` (so they can be scored starting the current round if
+    /// bidding hasn't closed yet), saves, and dismisses. Deliberately
+    /// excludes `.results` rounds — bidding is already closed there, so a
+    /// backfilled entry could never receive a bid and would linger as a
+    /// phantom "0 bid, 0 tricks" hit once the round completes.
     private func seat(_ player: Player) {
         guard game.participants.count < WizardEngine.maxPlayers,
               !seatedPlayerIds.contains(player.id) else { return }
@@ -312,7 +322,7 @@ private struct AddPlayerToGameSheet: View {
         let participant = Participant(playerId: player.id, displayNameSnapshot: player.name, colorIdSnapshot: player.colorId)
         game.participants.append(participant)
 
-        for round in game.rounds where round.phase != .complete {
+        for round in game.rounds where round.phase == .bidding {
             var updated = round.entries
             updated.append(RoundEntry(playerId: player.id, bid: nil, tricksTaken: nil))
             round.entries = updated

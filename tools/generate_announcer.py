@@ -47,7 +47,8 @@ COMMON = [(n, n.capitalize()) for n in [
 ]]
 
 WORDS = {2:"Two",3:"Three",4:"Four",5:"Five",6:"Six",7:"Seven",8:"Eight",9:"Nine",10:"Ten",
-         11:"Eleven",12:"Twelve",13:"Thirteen",14:"Fourteen",15:"Fifteen"}
+         11:"Eleven",12:"Twelve",13:"Thirteen",14:"Fourteen",15:"Fifteen",
+         16:"Sixteen",17:"Seventeen",18:"Eighteen",19:"Nineteen",20:"Twenty"}
 POINTS = {40:"Forty",50:"Fifty",60:"Sixty",70:"Seventy",80:"Eighty",90:"Ninety",100:"One hundred",
           110:"One hundred ten",120:"One hundred twenty",130:"One hundred thirty",140:"One hundred forty",
           150:"One hundred fifty",160:"One hundred sixty",170:"One hundred seventy",180:"One hundred eighty",
@@ -209,9 +210,9 @@ def jobs_for_voice():
     jobs = []  # (filename, spoken text) — generation order = priority order
     for slug, spoken in FAMILY:
         jobs.append((f"name_{slug}.mp3", f"{spoken}!"))
-    for n in range(2, 16):
+    for n in range(2, 21):
         jobs.append((f"inarow_{n}.mp3", f"{WORDS[n]} in a row!"))
-    for n in range(3, 16):
+    for n in range(3, 21):
         jobs.append((f"perfect_{n}.mp3", f"{WORDS[n]} for {WORDS[n].lower()} — PERFECT!"))
     for pts, word in POINTS.items():
         jobs.append((f"points_{pts}.mp3", f"{word} points!"))
@@ -232,8 +233,8 @@ def jobs_for_voice():
 def main():
     manifest = {"voices": list(VOICES), "styles": {str(s): {k: len(v) for k, v in kinds.items()} for s, kinds in TAILS.items()},
                 "names": [s for s, _ in FAMILY + COMMON],
-                "aliases": {"nicky": "nikki"},
-                "inarow": [2, 15], "perfect": [3, 15], "points": [40, 220], "zeros": [3, 10]}
+                "aliases": {"nicky": "nikki", "may": "mae", "cammy": "cami", "cammie": "cami", "nanna": "nana", "jeffrey": "jeffery"},
+                "inarow": [2, 20], "perfect": [3, 20], "points": [40, 220], "zeros": [3, 10]}
     os.makedirs(OUT_ROOT, exist_ok=True)
     with open(os.path.join(OUT_ROOT, "manifest.json"), "w") as f:
         json.dump(manifest, f, indent=1)

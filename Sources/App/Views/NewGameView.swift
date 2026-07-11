@@ -127,17 +127,9 @@ struct NewGameView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            Button(action: startGame) {
-                Text("Start Game")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.feltGreen)
-            .controlSize(.large)
-            .disabled(!canStart)
-            .padding()
-            .background(.bar)
+            PrimaryActionButton(title: "Start Game", isDisabled: !canStart, action: startGame)
+                .padding()
+                .background(.bar)
         }
         .sheet(isPresented: $showAddPlayer) {
             AddPlayerSheet(existingNames: players.map(\.name), nextColorId: nextColorId) { name, colorId in

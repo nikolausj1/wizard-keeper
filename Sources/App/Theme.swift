@@ -61,6 +61,16 @@ extension Color {
             ? UIColor(red: 0.929, green: 0.894, blue: 0.831, alpha: 1)
             : UIColor(red: 0.169, green: 0.129, blue: 0.094, alpha: 1)
     })
+
+    /// Disabled-button fill for `PrimaryActionButton` — replaces the cold
+    /// system-gray5 fill (broke the "Warm Table" palette) with a warm
+    /// neutral that harmonizes with `paperBase`'s parchment. Light #DDD3C0,
+    /// dark #3A322A.
+    static let warmDisabled = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.227, green: 0.196, blue: 0.165, alpha: 1)
+            : UIColor(red: 0.867, green: 0.827, blue: 0.753, alpha: 1)
+    })
 }
 
 /// The full page-background treatment: `paperBase` plus, in light mode only,
@@ -218,8 +228,8 @@ struct ScreenHeader: View {
 
 /// Full-width 50pt CTA button matching the mockup's `.btn`: indigo fill,
 /// 14pt corner radius, 17pt bold white label. `isDisabled` maps to the
-/// mockup's `.btn.disabled`: a system-gray5 fill with tertiary-label text,
-/// and disables interaction.
+/// mockup's `.btn.disabled`: a warm `Color.warmDisabled` fill (see its doc
+/// comment) with tertiary-label text, and disables interaction.
 struct PrimaryActionButton: View {
     var title: String
     var isDisabled: Bool = false
@@ -235,7 +245,7 @@ struct PrimaryActionButton: View {
                 .frame(height: 50)
         }
         .foregroundStyle(isDisabled ? Color(.tertiaryLabel) : .white)
-        .background(isDisabled ? Color(.systemGray5) : Color.feltGreen)
+        .background(isDisabled ? Color.warmDisabled : Color.feltGreen)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .disabled(isDisabled)
     }

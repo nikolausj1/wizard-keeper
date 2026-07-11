@@ -85,6 +85,21 @@ final class AnnouncerPlayer: ObservableObject {
     /// replaced on every new `play(urls:attempted:)` call and in `stop()`.
     private var endOfQueueObserver: NSObjectProtocol?
 
+    /// One observer per queued `AVPlayerItem` for
+    /// `.AVPlayerItemFailedToPlayToEndTime` — a mid-queue decode/IO failure
+    /// otherwise leaves `isPlaying` stuck `true` forever, since it never
+    /// fires the last item's normal end-of-playback notification. Torn down
+    /// and replaced on every new `play(urls:attempted:)` call and in
+    /// `stop()`, same lifecycle as `endOfQueueObserver`.
+    private var failureObservers: [NSObjectProtocol] = []
+
+    /// Observes `AVAudioSession.interruptionNotification` so an incoming
+    /// call/Siri/alarm that interrupts playback also stops us cleanly
+    /// instead of leaving `isPlaying` stuck `true` with a silently-paused
+    /// player. Registered once (see `init`) and never torn down — it
+    /// outlives any individual playback session.
+    private var interruptionObserver: NSObjectProtocol?
+
     /// Whether a clip sequence is currently queued/playing. Drives the
     /// Trends section's Announce/Stop toggle button in `GameView`.
     @Published private(set) var isPlaying = false
@@ -107,6 +122,26 @@ final class AnnouncerPlayer: ObservableObject {
         manifest = Self.loadManifest()
         if manifest == nil {
             print("Announcer: manifest.json not found or unreadable — announcer will be silent")
+        }
+        registerInterruptionObserver()
+    }
+
+    /// Registered once at init: on `.began` (interruption starting — a
+    /// call, Siri, an alarm, another app grabbing the session), stop
+    /// playback so `isPlaying` doesn't stay stuck `true` while the system
+    /// has already silently paused us. `.ended` is intentionally not
+    /// resumed automatically — the announcer is a one-shot callout, not a
+    /// music player.
+    private func registerInterruptionObserver() {
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { [weak self] notification in
+            guard let typeRaw = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+                  let type = AVAudioSession.InterruptionType(rawValue: typeRaw),
+                  type == .began else { return }
+            self?.stop()
         }
     }
 
@@ -324,8 +359,9 @@ final class AnnouncerPlayer: ObservableObject {
         }
     }
 
-    /// Stops any in-flight playback immediately and flips `isPlaying` back
-    /// to `false`.
+    /// Stops any in-flight playback immediately, flips `isPlaying` back to
+    /// `false`, and deactivates the audio session (`.notifyOthersOnDeactivation`
+    /// so ducked background music resumes).
     func stop() {
         queuePlayer?.pause()
         queuePlayer?.removeAllItems()
@@ -334,7 +370,12 @@ final class AnnouncerPlayer: ObservableObject {
             NotificationCenter.default.removeObserver(endOfQueueObserver)
         }
         endOfQueueObserver = nil
+        for observer in failureObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        failureObservers.removeAll()
         isPlaying = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     // MARK: - Segment basenames (filename minus ".mp3")
@@ -351,10 +392,13 @@ final class AnnouncerPlayer: ObservableObject {
         guard let value else { return nil }
         switch kind {
         case .hotStreak, .coldStreak:
-            guard (2...15).contains(value) else { return nil }
+            // Widened from 2...15: a 3-player game runs 20 rounds, and the
+            // lead can legitimately generate inarow_16..20 clips.
+            guard (2...20).contains(value) else { return nil }
             return "inarow_\(value)"
         case .perfect:
-            guard (3...15).contains(value) else { return nil }
+            // Widened from 3...15 — same 20-round 3-player ceiling as above.
+            guard (3...20).contains(value) else { return nil }
             return "perfect_\(value)"
         case .bigRound:
             guard (40...220).contains(value), value % 10 == 0 else { return nil }
@@ -364,16 +408,24 @@ final class AnnouncerPlayer: ObservableObject {
             return "zeros_\(value)"
         case .boldestBidder:
             return nil
-        case .leading, .chasing, .trailing, .leadChange, .nosedive:
+        case .leading, .trailing, .leadChange:
             // Reuses the same `points_<n>` clip family as `.bigRound` — the
-            // leader's total (or the chaser's gap, or the last-place
-            // total), not a single-round delta, but the audio just says a
-            // number, so the range/step constraint is identical. Chase gaps
-            // of 10-30 and negative last-place totals just fall outside the
-            // generated range and skip the stat clip, same as any other
-            // out-of-range value.
+            // value here IS the player's own point total (leader's total,
+            // trailer's total, or the new leader's total on a lead change),
+            // so the clip reads correctly as "their score". Values outside
+            // the generated range just skip the stat clip, same as any
+            // other out-of-range value.
             guard (40...220).contains(value), value % 10 == 0 else { return nil }
             return "points_\(value)"
+        case .chasing, .nosedive:
+            // Deliberately no stat clip: `.chasing`'s value is the GAP to
+            // the leader and `.nosedive`'s is the trailing total, neither
+            // of which is "this player's own score" — reusing `points_<n>`
+            // here is audibly ambiguous ("Sam! Forty points! Right on the
+            // leader's heels!" reads as Sam scoring 40, not trailing by 40).
+            // The on-screen text still carries the number; the tail clip
+            // carries what it means.
+            return nil
         case .reigningChamp, .freshGame, .everybodyHit, .carnage, .tightRace:
             // No stat clip by design — these are framing lines ("X won the
             // last game", "fresh scorepad"), not numeric callouts.
@@ -504,9 +556,11 @@ final class AnnouncerPlayer: ObservableObject {
     /// Queues `urls` on a fresh `AVQueuePlayer`, replacing any playback in
     /// progress. Prints a resolved/missing/attempted summary either way so
     /// a launch-arg smoke test (see `-announcerTest` in `WizardKeeperApp`)
-    /// can be verified from console logs alone. Session deactivation after
-    /// the queue ends is intentionally skipped — optional per spec, and
-    /// one less thing to get wrong before a demo.
+    /// can be verified from console logs alone. The session is set up with
+    /// `.duckOthers` so backgrounded music (e.g. Spotify/Music) ducks
+    /// instead of getting killed outright, and is deactivated with
+    /// `.notifyOthersOnDeactivation` — both when the queue finishes
+    /// naturally and in `stop()` — so that music comes back up afterward.
     @discardableResult
     private func play(urls: [URL], attempted: Int) -> Int {
         let missing = attempted - urls.count
@@ -517,9 +571,13 @@ final class AnnouncerPlayer: ObservableObject {
             NotificationCenter.default.removeObserver(endOfQueueObserver)
             self.endOfQueueObserver = nil
         }
+        for observer in failureObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        failureObservers.removeAll()
 
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .default)
+        try? session.setCategory(.playback, mode: .default, options: [.duckOthers])
         try? session.setActive(true)
 
         let items = urls.map { AVPlayerItem(url: $0) }
@@ -528,13 +586,31 @@ final class AnnouncerPlayer: ObservableObject {
 
         // Observe the LAST item specifically (not just any item finishing)
         // so `isPlaying` stays true through a multi-clip sequence and only
-        // flips false once the whole broadcast has played out.
+        // flips false once the whole broadcast has played out. Also
+        // deactivates the session (ducked music resumes) now that playback
+        // is genuinely done.
         endOfQueueObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: items.last,
             queue: .main
         ) { [weak self] _ in
             self?.isPlaying = false
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
+
+        // A mid-queue decode/IO failure never fires the last item's normal
+        // end-of-playback notification, which would otherwise leave
+        // `isPlaying` stuck `true` forever — one observer per queued item
+        // routes any of them failing through the same `stop()` cleanup
+        // (removes observers, deactivates the session, flips `isPlaying`).
+        failureObservers = items.map { item in
+            NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemFailedToPlayToEndTime,
+                object: item,
+                queue: .main
+            ) { [weak self] _ in
+                self?.stop()
+            }
         }
 
         isPlaying = true

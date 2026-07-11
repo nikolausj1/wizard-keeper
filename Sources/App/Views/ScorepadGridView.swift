@@ -15,6 +15,11 @@ struct ScorepadGridView: View {
     @State private var selectedRoundNumber: Int?
     @State private var showUndoConfirm = false
 
+    /// Drives the Trends block's Announce/Stop toggle button — observed so
+    /// the label/icon flip live as the broadcast plays and finishes. Same
+    /// pattern as `GameView`'s iPhone Trends section.
+    @ObservedObject private var announcer = AnnouncerPlayer.shared
+
     /// Fixed width of the leading "RND" column, matching the mockup's
     /// `grid-template-columns` anatomy, rescaled for the iPad pane.
     private let roundColumnWidth: CGFloat = 64
@@ -41,9 +46,16 @@ struct ScorepadGridView: View {
     @ScaledMetric(relativeTo: .subheadline) private var totalLabelSize: CGFloat = 15
     @ScaledMetric(relativeTo: .largeTitle) private var totalScoreSize: CGFloat = 30
     @ScaledMetric(relativeTo: .caption) private var totalStarSize: CGFloat = 15
+    @ScaledMetric(relativeTo: .caption) private var trendsHeaderSize: CGFloat = 12
+    @ScaledMetric(relativeTo: .body) private var trendIconWidth: CGFloat = 20
+    @ScaledMetric(relativeTo: .body) private var trendTextSize: CGFloat = 15
+    @ScaledMetric(relativeTo: .footnote) private var trendAnnounceSize: CGFloat = 13
 
     private enum RowKind {
-        case completed(deltas: [Int], cumulative: [Int])
+        /// `deltas[i]` is `nil` when `Round.score(for:)` can't find an entry
+        /// for that player — i.e. a round predating a mid-game-added
+        /// player — rendered as "—" rather than a misleading "+0".
+        case completed(deltas: [Int?], cumulative: [Int])
         case current
         case future
     }
@@ -82,6 +94,36 @@ struct ScorepadGridView: View {
         standings.map(\.total).max() ?? 0
     }
 
+    /// What the Trends block shows — same derivation `GameView`'s iPhone
+    /// Trends section uses, via `GameTrends` in `GameTrends.swift`, so
+    /// both panes always agree.
+    private var displayedInsights: [GameInsights.Insight] {
+        GameTrends.displayed(for: game, in: modelContext).insights
+    }
+
+    /// Toggles the Trends block's single table-wide broadcast — identical
+    /// logic to `GameView`'s `toggleAnnounce`, including the round-zero
+    /// pregame branch.
+    private func toggleAnnounce() {
+        guard let settings = try? AppSettings.fetchOrCreate(in: modelContext) else { return }
+        if completedRoundCount == 0 {
+            // Round zero gets the short call: champ nod, one joke, "deal!"
+            // — the full broadcast was too long with nothing yet to say.
+            let champName = GameTrends.displayed(for: game, in: modelContext).champName
+            announcer.togglePregame(
+                champName: champName,
+                voice: settings.announcerVoiceSelection,
+                style: settings.announcerStyleSelection
+            )
+        } else {
+            announcer.toggleRoundUpdate(
+                insights: displayedInsights,
+                voice: settings.announcerVoiceSelection,
+                style: settings.announcerStyleSelection
+            )
+        }
+    }
+
     /// The most recently completed round, if any — Undo reopens exactly
     /// this one, per `Game.reopenLastCompletedRound`.
     private var lastCompletedRoundNumber: Int? {
@@ -118,12 +160,12 @@ struct ScorepadGridView: View {
 
         for n in 1...max(game.totalRounds, 1) {
             if let round = ordered.first(where: { $0.roundNumber == n }), round.phase == .complete {
-                var deltas: [Int] = []
+                var deltas: [Int?] = []
                 deltas.reserveCapacity(participants.count)
                 for (i, participant) in participants.enumerated() {
-                    let delta = round.score(for: participant.playerId) ?? 0
+                    let delta = round.score(for: participant.playerId)
                     deltas.append(delta)
-                    running[i] += delta
+                    running[i] += delta ?? 0
                 }
                 result.append(RoundRow(id: n, roundNumber: n, kind: .completed(deltas: deltas, cumulative: running)))
             } else if n == current {
@@ -243,6 +285,8 @@ struct ScorepadGridView: View {
                     .warmCardShadow()
                     .padding(.horizontal, outerHPadding)
                     .padding(.top, 8)
+
+                    trendsBlock
                 }
                 .padding(.bottom, 12)
             }
@@ -315,6 +359,74 @@ struct ScorepadGridView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .frame(minHeight: 72)
+    }
+
+    /// The standings panel's Trends block — parity with `GameView`'s
+    /// iPhone Trends section (see `displayedInsights`/`toggleAnnounce`
+    /// above), filling the dead space that used to sit below the standings
+    /// card on iPad: a small-caps "TRENDS" label with a trailing
+    /// Announce/Stop button, then up to 3 insight rows in a warm-shadow
+    /// card.
+    private var trendsBlock: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("TRENDS")
+                    .font(.system(size: trendsHeaderSize, weight: .bold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if !displayedInsights.isEmpty {
+                    Button(action: toggleAnnounce) {
+                        Label(
+                            announcer.isPlaying ? "Stop" : "Announce",
+                            systemImage: announcer.isPlaying ? "stop.fill" : "speaker.wave.2.fill"
+                        )
+                        .font(.system(size: trendAnnounceSize, weight: .semibold))
+                        .foregroundStyle(Color.feltGreen)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, outerHPadding)
+            .padding(.top, 16)
+
+            VStack(spacing: 0) {
+                ForEach(Array(displayedInsights.enumerated()), id: \.offset) { index, insight in
+                    trendRow(insight)
+                    if index < displayedInsights.count - 1 {
+                        Rectangle()
+                            .fill(Color(.separator).opacity(0.5))
+                            .frame(height: 0.5)
+                            .padding(.leading, 16)
+                    }
+                }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            .warmCardShadow()
+            .padding(.horizontal, outerHPadding)
+            .padding(.top, 8)
+        }
+    }
+
+    /// One Trends block row: a felt-green SF Symbol plus
+    /// `GameInsights.Insight.text`, matching `GameView`'s iPhone Trends row
+    /// at the iPad's slightly roomier card padding.
+    private func trendRow(_ insight: GameInsights.Insight) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: insight.icon)
+                .foregroundStyle(Color.feltGreen)
+                .frame(width: trendIconWidth)
+            Text(insight.text)
+                .font(.system(size: trendTextSize, weight: .medium))
+                .foregroundStyle(.primary)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
     }
 
     // MARK: - Right pane: scorepad grid
@@ -422,19 +534,27 @@ struct ScorepadGridView: View {
     /// A completed round: tappable (same plain-button pattern as
     /// `currentRow`) into `RoundEntryView` for that round, which renders
     /// its edit mode since the round's phase is already `.complete`.
-    private func completedRow(roundNumber: Int, deltas: [Int], cumulative: [Int]) -> some View {
+    private func completedRow(roundNumber: Int, deltas: [Int?], cumulative: [Int]) -> some View {
         Button {
             selectedRoundNumber = roundNumber
         } label: {
             rowShell(roundNumber: roundNumber, tinted: false, numberColor: .secondary) {
                 ForEach(participants.indices, id: \.self) { i in
                     VStack(alignment: .center, spacing: 1) {
-                        Text(ScoreFormat.delta(deltas[i]))
-                            .font(.system(size: cellValueSize, weight: .bold))
-                            .monospacedDigit()
-                            .foregroundStyle(deltas[i] >= 0 ? Color.feltGreen : Color.terracotta)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
+                        if let delta = deltas[i] {
+                            Text(ScoreFormat.delta(delta))
+                                .font(.system(size: cellValueSize, weight: .bold))
+                                .monospacedDigit()
+                                .foregroundStyle(delta >= 0 ? Color.feltGreen : Color.terracotta)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        } else {
+                            Text("—")
+                                .font(.system(size: cellValueSize, weight: .bold))
+                                .foregroundStyle(Color(.tertiaryLabel))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
                         Text(ScoreFormat.score(cumulative[i]))
                             .font(.system(size: cellCumulativeSize, weight: .semibold))
                             .monospacedDigit()

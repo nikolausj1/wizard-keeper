@@ -78,98 +78,12 @@ struct GameView: View {
         return nil
     }
 
-    /// Up to 3 ranked mid-game trends/outliers, computed via
-    /// `GameInsights.insights` from each participant's completed-round
-    /// (bid, tricksTaken) history in seating order. Non-empty from the
-    /// first completed round on — `.leading` fires from round 1, richer
-    /// insights (streaks, big rounds, etc.) join in once
-    /// `GameInsights.minimumRounds` is reached. Only used once
-    /// `completedRoundCount >= 1`; see `displayedInsights` for round 0.
-    private var trendInsights: [GameInsights.Insight] {
-        let lines = game.participants.map { participant -> GameInsights.PlayerLine in
-            let entries = completedRounds.compactMap { round -> (bid: Int, tricksTaken: Int)? in
-                guard let entry = round.entries.first(where: { $0.playerId == participant.playerId }),
-                      let bid = entry.bid, let tricksTaken = entry.tricksTaken else { return nil }
-                return (bid, tricksTaken)
-            }
-            return GameInsights.PlayerLine(name: participant.displayNameSnapshot, entries: entries)
-        }
-        return GameInsights.insights(players: lines, maxCount: 3)
-    }
-
-    /// Trends before round 1's first entry: not engine-derived (there's no
-    /// round history yet), so this is built here from game/table state
-    /// instead. Always has at least one line (the "Fresh scorepad" insight
-    /// fires unconditionally), so — combined with `trendInsights` always
-    /// having `.leading` from round 1 on — the Trends section never has to
-    /// be empty for an in-progress game.
-    private var pregameInsights: [GameInsights.Insight] {
-        var insights: [GameInsights.Insight] = []
-
-        // Fetched once and shared by both the reigning-champ and
-        // table-history lines below, rather than each re-querying
-        // `modelContext` independently.
-        let completed = completedGames
-
-        if let lastCompleted = completed.first,
-           let winnerId = lastCompleted.winnerPlayerIds.first(where: { id in
-               game.participants.contains { $0.playerId == id }
-           }),
-           let winner = game.participants.first(where: { $0.playerId == winnerId }) {
-            insights.append(GameInsights.Insight(
-                icon: "crown.fill",
-                text: "\(winner.displayNameSnapshot) won the last game",
-                priority: 0,
-                kind: .reigningChamp,
-                playerName: winner.displayNameSnapshot,
-                value: nil
-            ))
-        }
-
-        insights.append(GameInsights.Insight(
-            icon: "sparkles",
-            text: "Fresh scorepad — \(game.totalRounds) rounds ahead",
-            priority: 1,
-            kind: .freshGame,
-            playerName: "",
-            value: nil
-        ))
-
-        // Third pregame line: table history, once this table has played at
-        // least one completed game before. Deliberately `.freshGame` (not a
-        // new kind) so it reuses that kind's audio tails — this is another
-        // framing line, not a numeric callout.
-        if !completed.isEmpty {
-            insights.append(GameInsights.Insight(
-                icon: "book.closed.fill",
-                text: "Game #\(completed.count + 1) for this table",
-                priority: 2,
-                kind: .freshGame,
-                playerName: "",
-                value: nil
-            ))
-        }
-
-        return insights
-    }
-
-    /// Every completed game across the whole history, most recent first —
-    /// feeds the reigning-champ and table-history pregame insights above.
-    /// `Game.statusRaw` is private to the model (see `HistoryView`'s doc
-    /// comment), so this fetches everything and filters/sorts on the
-    /// public `status` property instead; game history is small enough for
-    /// that to be cheap.
-    private var completedGames: [Game] {
-        let allGames = (try? modelContext.fetch(FetchDescriptor<Game>())) ?? []
-        return allGames
-            .filter { $0.status == .completed }
-            .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
-    }
-
     /// What the Trends section actually shows: pregame framing before
     /// round 1's first entry, the engine's ranked insights from then on.
+    /// Shared with `ScorepadGridView`'s iPad Trends panel via `GameTrends`
+    /// so both panes always agree.
     private var displayedInsights: [GameInsights.Insight] {
-        completedRoundCount == 0 ? pregameInsights : trendInsights
+        GameTrends.displayed(for: game, in: modelContext).insights
     }
 
     /// Toggles the Trends section's single table-wide broadcast: reads the
@@ -182,7 +96,7 @@ struct GameView: View {
         if completedRoundCount == 0 {
             // Round zero gets the short call: champ nod, one joke, "deal!"
             // — the full broadcast was too long with nothing yet to say.
-            let champName = pregameInsights.first { $0.kind == .reigningChamp }?.playerName
+            let champName = GameTrends.displayed(for: game, in: modelContext).champName
             announcer.togglePregame(
                 champName: champName,
                 voice: settings.announcerVoiceSelection,
