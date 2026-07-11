@@ -112,9 +112,28 @@ check("sim winner", WizardEngine.winners(totals: totals), [0])
 
 // MARK: GameInsights (trends/outliers on the scoreboard)
 typealias Line = GameInsights.PlayerLine
-// Too few rounds → nothing
-check("insights: <3 rounds → none",
-      GameInsights.insights(players: [Line(name: "A", entries: [(0, 0), (1, 1)])]).count, 0)
+// Zero rounds → nothing; one round → the leader insight fires
+check("insights: 0 rounds → none",
+      GameInsights.insights(players: [Line(name: "A", entries: [])]).count, 0)
+let oneRound = GameInsights.insights(players: [
+    Line(name: "A", entries: [(1, 1)]),   // +30 — leads
+    Line(name: "B", entries: [(0, 1)]),   // −10
+])
+check("insights: leader fires from round 1",
+      oneRound.contains { $0.text == "A leads with 30" }, true)
+// Leader loses the dedupe to a richer insight about the same player
+let richer = GameInsights.insights(players: [
+    Line(name: "A", entries: [(0, 0), (1, 1), (2, 2)]),  // perfect AND leading
+    Line(name: "B", entries: [(0, 1), (1, 0), (0, 1)]),
+])
+check("insights: perfect beats leading in dedupe",
+      richer.filter { $0.playerName == "A" }.count == 1
+      && richer.contains { $0.kind == .perfect && $0.playerName == "A" }, true)
+// Two rounds is enough for early signals (gate lowered after game-night
+// feedback): a 2-miss cold streak fires at round 2.
+check("insights: 2-round cold streak fires",
+      GameInsights.insights(players: [Line(name: "N", entries: [(1, 0), (2, 0)])])
+          .contains { $0.text == "N has missed 2 in a row" }, true)
 // Perfect so far
 let perfect = GameInsights.insights(players: [
     Line(name: "Kelly", entries: [(0, 0), (1, 1), (2, 2), (0, 0)]),

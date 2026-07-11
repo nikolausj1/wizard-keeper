@@ -203,8 +203,16 @@ struct ScreenHeader: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 4)
-        .padding(.top, 2)
-        .padding(.bottom, 2)
+        // 4pt (not 2) top/bottom: rounded letterforms (R, D, O, C…) draw
+        // with a slight optical overshoot past their cap-height/baseline,
+        // and this block sits inside a zero-inset List row (see call
+        // sites' `.listRowInsets(EdgeInsets())`). With only 2pt of
+        // clearance the row's tight clip bounds sliced off that overshoot
+        // on the very first/last line — reported as the eyebrow's "R" and
+        // a trailing subtitle's "D" getting clipped at a corner. 4pt gives
+        // the overshoot room without visibly changing the block's rhythm.
+        .padding(.top, 4)
+        .padding(.bottom, 4)
     }
 }
 

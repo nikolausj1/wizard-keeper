@@ -11,7 +11,10 @@ import SwiftData
 /// `newGame`, `game`, `bidding`, `results`, `final`, `history`, `players`,
 /// `gameDetail` (pair with `-demoHistory`), `playerProfile` (pair with
 /// `-demoHistory`), `settings`, or `editRound` (pair with `-demoMidGame`;
-/// round 5 is complete in that seed, so it lands in edit mode).
+/// round 5 is complete in that seed, so it lands in edit mode). `game`
+/// paired with `-demoFreshGame` instead of `-demoMidGame`/`-demoFinal`
+/// lands on a zero-round in-progress game, showing the Trends section's
+/// pregame path.
 struct RootView: View {
     private static let uiScreen = WizardKeeperApp.launchArgumentValue(
         "-uiScreen", in: ProcessInfo.processInfo.arguments
@@ -41,11 +44,14 @@ struct RootView: View {
     }
 
     /// Verification hook for the announcer feature: `-announcerTest`
-    /// (combinable with any `-uiScreen`) fires a synthetic two-insight
+    /// (combinable with any `-uiScreen`) fires a synthetic three-insight
     /// round-update broadcast one second after launch and prints the
     /// resolved/missing segment counts, so the lead can confirm clip
     /// resolution ran from `simctl` console logs alone — no tapping
-    /// required.
+    /// required. The third insight is `.freshGame` (empty `playerName`, no
+    /// stat clip) so the always-available pregame path's segment
+    /// resolution — including the empty-name-slug skip — gets exercised
+    /// too, not just the engine-trend kinds.
     private func fireAnnouncerTestIfNeeded() {
         guard ProcessInfo.processInfo.arguments.contains("-announcerTest") else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -65,6 +71,14 @@ struct RootView: View {
                     kind: .perfect,
                     playerName: "Kelly",
                     value: 7
+                ),
+                GameInsights.Insight(
+                    icon: "sparkles",
+                    text: "Announcer test",
+                    priority: 1,
+                    kind: .freshGame,
+                    playerName: "",
+                    value: nil
                 ),
             ]
             let segments = AnnouncerPlayer.shared.announceRoundUpdate(insights: insights, voice: .charlie, style: .scorched)

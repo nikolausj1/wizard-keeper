@@ -19,6 +19,7 @@ struct GameOptionsMenu: View {
     @State private var showLengthSheet = false
     @State private var showEndGameConfirm = false
     @State private var showAddPlayerSheet = false
+    @State private var showSettingsSheet = false
 
     private var completedRoundCount: Int {
         game.orderedRounds.filter { $0.phase == .complete }.count
@@ -70,6 +71,14 @@ struct GameOptionsMenu: View {
             } label: {
                 Label("End Game Now", systemImage: "flag.checkered")
             }
+
+            Divider()
+
+            Button {
+                showSettingsSheet = true
+            } label: {
+                Label("Settings", systemImage: "gear")
+            }
         } label: {
             Image(systemName: "ellipsis.circle")
         }
@@ -78,6 +87,16 @@ struct GameOptionsMenu: View {
         }
         .sheet(isPresented: $showAddPlayerSheet) {
             AddPlayerToGameSheet(game: game)
+        }
+        .sheet(isPresented: $showSettingsSheet) {
+            NavigationStack {
+                SettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showSettingsSheet = false }
+                        }
+                    }
+            }
         }
         .confirmationDialog(
             "End the game with the current totals?",

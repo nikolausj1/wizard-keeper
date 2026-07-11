@@ -20,6 +20,12 @@ public enum GameInsights {
     /// selection off this, so every case maps to a tail-clip family.
     public enum Kind: String, Equatable {
         case perfect, hotStreak, coldStreak, bigRound, zeroSpecialist, boldestBidder
+        /// Fires from the first completed round — guarantees Trends is
+        /// never empty mid-game.
+        case leading
+        /// Pregame kinds, constructed by the app layer from game history
+        /// (the engine only defines them so audio mapping stays kind-keyed).
+        case reigningChamp, freshGame
     }
 
     public struct Insight: Equatable {
@@ -37,13 +43,16 @@ public enum GameInsights {
     }
 
     /// Minimum completed rounds before any insight is worth showing.
-    public static let minimumRounds = 3
+    /// Two, not three: the table noticed the Trends section (and its
+    /// Announce button) silently missing early in a 20-round game. From
+    /// two rounds, cold streaks, +40 rounds, and bold bids can all fire.
+    public static let minimumRounds = 2
 
     /// Ranked insights, at most `maxCount`, at most one per player
     /// (keeping each player's most interesting one).
     public static func insights(players: [PlayerLine], maxCount: Int = 3) -> [Insight] {
         guard let roundCount = players.map({ $0.entries.count }).max(),
-              roundCount >= minimumRounds else { return [] }
+              roundCount >= 1 else { return [] }
 
         var perPlayer: [String: Insight] = [:]
 
@@ -58,7 +67,7 @@ public enum GameInsights {
         // Boldest bidder is cross-player: strictly highest total bids.
         var bidTotals: [(name: String, total: Int)] = []
 
-        for player in players {
+        for player in players where roundCount >= minimumRounds {
             let entries = player.entries
             guard !entries.isEmpty else { continue }
             let hits = entries.map { $0.bid == $0.tricksTaken }
@@ -134,6 +143,23 @@ public enum GameInsights {
                     text: "\(sorted[0].name) is the boldest bidder (\(sorted[0].total) tricks called)",
                     priority: 5,
                     kind: .boldestBidder, playerName: sorted[0].name, value: nil
+                ))
+            }
+        }
+
+        // The current leader — computable from round 1, so Trends (and the
+        // announcer) always have at least one line during a game. Lowest
+        // priority: any richer insight about the leader wins the dedupe.
+        if players.count >= 2 {
+            let totals = players.map { line in
+                line.entries.reduce(0) { $0 + WizardEngine.roundScore(bid: $1.bid, tricksTaken: $1.tricksTaken) }
+            }
+            if let best = totals.max(), let index = totals.firstIndex(of: best) {
+                offer(players[index].name, Insight(
+                    icon: "crown.fill",
+                    text: "\(players[index].name) leads with \(best)",
+                    priority: 6,
+                    kind: .leading, playerName: players[index].name, value: best
                 ))
             }
         }

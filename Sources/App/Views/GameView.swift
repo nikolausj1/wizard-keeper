@@ -82,9 +82,11 @@ struct GameView: View {
 
     /// Up to 3 ranked mid-game trends/outliers, computed via
     /// `GameInsights.insights` from each participant's completed-round
-    /// (bid, tricksTaken) history in seating order. Empty (and the Trends
-    /// section omitted entirely) until at least `GameInsights.minimumRounds`
-    /// rounds are complete.
+    /// (bid, tricksTaken) history in seating order. Non-empty from the
+    /// first completed round on — `.leading` fires from round 1, richer
+    /// insights (streaks, big rounds, etc.) join in once
+    /// `GameInsights.minimumRounds` is reached. Only used once
+    /// `completedRoundCount >= 1`; see `displayedInsights` for round 0.
     private var trendInsights: [GameInsights.Insight] {
         let lines = game.participants.map { participant -> GameInsights.PlayerLine in
             let entries = completedRounds.compactMap { round -> (bid: Int, tricksTaken: Int)? in
@@ -97,15 +99,70 @@ struct GameView: View {
         return GameInsights.insights(players: lines, maxCount: 3)
     }
 
+    /// Trends before round 1's first entry: not engine-derived (there's no
+    /// round history yet), so this is built here from game/table state
+    /// instead. Always has at least one line (the "Fresh scorepad" insight
+    /// fires unconditionally), so — combined with `trendInsights` always
+    /// having `.leading` from round 1 on — the Trends section never has to
+    /// be empty for an in-progress game.
+    private var pregameInsights: [GameInsights.Insight] {
+        var insights: [GameInsights.Insight] = []
+
+        if let lastCompleted = mostRecentlyCompletedGame,
+           let winnerId = lastCompleted.winnerPlayerIds.first(where: { id in
+               game.participants.contains { $0.playerId == id }
+           }),
+           let winner = game.participants.first(where: { $0.playerId == winnerId }) {
+            insights.append(GameInsights.Insight(
+                icon: "crown.fill",
+                text: "\(winner.displayNameSnapshot) won the last game",
+                priority: 0,
+                kind: .reigningChamp,
+                playerName: winner.displayNameSnapshot,
+                value: nil
+            ))
+        }
+
+        insights.append(GameInsights.Insight(
+            icon: "sparkles",
+            text: "Fresh scorepad — \(game.totalRounds) rounds ahead",
+            priority: 1,
+            kind: .freshGame,
+            playerName: "",
+            value: nil
+        ))
+
+        return insights
+    }
+
+    /// The most recently completed game across the whole history, if any —
+    /// feeds the reigning-champ pregame insight. `Game.statusRaw` is
+    /// private to the model (see `HistoryView`'s doc comment), so this
+    /// fetches everything and filters/sorts on the public `status`
+    /// property instead; game history is small enough for that to be cheap.
+    private var mostRecentlyCompletedGame: Game? {
+        let allGames = (try? modelContext.fetch(FetchDescriptor<Game>())) ?? []
+        return allGames
+            .filter { $0.status == .completed }
+            .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
+            .first
+    }
+
+    /// What the Trends section actually shows: pregame framing before
+    /// round 1's first entry, the engine's ranked insights from then on.
+    private var displayedInsights: [GameInsights.Insight] {
+        completedRoundCount == 0 ? pregameInsights : trendInsights
+    }
+
     /// Toggles the Trends section's single table-wide broadcast: reads the
     /// persisted announcer voice/style and plays (or stops) the sequence
-    /// for all current `trendInsights` via `AnnouncerPlayer`. Missing clips
-    /// (generation may still be running) are skipped silently by
-    /// `AnnouncerPlayer`.
+    /// for whichever insights `displayedInsights` currently shows, via
+    /// `AnnouncerPlayer`. Missing clips (generation may still be running)
+    /// are skipped silently by `AnnouncerPlayer`.
     private func toggleAnnounce() {
         guard let settings = try? AppSettings.fetchOrCreate(in: modelContext) else { return }
         announcer.toggleRoundUpdate(
-            insights: trendInsights,
+            insights: displayedInsights,
             voice: settings.announcerVoiceSelection,
             style: settings.announcerStyleSelection
         )
@@ -128,15 +185,19 @@ struct GameView: View {
                 Text("Standings")
             }
 
-            if !trendInsights.isEmpty {
-                Section {
-                    ForEach(Array(trendInsights.enumerated()), id: \.offset) { _, insight in
-                        InsightRow(insight: insight)
-                    }
-                } header: {
-                    HStack {
-                        Text("Trends")
-                        Spacer()
+            // Always shown for an in-progress game: pregame framing before
+            // round 1's first entry, engine-derived trends from then on.
+            // Both sources always emit at least one insight, so there's no
+            // empty state to design for here anymore.
+            Section {
+                ForEach(Array(displayedInsights.enumerated()), id: \.offset) { _, insight in
+                    InsightRow(insight: insight)
+                }
+            } header: {
+                HStack {
+                    Text("Trends")
+                    Spacer()
+                    if !displayedInsights.isEmpty {
                         Button(action: toggleAnnounce) {
                             Label(
                                 announcer.isPlaying ? "Stop" : "Announce",

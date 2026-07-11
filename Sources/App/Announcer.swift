@@ -265,6 +265,16 @@ final class AnnouncerPlayer: ObservableObject {
             return "zeros_\(value)"
         case .boldestBidder:
             return nil
+        case .leading:
+            // Reuses the same `points_<n>` clip family as `.bigRound` — the
+            // leader's total, not a single-round delta, but the audio just
+            // says a number, so the range/step constraint is identical.
+            guard (40...220).contains(value), value % 10 == 0 else { return nil }
+            return "points_\(value)"
+        case .reigningChamp, .freshGame:
+            // No stat clip by design — these are framing lines ("X won the
+            // last game", "fresh scorepad"), not numeric callouts.
+            return nil
         }
     }
 

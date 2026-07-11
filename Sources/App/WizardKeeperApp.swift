@@ -10,8 +10,9 @@ struct WizardKeeperApp: App {
         let isDemoMidGame = arguments.contains("-demoMidGame")
         let isDemoFinal = arguments.contains("-demoFinal")
         let isDemoHistory = arguments.contains("-demoHistory")
+        let isDemoFreshGame = arguments.contains("-demoFreshGame")
         let uiScreen = Self.launchArgumentValue("-uiScreen", in: arguments)
-        let isDemo = isDemoMidGame || isDemoFinal || isDemoHistory || uiScreen != nil
+        let isDemo = isDemoMidGame || isDemoFinal || isDemoHistory || isDemoFreshGame || uiScreen != nil
 
         // Any demo/screenshot launch arg forces an in-memory store so seeded
         // data never pollutes real on-device storage.
@@ -32,6 +33,8 @@ struct WizardKeeperApp: App {
                 DemoData.seedMidGame(in: context)
             } else if isDemoHistory {
                 DemoData.seedHistory(in: context)
+            } else if isDemoFreshGame {
+                DemoData.seedFreshGame(in: context)
             } else if uiScreen == "newGame" {
                 DemoData.seedPlayersOnly(in: context)
             }

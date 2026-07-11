@@ -78,6 +78,9 @@ CONNECTIVES = {
 # All name-free and number-free; never target age/looks/intelligence.
 TAILS = {
  1: {  # Classic — warm sports-caster
+  "leading": ["Out in front and cruising!", "Top of the pile, folks!"],
+  "reigningChamp": ["The reigning champion is at the table!", "Last game's winner is BACK!"],
+  "freshGame": ["A fresh scorepad! Anything can happen!", "New game, clean slate — good luck, everyone!"],
   "perfect": ["Still PERFECT! Not a single miss all game!", "Flawless! The bids just keep landing!"],
   "hotStreak": ["On FIRE! Another bid, another hit!", "The streak continues — they simply do not miss!"],
   "coldStreak": ["The cold streak continues. Thoughts and prayers.", "Ice cold! Somebody grab a blanket!",
@@ -89,6 +92,9 @@ TAILS = {
   "lastPlace": ["And hey — somebody had to come in last.", "Better luck next game, friend."],
  },
  2: {  # Spicy — the announcer has opinions
+  "leading": ["Leading the pack — for now!", "First place! Enjoy it while it lasts!"],
+  "reigningChamp": ["The champ is back to defend the crown!", "Reigning champion — target on their back!"],
+  "freshGame": ["Clean slate! Time for some questionable bids!", "New game! Zero points, zero excuses!"],
   "perfect": ["Still perfect! Save some glory for the rest of the table!", "Perfection! This is getting suspicious, folks!"],
   "hotStreak": ["Another hit! Leave some for everybody else!", "Red hot! The table is in TROUBLE!"],
   "coldStreak": ["Speedrunning last place, folks!", "The confidence and the scorecard are no longer on speaking terms!",
@@ -100,6 +106,9 @@ TAILS = {
   "lastPlace": ["Dead last! But hey — great snacks tonight.", "Last place! We've alerted the authorities."],
  },
  3: {  # Scorched — full roast-battle meltdown, still clean
+  "leading": ["DOMINATING! Somebody do something!", "On TOP and rubbing it in!"],
+  "reigningChamp": ["The CHAMPION walks among you! BOW!", "Back to defend the title — and talking TRASH!"],
+  "freshGame": ["A NEW battle begins! May the odds ignore your history!", "Fresh scorepad — carnage incoming!"],
   "perfect": ["PERFECT AGAIN! Everyone else can GO HOME! It's OVER!", "Not playing cards — committing ROBBERY!"],
   "hotStreak": ["They simply CANNOT be stopped! This is a HOSTILE TAKEOVER!", "Another one! Have MERCY on this table!"],
   "coldStreak": ["I have seen CAR CRASHES with better outcomes!", "The deck is just BULLYING them at this point!",
@@ -112,6 +121,9 @@ TAILS = {
                 "Dead last! The announcer's union says I don't have to talk about it!"],
  },
  4: {  # Vicious — mild expletives, personal edge. ADULTS ONLY.
+  "leading": ["Leading, and frankly? Insufferable about it!", "First place! The rest of you should be embarrassed!"],
+  "reigningChamp": ["The champ is HERE — act like it matters, people!", "Defending champion! Somebody take them down a damn peg!"],
+  "freshGame": ["New game! Try not to embarrass yourselves this time!", "Clean slate — and some of you need it, BADLY!"],
   "perfect": ["Perfect AGAIN! The rest of you should be ASHAMED!", "Good LORD! Just hand over the trophy already!"],
   "hotStreak": ["ANOTHER hit! This is getting disrespectful as hell!", "Unstoppable! And frankly? Insufferable!"],
   "coldStreak": ["My GOD, have some self-respect!", "What the HELL was that bid?!",
@@ -123,6 +135,9 @@ TAILS = {
   "lastPlace": ["Dead last. At this point it's not luck — it's a personality trait!", "Last place AGAIN! The family is WATCHING!"],
  },
  5: {  # Unhinged — real profanity, R-rated roast. ADULTS ONLY, never App Store.
+  "leading": ["On TOP! Somebody knock their ass off the throne!", "Leading the whole damn table!"],
+  "reigningChamp": ["The CHAMP is back — and the trash talk is EARNED!", "Reigning champion! Someone knock their ass off!"],
+  "freshGame": ["FRESH game! Zero points, zero shits given — let's GO!", "New scorepad, same suspects — let the beatdown begin!"],
   "perfect": ["STILL perfect! You have GOT to be shitting me!", "UNREAL! Somebody frisk this player — I am dead serious!"],
   "hotStreak": ["ANOTHER one! This is bullshit-level lucky, folks!", "On FIRE! The rest of this table is getting its ass KICKED!"],
   "coldStreak": ["That was a shit bid and EVERYBODY at this table knew it!", "Holy hell — someone stage an intervention!",

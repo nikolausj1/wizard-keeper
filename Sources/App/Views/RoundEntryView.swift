@@ -17,8 +17,6 @@ struct RoundEntryView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var round: Round?
-    @State private var showMismatchAlert = false
-    @State private var mismatchSaveAction: (() -> Void)?
     @State private var showHookAlert = false
     @State private var didConfirm = false
     @State private var hapticsEnabled = true
@@ -36,15 +34,6 @@ struct RoundEntryView: View {
             hapticsEnabled = HapticsGate.isEnabled(in: modelContext)
         }
         .sensoryFeedback(trigger: didConfirm) { _, _ in hapticsEnabled ? .success : nil }
-        .alert("Trick Count Mismatch", isPresented: $showMismatchAlert) {
-            Button("Fix", role: .cancel) {}
-            Button("Save Anyway", role: .destructive) { mismatchSaveAction?() }
-        } message: {
-            if let round {
-                let entered = round.entries.compactMap(\.tricksTaken).reduce(0, +)
-                Text("Only \(round.roundNumber) tricks exist this round — you entered \(entered).")
-            }
-        }
         .alert("Dealer's Hook", isPresented: $showHookAlert) {
             Button("Fix Bids", role: .cancel) {}
         } message: {
@@ -60,9 +49,9 @@ struct RoundEntryView: View {
         case .bidding:
             BiddingView(game: game, round: round, onConfirm: confirmBids)
         case .results:
-            ResultsView(game: game, round: round, onConfirm: attemptConfirmRound)
+            ResultsView(game: game, round: round, onConfirm: completeRound)
         case .complete:
-            EditRoundView(game: game, round: round, onSave: attemptSaveEdits)
+            EditRoundView(game: game, round: round, onSave: saveEdits)
         }
     }
 
@@ -108,17 +97,13 @@ struct RoundEntryView: View {
         modelContext.saveNow()
     }
 
-    private func attemptConfirmRound() {
-        guard let round else { return }
-        let entered = round.entries.compactMap(\.tricksTaken).reduce(0, +)
-        if game.rulesSnapshot.trickTotalCheckEnabled && entered != round.roundNumber {
-            mismatchSaveAction = completeRound
-            showMismatchAlert = true
-            return
-        }
-        completeRound()
-    }
-
+    /// The trick-total soft check that used to live behind a save-time
+    /// "Trick Count Mismatch" alert here now lives up front as button
+    /// gating in `ResultsView`/`EditRoundView` (state-driven "Enter N More
+    /// Trick(s)" / "N Too Many" labels via `PrimaryActionButton`'s
+    /// `isDisabled`) — `onConfirm`/`onSave` are only ever invoked once the
+    /// count already matches (or the house rule is off), so there's
+    /// nothing left to gate here.
     private func completeRound() {
         guard let round else { return }
         round.phase = .complete
@@ -131,22 +116,12 @@ struct RoundEntryView: View {
         dismiss()
     }
 
-    /// Same soft trick-total check as `attemptConfirmRound`, but for saving
-    /// edits to an already-`.complete` round: the round's phase is already
-    /// `.complete` and stays there — no re-entry into `game.complete()`,
-    /// since that would incorrectly re-stamp `completedAt`/winners for a
-    /// game that may have finished on a *later* round than this one.
-    private func attemptSaveEdits() {
-        guard let round else { return }
-        let entered = round.entries.compactMap(\.tricksTaken).reduce(0, +)
-        if game.rulesSnapshot.trickTotalCheckEnabled && entered != round.roundNumber {
-            mismatchSaveAction = saveEdits
-            showMismatchAlert = true
-            return
-        }
-        saveEdits()
-    }
-
+    /// Saves edits to an already-`.complete` round: the round's phase is
+    /// already `.complete` and stays there — no re-entry into
+    /// `game.complete()`, since that would incorrectly re-stamp
+    /// `completedAt`/winners for a game that may have finished on a
+    /// *later* round than this one. See `completeRound`'s doc comment for
+    /// where the trick-total check now lives.
     private func saveEdits() {
         modelContext.saveNow()
         didConfirm.toggle()
@@ -174,15 +149,25 @@ private struct BiddingView: View {
     @ScaledMetric(relativeTo: .subheadline) private var statusSize: CGFloat = 14
     @ScaledMetric(relativeTo: .subheadline) private var footerSize: CGFloat = 14.5
     @ScaledMetric(relativeTo: .largeTitle) private var footerHeroSize: CGFloat = 20
-    @ScaledMetric(relativeTo: .subheadline) private var dealSubtitleBaseSize: CGFloat = 15.5
+    @ScaledMetric(relativeTo: .subheadline) private var dealSubtitleBaseSize: CGFloat = 17
     @ScaledMetric(relativeTo: .largeTitle) private var dealSubtitleCountSize: CGFloat = 20
 
-    /// First not-yet-bid participant in seating order, or nil once every
-    /// bid is in.
-    private var firstWaitingName: String? {
-        for participant in game.participants {
+    /// Whether every seated participant has a bid in — gates "Confirm
+    /// Bids".
+    private var allBidsIn: Bool { round.entries.allSatisfy { $0.bid != nil } }
+
+    /// Seat index of the first not-yet-bid participant in BID order (the
+    /// actual turn order the table bids in, via `game.bidOrder(forRound:)`
+    /// — not raw seating), or nil once every bid is in. This is also the
+    /// only row that shows "Bidding now"; every other not-yet-bid row
+    /// shows the neutral "No bid yet" instead, so exactly one row ever
+    /// claims to be on the clock.
+    private var firstWaitingSeatIndex: Int? {
+        for seatIndex in game.bidOrder(forRound: round.roundNumber) {
+            guard game.participants.indices.contains(seatIndex) else { continue }
+            let participant = game.participants[seatIndex]
             guard let entry = round.entries.first(where: { $0.playerId == participant.playerId }) else { continue }
-            if entry.bid == nil { return participant.displayNameSnapshot }
+            if entry.bid == nil { return seatIndex }
         }
         return nil
     }
@@ -226,17 +211,17 @@ private struct BiddingView: View {
     private var dealSubtitleText: Text {
         let n = round.roundNumber
         var text = Text("Deal ")
-            .font(.system(size: dealSubtitleBaseSize, weight: .medium))
+            .font(.system(size: dealSubtitleBaseSize, weight: .semibold))
             .foregroundStyle(.secondary)
             + Text("\(n)")
             .font(.system(size: dealSubtitleCountSize, weight: .heavy))
             .foregroundStyle(.primary)
             + Text(" card\(n == 1 ? "" : "s") each")
-            .font(.system(size: dealSubtitleBaseSize, weight: .medium))
+            .font(.system(size: dealSubtitleBaseSize, weight: .semibold))
             .foregroundStyle(.secondary)
         if let currentDealerName {
             text = text + Text(" · \(currentDealerName) deals")
-                .font(.system(size: dealSubtitleBaseSize, weight: .medium))
+                .font(.system(size: dealSubtitleBaseSize, weight: .semibold))
                 .foregroundStyle(.secondary)
         }
         return text
@@ -263,6 +248,12 @@ private struct BiddingView: View {
                     )
                     dealSubtitleText
                         .padding(.horizontal, 4)
+                        // Sibling of `ScreenHeader`, so it doesn't get that
+                        // view's own bottom padding — without this the line
+                        // sits flush against the zero-inset row's bottom
+                        // edge and its leading "D" (rounded overshoot) gets
+                        // clipped. See `ScreenHeader`'s matching comment.
+                        .padding(.bottom, 4)
                 }
             }
             .listRowInsets(EdgeInsets())
@@ -289,9 +280,15 @@ private struct BiddingView: View {
                                         }
                                     }
                                     if untouched {
-                                        Text("Bidding now")
-                                            .font(.system(size: statusSize, weight: .semibold))
-                                            .foregroundStyle(Color.feltGreen)
+                                        if seatIndex == firstWaitingSeatIndex {
+                                            Text("Bidding now")
+                                                .font(.system(size: statusSize, weight: .semibold))
+                                                .foregroundStyle(Color.feltGreen)
+                                        } else {
+                                            Text("No bid yet")
+                                                .font(.system(size: statusSize, weight: .medium))
+                                                .foregroundStyle(.secondary)
+                                        }
                                     } else {
                                         Text("\(game.runningTotal(for: participant.playerId)) pts")
                                             .font(.system(size: statusSize, weight: .medium))
@@ -338,7 +335,7 @@ private struct BiddingView: View {
                 footerText
                     .font(.system(size: footerSize, weight: .semibold))
                     .foregroundStyle(.secondary)
-                PrimaryActionButton(title: "Confirm Bids", isDisabled: firstWaitingName != nil, action: onConfirm)
+                PrimaryActionButton(title: "Confirm Bids", isDisabled: !allBidsIn, action: onConfirm)
             }
             .padding(.horizontal)
             .padding(.top, 8)
@@ -347,22 +344,18 @@ private struct BiddingView: View {
         }
     }
 
-    /// "Bids so far: **S**" while any bid is nil (plus "· waiting on
-    /// <name>"), or "Bids so far: **S** of N tricks" once every bid is in —
-    /// both tallies rendered via `heroNumber` so the numbers read as the
-    /// hero of the footer.
+    /// "Bids: **S** of **N** tricks" from the very first render (S starts
+    /// at 0) — both the running sum and the round's trick count are hero
+    /// numbers via `heroNumber`, with only the connective words at the
+    /// ambient secondary size. No "so far"/"waiting on <name>" suffix: the
+    /// turn-aware per-row status (`firstWaitingSeatIndex`, above) already
+    /// carries that information.
     private var footerText: Text {
-        if let waiting = firstWaitingName {
-            return Text("Bids so far: ")
-                + heroNumber(bidTotal)
-                + Text(" · waiting on \(waiting)")
-        } else {
-            return Text("Bids so far: ")
-                + heroNumber(bidTotal)
-                + Text(" of ")
-                + heroNumber(round.roundNumber)
-                + Text(" tricks")
-        }
+        Text("Bids: ")
+            + heroNumber(bidTotal)
+            + Text(" of ")
+            + heroNumber(round.roundNumber)
+            + Text(" tricks")
     }
 
     private func setBid(_ value: Int, seatIndex: Int, at index: Int) {
@@ -396,13 +389,27 @@ private struct ResultsView: View {
     /// the number of tricks that exist this round (= the round number).
     private var trickTotal: Int { round.entries.compactMap(\.tricksTaken).reduce(0, +) }
 
-    private var allTricksIn: Bool { round.entries.allSatisfy { $0.tricksTaken != nil } }
+    /// "Confirm Round" label + enabled state, state-driven off the
+    /// trick-total tally when the house "trick total check" rule is on:
+    /// short of the round's trick count disables with an "Enter N More"
+    /// count-down, over disables with "N Too Many", and exactly on target
+    /// enables with the normal label. With the rule off, the button is
+    /// fully permissive — always enabled, always "Confirm Round" — since
+    /// there's nothing to gate.
+    private var confirmState: (label: String, disabled: Bool) {
+        guard game.rulesSnapshot.trickTotalCheckEnabled else { return ("Confirm Round", false) }
+        let diff = trickTotal - round.roundNumber
+        if diff < 0 { return ("Enter \(-diff) More Trick\(-diff == 1 ? "" : "s")", true) }
+        if diff > 0 { return ("\(diff) Too Many", true) }
+        return ("Confirm Round", false)
+    }
 
     @ScaledMetric(relativeTo: .body) private var nameSize: CGFloat = 17.5
     @ScaledMetric(relativeTo: .subheadline) private var subInfoSize: CGFloat = 14
     @ScaledMetric(relativeTo: .caption) private var tagSize: CGFloat = 13
     @ScaledMetric(relativeTo: .subheadline) private var footerSize: CGFloat = 14.5
     @ScaledMetric(relativeTo: .body) private var needsChipSize: CGFloat = 17
+    @ScaledMetric(relativeTo: .subheadline) private var compactHeaderSize: CGFloat = 15
 
     /// Whether `participant` deals this round: the inferred dealer (last
     /// seat in bid order) once `game.firstBidderSeat` is known, otherwise
@@ -415,6 +422,33 @@ private struct ResultsView: View {
             return order.last == seatIndex
         }
         return game.rulesSnapshot.dealerRotationEnabled && round.dealerPlayerId == participant.playerId
+    }
+
+    /// The dealer's display name for the compact header line: the
+    /// inferred dealer when known, else the old toggle-driven
+    /// `Round.dealerPlayerId`, else nil — same precedence as
+    /// `BiddingView.currentDealerName`.
+    private var currentDealerName: String? {
+        if game.firstBidderSeat != nil {
+            let order = game.bidOrder(forRound: round.roundNumber)
+            guard let dealerSeat = order.last, game.participants.indices.contains(dealerSeat) else { return nil }
+            return game.participants[dealerSeat].displayNameSnapshot
+        }
+        guard game.rulesSnapshot.dealerRotationEnabled, let dealerId = round.dealerPlayerId else { return nil }
+        return game.participants.first(where: { $0.playerId == dealerId })?.displayNameSnapshot
+    }
+
+    /// "Round N of R · deal N · <Dealer> deals" — the single compact line
+    /// that replaces the big `ScreenHeader` block now that "Enter Tricks"
+    /// lives in the navigation bar. Frees up vertical space for 5-6 player
+    /// tables, which is what this screen needs more than a hero title.
+    private var compactHeaderLine: String {
+        let n = round.roundNumber
+        var text = "Round \(n) of \(game.totalRounds) · deal \(n)"
+        if let currentDealerName {
+            text += " · \(currentDealerName) deals"
+        }
+        return text
     }
 
     /// The reserved-size hit/miss slot: always the same tag shape at the
@@ -443,11 +477,11 @@ private struct ResultsView: View {
     var body: some View {
         List {
             Section {
-                ScreenHeader(
-                    eyebrow: "Round \(round.roundNumber) of \(game.totalRounds)",
-                    title: "Enter Tricks",
-                    subtitle: "Tricks taken must total \(round.roundNumber)"
-                )
+                Text(compactHeaderLine)
+                    .font(.system(size: compactHeaderSize, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 6)
             }
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
@@ -464,14 +498,18 @@ private struct ResultsView: View {
                             let untouched = entry.tricksTaken == nil
                             HStack {
                                 // LEFT: name + running total before this round.
+                                // The dealer tag sits ABOVE the name (not
+                                // inline beside it) so it adds height, not
+                                // width — inline, it widened this column
+                                // just for the dealer's row, which shoved
+                                // the "Needs" chip and stepper column out of
+                                // alignment with every other row.
                                 VStack(alignment: .leading, spacing: 2) {
-                                    HStack(spacing: 6) {
-                                        Text(participant.displayNameSnapshot)
-                                            .font(.system(size: nameSize, weight: .bold))
-                                        if isDealer(participant) {
-                                            DealerTag()
-                                        }
+                                    if isDealer(participant) {
+                                        DealerTag()
                                     }
+                                    Text(participant.displayNameSnapshot)
+                                        .font(.system(size: nameSize, weight: .bold))
                                     Text("\(game.runningTotal(for: participant.playerId)) pts")
                                         .font(.system(size: subInfoSize, weight: .medium))
                                         .foregroundStyle(.secondary)
@@ -528,14 +566,14 @@ private struct ResultsView: View {
         .listStyle(.insetGrouped)
         .listSectionSpacing(.compact)
         .paperBackground()
-        .navigationTitle("")
+        .navigationTitle("Enter Tricks")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
                     .font(.system(size: footerSize, weight: .semibold))
                     .foregroundStyle(.secondary)
-                PrimaryActionButton(title: "Confirm Round", isDisabled: !allTricksIn, action: onConfirm)
+                PrimaryActionButton(title: confirmState.label, isDisabled: confirmState.disabled, action: onConfirm)
             }
             .padding(.horizontal)
             .padding(.top, 8)
@@ -570,6 +608,17 @@ private struct EditRoundView: View {
     /// A complete round's entries always have non-nil bid/tricks, but the
     /// model type allows `nil` — treated defensively as 0 here.
     private var trickTotal: Int { round.entries.reduce(0) { $0 + ($1.tricksTaken ?? 0) } }
+
+    /// "Save Changes" label + enabled state — same state-driven gating
+    /// `ResultsView.confirmState` uses, just against the base "Save
+    /// Changes" label instead of "Confirm Round" once the count matches.
+    private var saveState: (label: String, disabled: Bool) {
+        guard game.rulesSnapshot.trickTotalCheckEnabled else { return ("Save Changes", false) }
+        let diff = trickTotal - round.roundNumber
+        if diff < 0 { return ("Enter \(-diff) More Trick\(-diff == 1 ? "" : "s")", true) }
+        if diff > 0 { return ("\(diff) Too Many", true) }
+        return ("Save Changes", false)
+    }
 
     @ScaledMetric(relativeTo: .body) private var nameSize: CGFloat = 17.5
     @ScaledMetric(relativeTo: .caption) private var tagSize: CGFloat = 13
@@ -625,7 +674,7 @@ private struct EditRoundView: View {
                 (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
                     .font(.system(size: footerSize, weight: .semibold))
                     .foregroundStyle(.secondary)
-                PrimaryActionButton(title: "Save Changes", action: onSave)
+                PrimaryActionButton(title: saveState.label, isDisabled: saveState.disabled, action: onSave)
             }
             .padding(.horizontal)
             .padding(.top, 8)
@@ -642,13 +691,16 @@ private struct EditRoundView: View {
         let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
 
         return VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                HStack(spacing: 6) {
-                    Text(participant.displayNameSnapshot)
-                        .font(.system(size: nameSize, weight: .bold))
+            // Dealer tag above the name (not inline beside it), matching
+            // `ResultsView`'s row — see that view's comment on why inline
+            // placement misaligns sibling chip/column layout.
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
                     if isDealer(participant) {
                         DealerTag()
                     }
+                    Text(participant.displayNameSnapshot)
+                        .font(.system(size: nameSize, weight: .bold))
                 }
                 Spacer()
                 Text("\(hit ? "Hit" : "Miss") · \(ScoreFormat.delta(score))")

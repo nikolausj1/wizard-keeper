@@ -111,6 +111,32 @@ enum DemoData {
         return RoundSpec(bids: bids, tricks: tricks)
     }
 
+    /// Seeds the four demo players plus an in-progress game with zero
+    /// rounds — used for the "always-available Trends" pregame screenshot
+    /// (`-demoFreshGame -uiScreen game`), where `GameView` falls back to
+    /// its pregame insights (no engine trend history exists yet).
+    static func seedFreshGame(in context: ModelContext) {
+        let players = demoPlayerNames.enumerated().map { index, name in
+            Player(name: name, colorId: index)
+        }
+        players.forEach(context.insert)
+
+        let participants = players.map {
+            Participant(playerId: $0.id, displayNameSnapshot: $0.name, colorIdSnapshot: $0.colorId)
+        }
+        guard let totalRounds = WizardEngine.totalRounds(playerCount: participants.count) else {
+            assertionFailure("demo player count must be 3–6")
+            return
+        }
+        let rulesSnapshot = RulesSnapshot(
+            hookRuleEnabled: false,
+            trickTotalCheckEnabled: true,
+            dealerRotationEnabled: false
+        )
+        let game = Game(participants: participants, totalRounds: totalRounds, rulesSnapshot: rulesSnapshot)
+        context.insert(game)
+    }
+
     /// Seeds just the four demo players (no game) — used for the New Game
     /// setup screenshot.
     static func seedPlayersOnly(in context: ModelContext) {
