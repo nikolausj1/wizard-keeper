@@ -125,6 +125,7 @@ final class AnnouncerPlayer: ObservableObject {
     /// the miss count for on-device verification.
     @discardableResult
     func announce(insight: GameInsights.Insight, voice: AnnouncerVoice, style: AnnouncerStyle) -> Int {
+        beginAssembly()
         let voiceRaw = voice.rawValue
         var urls: [URL] = []
         var attempted = 0
@@ -182,6 +183,7 @@ final class AnnouncerPlayer: ObservableObject {
     /// behavior as `announce`/`announceWinner`.
     @discardableResult
     func announceRoundUpdate(insights: [GameInsights.Insight], voice: AnnouncerVoice, style: AnnouncerStyle) -> Int {
+        beginAssembly()
         let voiceRaw = voice.rawValue
         var urls: [URL] = []
         var attempted = 0
@@ -233,6 +235,7 @@ final class AnnouncerPlayer: ObservableObject {
         voice: AnnouncerVoice,
         style: AnnouncerStyle
     ) -> Int {
+        beginAssembly()
         let voiceRaw = voice.rawValue
         var urls: [URL] = []
         var attempted = 0
@@ -279,6 +282,7 @@ final class AnnouncerPlayer: ObservableObject {
     /// [champ name + reigningChamp tail]? + [freshGame tail] + [kickoff tail].
     @discardableResult
     func announcePregame(champName: String?, voice: AnnouncerVoice, style: AnnouncerStyle) -> Int {
+        beginAssembly()
         let voiceRaw = voice.rawValue
         var urls: [URL] = []
         var attempted = 0
@@ -360,7 +364,7 @@ final class AnnouncerPlayer: ObservableObject {
             return "zeros_\(value)"
         case .boldestBidder:
             return nil
-        case .leading, .chasing, .trailing:
+        case .leading, .chasing, .trailing, .leadChange, .nosedive:
             // Reuses the same `points_<n>` clip family as `.bigRound` — the
             // leader's total (or the chaser's gap, or the last-place
             // total), not a single-round delta, but the audio just says a
@@ -370,20 +374,53 @@ final class AnnouncerPlayer: ObservableObject {
             // out-of-range value.
             guard (40...220).contains(value), value % 10 == 0 else { return nil }
             return "points_\(value)"
-        case .reigningChamp, .freshGame:
+        case .reigningChamp, .freshGame, .everybodyHit, .carnage, .tightRace:
             // No stat clip by design — these are framing lines ("X won the
             // last game", "fresh scorepad"), not numeric callouts.
             return nil
         }
     }
 
-    /// Picks a random tail variant for (style, kind) from the manifest's
-    /// variant count, resolves it, and falls back to variant 0 if the
-    /// randomly-chosen file isn't on disk yet (generation may still be in
-    /// progress). Returns `nil` only if neither is resolvable.
+    /// Variant bookkeeping (game-night bug: the same clip played twice in
+    /// one broadcast). `usedInAssembly` is cleared at the start of every
+    /// announce* call and guarantees no clip repeats within a single
+    /// announcement; `lastVariant` persists across announcements so the
+    /// next broadcast avoids opening with the identical line when there's
+    /// an alternative.
+    private var usedInAssembly: Set<String> = []
+    private var lastVariant: [String: Int] = [:]
+
+    /// Called at the top of every announce* assembly.
+    private func beginAssembly() {
+        usedInAssembly.removeAll()
+    }
+
+    /// Draws a variant index for a category without repeating within the
+    /// current announcement, and avoiding the previous announcement's pick
+    /// when an alternative exists. Falls back to reuse only when every
+    /// variant is already spent (better a repeat than silence).
+    private func pickVariant(category: String, count: Int, styleRaw: Int) -> Int {
+        let key = "\(styleRaw)_\(category)"
+        let pool = Array(0..<count)
+        var candidates = pool.filter { !usedInAssembly.contains("\(key)_\($0)") }
+        if candidates.isEmpty { candidates = pool }
+        if candidates.count > 1, let last = lastVariant[key] {
+            let withoutLast = candidates.filter { $0 != last }
+            if !withoutLast.isEmpty { candidates = withoutLast }
+        }
+        let chosen = candidates.randomElement() ?? 0
+        usedInAssembly.insert("\(key)_\(chosen)")
+        lastVariant[key] = chosen
+        return chosen
+    }
+
+    /// Picks a no-repeat tail variant for (style, kind) from the manifest's
+    /// variant count, and falls back to variant 0 if the chosen file isn't
+    /// on disk yet (generation may still be in progress). Returns `nil`
+    /// only if nothing is resolvable.
     private func tailURL(kindName: String, style: AnnouncerStyle, voice: String) -> URL? {
         guard let count = manifest?.styles[String(style.rawValue)]?[kindName], count > 0 else { return nil }
-        let variant = Int.random(in: 0..<count)
+        let variant = pickVariant(category: "tail_\(kindName)", count: count, styleRaw: style.rawValue)
         if let url = resolvedURL(basename: "tail_\(style.rawValue)_\(kindName)_\(variant)", voice: voice) {
             return url
         }
@@ -402,13 +439,26 @@ final class AnnouncerPlayer: ObservableObject {
     /// shuffled 0..<3 index order and returns the first that resolves —
     /// `nil`, silently, if none do.
     private func connectiveURL(kind: String, style: AnnouncerStyle, voice: String) -> URL? {
-        for i in [0, 1, 2].shuffled() {
-            if let url = resolvedURL(basename: "seg_\(style.rawValue)_\(kind)_\(i)", voice: voice) {
-                return url
+        let cacheKey = "\(voice)_\(style.rawValue)_\(kind)"
+        let count: Int
+        if let cached = connectiveCounts[cacheKey] {
+            count = cached
+        } else {
+            var probed = 0
+            while probed < 8, resolvedURL(basename: "seg_\(style.rawValue)_\(kind)_\(probed)", voice: voice) != nil {
+                probed += 1
             }
+            connectiveCounts[cacheKey] = probed
+            count = probed
         }
-        return nil
+        guard count > 0 else { return nil }
+        let variant = pickVariant(category: "seg_\(kind)", count: count, styleRaw: style.rawValue)
+        return resolvedURL(basename: "seg_\(style.rawValue)_\(kind)_\(variant)", voice: voice)
     }
+
+    /// On-disk connective variant counts, probed once per (voice, style,
+    /// kind) — connectives aren't in the manifest's tail counts.
+    private var connectiveCounts: [String: Int] = [:]
 
     // MARK: - Name slugging
 

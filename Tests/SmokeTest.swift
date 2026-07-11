@@ -202,6 +202,39 @@ check("insights: past-tense led the field",
 check("insights: past-tense finished last",
       storyTrio.contains { $0.text == "C finished last with -10" }, true)
 
+// Round-level news
+let leadFlip = GameInsights.insights(players: [
+    Line(name: "A", entries: [(1, 1), (0, 1)]),   // 30 → 20: led, slipped
+    Line(name: "B", entries: [(0, 0), (2, 2)]),   // 20 → 60: takes the lead
+    Line(name: "C", entries: [(0, 1), (0, 1)]),
+])
+check("insights: lead change", leadFlip.contains { $0.text == "B takes the lead" }, true)
+let dive = GameInsights.insights(players: [
+    Line(name: "A", entries: [(0, 0), (4, 0)]),   // −40 nosedive
+    Line(name: "B", entries: [(1, 1), (1, 1)]),
+])
+check("insights: nosedive", dive.contains { $0.text == "A dropped 40 last round" }, true)
+let allHit = GameInsights.insights(players: [
+    Line(name: "A", entries: [(1, 1)]), Line(name: "B", entries: [(0, 0)]), Line(name: "C", entries: [(0, 0)]),
+])
+check("insights: everybody hit", allHit.contains { $0.kind == .everybodyHit }, true)
+let bloodbath = GameInsights.insights(players: [
+    Line(name: "A", entries: [(1, 0)]), Line(name: "B", entries: [(2, 0)]), Line(name: "C", entries: [(0, 1)]),
+])
+check("insights: carnage", bloodbath.contains { $0.kind == .carnage }, true)
+let photo = GameInsights.insights(players: [
+    Line(name: "A", entries: [(1, 1), (1, 1)]),   // 60
+    Line(name: "B", entries: [(2, 2), (0, 0)]),   // 60 — dead heat
+    Line(name: "C", entries: [(0, 1), (0, 1)]),
+], maxCount: 6)  // presence check — don't let the display cap hide it
+check("insights: dead heat", photo.contains { $0.text == "Dead heat at the top" }, true)
+// Misaligned entry counts (mid-game joiner) → round-news skipped, no crash
+let joiner = GameInsights.insights(players: [
+    Line(name: "A", entries: [(1, 1), (0, 0)]),
+    Line(name: "B", entries: [(0, 0)]),
+])
+check("insights: joiner skips round news", joiner.contains { $0.kind == .leadChange || $0.kind == .everybodyHit }, false)
+
 // MARK: Result
 if failures == 0 {
     print("OK — all \(checks) checks passed")
