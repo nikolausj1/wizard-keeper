@@ -140,6 +140,7 @@ struct PlayerProfileView: View {
 
     private func deletePlayer() {
         modelContext.delete(player)
+        modelContext.saveNow()
         dismiss()
     }
 }

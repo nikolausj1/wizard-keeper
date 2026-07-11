@@ -207,6 +207,7 @@ struct NewGameView: View {
         let game = Game(participants: participants, totalRounds: roundCount, rulesSnapshot: rulesSnapshot)
         modelContext.insert(game)
         createdGame = game
+        modelContext.saveNow()
         navigateToGame = true
     }
 }

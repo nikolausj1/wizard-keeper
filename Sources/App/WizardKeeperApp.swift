@@ -49,10 +49,19 @@ struct WizardKeeperApp: App {
         return arguments[index + 1]
     }
 
+    @Environment(\.scenePhase) private var scenePhase
+
     var body: some Scene {
         WindowGroup {
             RootView()
         }
         .modelContainer(modelContainer)
+        .onChange(of: scenePhase) { _, newPhase in
+            // Flush to disk the moment we leave the foreground — a
+            // force-quit must never cost the table its rounds.
+            if newPhase == .background || newPhase == .inactive {
+                modelContainer.mainContext.saveNow()
+            }
+        }
     }
 }

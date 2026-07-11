@@ -11,6 +11,7 @@ import SwiftData
 struct ScorepadGridView: View {
     @Bindable var game: Game
     @State private var navigateToRoundEntry = false
+    @Environment(\.modelContext) private var modelContext
     @State private var selectedRoundNumber: Int?
     @State private var showUndoConfirm = false
 
@@ -157,6 +158,7 @@ struct ScorepadGridView: View {
         ) {
             Button("Reopen Round", role: .destructive) {
                 game.reopenLastCompletedRound()
+                modelContext.saveNow()
             }
             Button("Cancel", role: .cancel) {}
         } message: {

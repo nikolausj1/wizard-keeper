@@ -10,6 +10,7 @@ struct GameView: View {
     @State private var navigateToRoundEntry = false
     @State private var showUndoConfirm = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.modelContext) private var modelContext
 
     @ScaledMetric(relativeTo: .body) private var allRoundsLabelSize: CGFloat = 15
     @ScaledMetric(relativeTo: .subheadline) private var allRoundsCountSize: CGFloat = 14
@@ -167,6 +168,7 @@ struct GameView: View {
         ) {
             Button("Reopen Round", role: .destructive) {
                 game.reopenLastCompletedRound()
+                modelContext.saveNow()
             }
             Button("Cancel", role: .cancel) {}
         } message: {

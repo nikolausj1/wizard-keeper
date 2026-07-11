@@ -136,6 +136,7 @@ struct FinalResultsView: View {
         ) {
             Button("Reopen Round", role: .destructive) {
                 game.reopenLastCompletedRound()
+                modelContext.saveNow()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -214,6 +215,7 @@ struct FinalResultsView: View {
             rulesSnapshot: freshRules
         )
         modelContext.insert(newGame)
+        modelContext.saveNow()
         rematchGame = newGame
         navigateToRematch = true
     }

@@ -86,6 +86,7 @@ struct RoundEntryView: View {
         modelContext.insert(newRound)
         game.rounds.append(newRound)
         round = newRound
+        modelContext.saveNow()
     }
 
     /// Gates the "Confirm Bids" transition on the house "Dealer's Hook"
@@ -104,6 +105,7 @@ struct RoundEntryView: View {
             }
         }
         round.phase = .results
+        modelContext.saveNow()
     }
 
     private func attemptConfirmRound() {
@@ -124,6 +126,7 @@ struct RoundEntryView: View {
         if wasFinalRound {
             game.complete()
         }
+        modelContext.saveNow()
         didConfirm.toggle()
         dismiss()
     }
@@ -145,6 +148,7 @@ struct RoundEntryView: View {
     }
 
     private func saveEdits() {
+        modelContext.saveNow()
         didConfirm.toggle()
         dismiss()
     }
@@ -157,6 +161,7 @@ struct RoundEntryView: View {
 private struct BiddingView: View {
     @Bindable var game: Game
     @Bindable var round: Round
+    @Environment(\.modelContext) private var modelContext
     let onConfirm: () -> Void
 
     private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
@@ -288,6 +293,7 @@ private struct BiddingView: View {
         var updated = round.entries
         updated[index].bid = value
         round.entries = updated
+        modelContext.saveNow()
     }
 }
 
@@ -298,6 +304,7 @@ private struct BiddingView: View {
 private struct ResultsView: View {
     @Bindable var game: Game
     @Bindable var round: Round
+    @Environment(\.modelContext) private var modelContext
     let onConfirm: () -> Void
 
     private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
@@ -415,6 +422,7 @@ private struct ResultsView: View {
         var updated = round.entries
         updated[index].tricksTaken = value
         round.entries = updated
+        modelContext.saveNow()
     }
 }
 
@@ -428,6 +436,7 @@ private struct ResultsView: View {
 private struct EditRoundView: View {
     @Bindable var game: Game
     @Bindable var round: Round
+    @Environment(\.modelContext) private var modelContext
     let onSave: () -> Void
 
     private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
@@ -548,11 +557,13 @@ private struct EditRoundView: View {
         var updated = round.entries
         updated[index].bid = value
         round.entries = updated
+        modelContext.saveNow()
     }
 
     private func setTricks(_ value: Int, at index: Int) {
         var updated = round.entries
         updated[index].tricksTaken = value
         round.entries = updated
+        modelContext.saveNow()
     }
 }

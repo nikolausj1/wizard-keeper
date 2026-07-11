@@ -91,6 +91,7 @@ struct HomeView: View {
     private func abandonInProgressGame() {
         guard let game = inProgressGame else { return }
         modelContext.delete(game)
+        modelContext.saveNow()
         inProgressGame = nil
     }
 }

@@ -2,6 +2,18 @@ import SwiftUI
 import SwiftData
 import UIKit
 
+extension ModelContext {
+    /// Explicit save at meaningful commit points (round confirmed, bid
+    /// tapped, game created). SwiftData's autosave coalesces lazily and a
+    /// force-quit can beat it — game night proved it. Errors are
+    /// deliberately swallowed: an in-memory state that briefly outruns disk
+    /// is better than interrupting scoring.
+    func saveNow() {
+        guard hasChanges else { return }
+        try? save()
+    }
+}
+
 /// The page background used behind every screen's outermost List/ScrollView.
 /// Light mode gets the faintest warm paper shift (#F4F0E8) off pure system
 /// gray, matching `_review/texture-A-paper-whisper.html`'s "Paper Whisper"
