@@ -181,11 +181,22 @@ struct GameView: View {
     /// are skipped silently by `AnnouncerPlayer`.
     private func toggleAnnounce() {
         guard let settings = try? AppSettings.fetchOrCreate(in: modelContext) else { return }
-        announcer.toggleRoundUpdate(
-            insights: displayedInsights,
-            voice: settings.announcerVoiceSelection,
-            style: settings.announcerStyleSelection
-        )
+        if completedRoundCount == 0 {
+            // Round zero gets the short call: champ nod, one joke, "deal!"
+            // — the full broadcast was too long with nothing yet to say.
+            let champName = pregameInsights.first { $0.kind == .reigningChamp }?.playerName
+            announcer.togglePregame(
+                champName: champName,
+                voice: settings.announcerVoiceSelection,
+                style: settings.announcerStyleSelection
+            )
+        } else {
+            announcer.toggleRoundUpdate(
+                insights: displayedInsights,
+                voice: settings.announcerVoiceSelection,
+                style: settings.announcerStyleSelection
+            )
+        }
     }
 
     private var inProgressBody: some View {

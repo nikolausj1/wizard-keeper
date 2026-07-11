@@ -78,6 +78,7 @@ CONNECTIVES = {
 # All name-free and number-free; never target age/looks/intelligence.
 TAILS = {
  1: {  # Classic — warm sports-caster
+  "kickoff": ["Shuffle up and deal — let's play!", "Round one — here we go!"],
   "chasing": ["Right on the leader's heels!", "The chase is ON!"],
   "trailing": ["Bringing up the rear — plenty of game left!", "Last place... for now!"],
   "leading": ["Out in front and cruising!", "Top of the pile, folks!"],
@@ -94,6 +95,7 @@ TAILS = {
   "lastPlace": ["And hey — somebody had to come in last.", "Better luck next game, friend."],
  },
  2: {  # Spicy — the announcer has opinions
+  "kickoff": ["Deal 'em up. Let's see who disappoints first!", "Round one! Places, everyone!"],
   "chasing": ["Closing in — the leader should be nervous!", "Hot on the trail!"],
   "trailing": ["Holding down last place like it's a job!", "The basement has a new tenant!"],
   "leading": ["Leading the pack — for now!", "First place! Enjoy it while it lasts!"],
@@ -110,6 +112,7 @@ TAILS = {
   "lastPlace": ["Dead last! But hey — great snacks tonight.", "Last place! We've alerted the authorities."],
  },
  3: {  # Scorched — full roast-battle meltdown, still clean
+  "kickoff": ["Shuffle up — the CARNAGE begins NOW!", "Round ONE! Let the chaos COMMENCE!"],
   "chasing": ["The hunt is ON! Nowhere to hide!", "Breathing down the leader's NECK!"],
   "trailing": ["ANCHORED to the bottom of this table!", "Last place and digging DEEPER!"],
   "leading": ["DOMINATING! Somebody do something!", "On TOP and rubbing it in!"],
@@ -127,6 +130,7 @@ TAILS = {
                 "Dead last! The announcer's union says I don't have to talk about it!"],
  },
  4: {  # Vicious — mild expletives, personal edge. ADULTS ONLY.
+  "kickoff": ["Deal the damn cards — destiny is waiting!", "Round one! Try not to blow it immediately!"],
   "chasing": ["Coming for the throne — and the leader KNOWS it!", "The gap is shrinking, people! PANIC!"],
   "trailing": ["Dead last — somebody stage a damn rescue!", "The basement called. They want rent!"],
   "leading": ["Leading, and frankly? Insufferable about it!", "First place! The rest of you should be embarrassed!"],
@@ -143,6 +147,7 @@ TAILS = {
   "lastPlace": ["Dead last. At this point it's not luck — it's a personality trait!", "Last place AGAIN! The family is WATCHING!"],
  },
  5: {  # Unhinged — real profanity, R-rated roast. ADULTS ONLY, never App Store.
+  "kickoff": ["Shuffle up — and let the shit-show BEGIN!", "Round ONE, baby! LET'S GO!"],
   "chasing": ["Coming for BLOOD!", "The leader's ass is officially on notice!"],
   "trailing": ["Stone. Cold. LAST. Get your shit together!", "Living in the basement rent-free — and it SHOWS!"],
   "leading": ["On TOP! Somebody knock their ass off the throne!", "Leading the whole damn table!"],

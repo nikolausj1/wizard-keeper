@@ -272,6 +272,43 @@ final class AnnouncerPlayer: ObservableObject {
         return play(urls: urls, attempted: attempted)
     }
 
+    /// The short round-zero call (game-night feedback: the full broadcast
+    /// was too long when "there's not much to say"): acknowledge the
+    /// reigning champ if one is seated, one quick joke, then point to the
+    /// deal. No intro, no transitions — roughly 6–8 seconds:
+    /// [champ name + reigningChamp tail]? + [freshGame tail] + [kickoff tail].
+    @discardableResult
+    func announcePregame(champName: String?, voice: AnnouncerVoice, style: AnnouncerStyle) -> Int {
+        let voiceRaw = voice.rawValue
+        var urls: [URL] = []
+        var attempted = 0
+
+        if let champName {
+            attempted += 1
+            if let u = nameURL(champName, voice: voiceRaw) { urls.append(u) }
+            attempted += 1
+            if let u = tailURL(kindName: "reigningChamp", style: style, voice: voiceRaw) { urls.append(u) }
+        }
+
+        attempted += 1
+        if let u = tailURL(kindName: "freshGame", style: style, voice: voiceRaw) { urls.append(u) }
+
+        attempted += 1
+        if let u = tailURL(kindName: "kickoff", style: style, voice: voiceRaw) { urls.append(u) }
+
+        return play(urls: urls, attempted: attempted)
+    }
+
+    /// Toggle helper for the round-zero pregame call — same stop-if-playing
+    /// behavior as `toggleRoundUpdate`.
+    func togglePregame(champName: String?, voice: AnnouncerVoice, style: AnnouncerStyle) {
+        if isPlaying {
+            stop()
+        } else {
+            announcePregame(champName: champName, voice: voice, style: style)
+        }
+    }
+
     /// Toggle helper for call sites (the Trends section's Announce/Stop
     /// button): stops playback if a broadcast is already in progress,
     /// otherwise starts one via `announceRoundUpdate`.

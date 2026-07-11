@@ -5,6 +5,7 @@
  ],
  "styles": {
   "1": {
+   "kickoff": 2,
    "chasing": 2,
    "trailing": 2,
    "leading": 2,
@@ -20,6 +21,7 @@
    "lastPlace": 2
   },
   "2": {
+   "kickoff": 2,
    "chasing": 2,
    "trailing": 2,
    "leading": 2,
@@ -35,6 +37,7 @@
    "lastPlace": 2
   },
   "3": {
+   "kickoff": 2,
    "chasing": 2,
    "trailing": 2,
    "leading": 2,
@@ -50,6 +53,7 @@
    "lastPlace": 2
   },
   "4": {
+   "kickoff": 2,
    "chasing": 2,
    "trailing": 2,
    "leading": 2,
@@ -65,6 +69,7 @@
    "lastPlace": 2
   },
   "5": {
+   "kickoff": 2,
    "chasing": 2,
    "trailing": 2,
    "leading": 2,
