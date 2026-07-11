@@ -65,12 +65,12 @@ struct RecapCardView: View {
             Text("WIZARD KEEPER")
                 .font(.system(size: 11, weight: .bold))
                 .tracking(2)
-                .foregroundStyle(.indigo)
+                .foregroundStyle(Color.feltGreen)
 
             HStack(spacing: 6) {
                 Image(systemName: "star.fill")
                     .font(.system(size: 18))
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(Color.brassGold)
                 Text(data.headline)
                     .font(.system(size: 26, weight: .heavy))
                     .multilineTextAlignment(.center)
@@ -97,10 +97,10 @@ struct RecapCardView: View {
         HStack(spacing: 10) {
             ZStack {
                 Circle()
-                    .fill(row.isWinner ? Color.yellow.opacity(0.22) : Color(.systemGray6))
+                    .fill(row.isWinner ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
                 Text("\(row.rank)")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(row.isWinner ? .yellow : .secondary)
+                    .foregroundStyle(row.isWinner ? Color.brassGold : .secondary)
             }
             .frame(width: 22, height: 22)
 
@@ -112,7 +112,7 @@ struct RecapCardView: View {
                 if row.isWinner {
                     Image(systemName: "star.fill")
                         .font(.system(size: 10))
-                        .foregroundStyle(.yellow)
+                        .foregroundStyle(Color.brassGold)
                 }
             }
 
@@ -125,7 +125,7 @@ struct RecapCardView: View {
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(row.isWinner ? Color.yellow.opacity(0.12) : Color(.secondarySystemGroupedBackground))
+                .fill(row.isWinner ? Color.brassGold.opacity(0.12) : Color(.secondarySystemGroupedBackground))
         )
     }
 

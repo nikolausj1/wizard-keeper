@@ -291,7 +291,7 @@ private struct BiddingView: View {
                                     if untouched {
                                         Text("Bidding now")
                                             .font(.system(size: statusSize, weight: .semibold))
-                                            .foregroundStyle(.indigo)
+                                            .foregroundStyle(Color.feltGreen)
                                     } else {
                                         Text("\(game.runningTotal(for: participant.playerId)) pts")
                                             .font(.system(size: statusSize, weight: .medium))
@@ -322,7 +322,7 @@ private struct BiddingView: View {
                             }
                             .padding(.vertical, 8)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                            .listRowBackground(untouched ? Color.indigo.opacity(0.05) : Color(.secondarySystemGroupedBackground))
+                            .listRowBackground(untouched ? Color.feltGreen.opacity(0.05) : Color(.secondarySystemGroupedBackground))
                         }
                     }
                 }
@@ -433,8 +433,8 @@ private struct ResultsView: View {
             .font(.system(size: tagSize, weight: .bold))
             .padding(.horizontal, 9)
             .padding(.vertical, 4)
-            .background(hit ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
-            .foregroundStyle(hit ? .green : .red)
+            .background(hit ? Color.feltGreen.opacity(0.14) : Color.terracotta.opacity(0.13))
+            .foregroundStyle(hit ? Color.feltGreen : Color.terracotta)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .opacity(hasResult ? 1 : 0)
             .animation(.easeInOut(duration: 0.18), value: hasResult)
@@ -484,10 +484,10 @@ private struct ResultsView: View {
                                 // prominent chip, not a small caption.
                                 Text("Needs \(entry.bid ?? 0)")
                                     .font(.system(size: needsChipSize, weight: .bold))
-                                    .foregroundStyle(.indigo)
+                                    .foregroundStyle(Color.feltGreen)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(Color.indigo.opacity(0.12))
+                                    .background(Color.feltGreen.opacity(0.12))
                                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                                 Spacer(minLength: 8)
@@ -519,7 +519,7 @@ private struct ResultsView: View {
                             }
                             .padding(.vertical, 8)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                            .listRowBackground(untouched ? Color.indigo.opacity(0.05) : Color(.secondarySystemGroupedBackground))
+                            .listRowBackground(untouched ? Color.feltGreen.opacity(0.05) : Color(.secondarySystemGroupedBackground))
                         }
                     }
                 }
@@ -655,8 +655,8 @@ private struct EditRoundView: View {
                     .font(.system(size: tagSize, weight: .bold))
                     .padding(.horizontal, 9)
                     .padding(.vertical, 4)
-                    .background(hit ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
-                    .foregroundStyle(hit ? .green : .red)
+                    .background(hit ? Color.feltGreen.opacity(0.14) : Color.terracotta.opacity(0.13))
+                    .foregroundStyle(hit ? Color.feltGreen : Color.terracotta)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
 

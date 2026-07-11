@@ -63,5 +63,5 @@ struct AddPlayerSheet: View {
 
 #Preview {
     AddPlayerSheet(existingNames: ["Justin", "Kelly"], nextColorId: 2) { _, _ in }
-        .tint(.indigo)
+        .tint(.feltGreen)
 }

@@ -2,7 +2,8 @@ import SwiftUI
 import SwiftData
 
 /// App root: a single `NavigationStack` rooted at `HomeView`, tinted with
-/// the one system accent (indigo) per the Apple Native design direction.
+/// the one accent color app-wide — felt green, per the "Warm Table" design
+/// direction.
 ///
 /// Sim-verify support: `simctl` can't tap, so a `-uiScreen <name>` launch
 /// argument (paired with the `-demo*` seeding args, which force an
@@ -34,28 +35,39 @@ struct RootView: View {
         NavigationStack {
             rootContent
         }
-        .tint(.indigo)
+        .tint(.feltGreen)
         .preferredColorScheme(preferredColorScheme)
         .onAppear(perform: fireAnnouncerTestIfNeeded)
     }
 
     /// Verification hook for the announcer feature: `-announcerTest`
-    /// (combinable with any `-uiScreen`) fires a synthetic cold-streak
-    /// insight one second after launch and prints the resolved/missing
-    /// segment counts, so the lead can confirm clip resolution ran from
-    /// `simctl` console logs alone — no tapping required.
+    /// (combinable with any `-uiScreen`) fires a synthetic two-insight
+    /// round-update broadcast one second after launch and prints the
+    /// resolved/missing segment counts, so the lead can confirm clip
+    /// resolution ran from `simctl` console logs alone — no tapping
+    /// required.
     private func fireAnnouncerTestIfNeeded() {
         guard ProcessInfo.processInfo.arguments.contains("-announcerTest") else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            let insight = GameInsights.Insight(
-                icon: "snowflake",
-                text: "Announcer test",
-                priority: 0,
-                kind: .coldStreak,
-                playerName: "Justin",
-                value: 3
-            )
-            let segments = AnnouncerPlayer.shared.announce(insight: insight, voice: .charlie, style: .scorched)
+            let insights = [
+                GameInsights.Insight(
+                    icon: "snowflake",
+                    text: "Announcer test",
+                    priority: 0,
+                    kind: .coldStreak,
+                    playerName: "Justin",
+                    value: 3
+                ),
+                GameInsights.Insight(
+                    icon: "checkmark.seal.fill",
+                    text: "Announcer test",
+                    priority: 0,
+                    kind: .perfect,
+                    playerName: "Kelly",
+                    value: 7
+                ),
+            ]
+            let segments = AnnouncerPlayer.shared.announceRoundUpdate(insights: insights, voice: .charlie, style: .scorched)
             print("announcer test fired, segments: \(segments)")
         }
     }

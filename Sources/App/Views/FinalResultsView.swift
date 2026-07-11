@@ -105,7 +105,7 @@ struct FinalResultsView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.indigo)
+                .tint(.feltGreen)
                 .controlSize(.large)
 
                 Button {
@@ -178,7 +178,7 @@ struct FinalResultsView: View {
         VStack(spacing: 6) {
             Image(systemName: "star.fill")
                 .font(.system(size: winnerStarSize))
-                .foregroundStyle(.yellow)
+                .foregroundStyle(Color.brassGold)
                 .scaleEffect(didAppear ? 1 : 0.4)
                 .opacity(didAppear ? 1 : 0)
             Text(winnerNames.isEmpty ? "Game Complete" : "\(winnerNames) Wins!")
@@ -208,7 +208,7 @@ struct FinalResultsView: View {
                     .font(.subheadline.weight(.semibold))
             }
             .buttonStyle(.bordered)
-            .tint(.indigo)
+            .tint(.feltGreen)
         }
     }
 
@@ -216,10 +216,10 @@ struct FinalResultsView: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(standing.isWinner ? Color.yellow.opacity(0.22) : Color(.systemGray6))
+                    .fill(standing.isWinner ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
                 Text("\(standing.rank)")
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(standing.isWinner ? .yellow : .secondary)
+                    .foregroundStyle(standing.isWinner ? Color.brassGold : .secondary)
             }
             .frame(width: 34, height: 34)
 
@@ -229,7 +229,7 @@ struct FinalResultsView: View {
                 if standing.isWinner {
                     Image(systemName: "star.fill")
                         .font(.caption2)
-                        .foregroundStyle(.yellow)
+                        .foregroundStyle(Color.brassGold)
                 }
             }
 
@@ -244,6 +244,7 @@ struct FinalResultsView: View {
             RoundedRectangle(cornerRadius: 14)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
+        .warmCardShadow()
     }
 
     private func rematch() {

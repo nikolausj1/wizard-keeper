@@ -121,7 +121,7 @@ private struct RoundRow: View {
                 Text(ScoreFormat.delta(delta))
                     .font(.system(size: deltaSize, weight: .bold))
                     .monospacedDigit()
-                    .foregroundStyle(delta >= 0 ? .green : .red)
+                    .foregroundStyle(delta >= 0 ? Color.feltGreen : Color.terracotta)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             } else {
@@ -141,6 +141,6 @@ private struct RoundRow: View {
             rulesSnapshot: RulesSnapshot(hookRuleEnabled: false, trickTotalCheckEnabled: true, dealerRotationEnabled: false)
         ))
     }
-    .tint(.indigo)
+    .tint(.feltGreen)
     .modelContainer(for: [Player.self, Game.self, Round.self, AppSettings.self], inMemory: true)
 }

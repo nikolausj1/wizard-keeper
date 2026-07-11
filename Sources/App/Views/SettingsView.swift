@@ -153,6 +153,6 @@ private struct SettingsForm: View {
     NavigationStack {
         SettingsView()
     }
-    .tint(.indigo)
+    .tint(.feltGreen)
     .modelContainer(for: [Player.self, Game.self, Round.self, AppSettings.self], inMemory: true)
 }

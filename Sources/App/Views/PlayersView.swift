@@ -111,6 +111,6 @@ private struct PlayerRow: View {
     NavigationStack {
         PlayersView()
     }
-    .tint(.indigo)
+    .tint(.feltGreen)
     .modelContainer(for: [Player.self, Game.self, Round.self, AppSettings.self], inMemory: true)
 }

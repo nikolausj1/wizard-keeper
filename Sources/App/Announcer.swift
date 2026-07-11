@@ -1,4 +1,5 @@
 import AVFoundation
+import Combine
 import Foundation
 import SwiftData
 
@@ -69,13 +70,24 @@ extension AppSettings {
 /// resolves to zero segments, calling `announce`/`announceWinner` is a
 /// silent no-op. Never blocks on or validates clip existence up front —
 /// resolution happens lazily, per call, against whatever is in the bundle.
-final class AnnouncerPlayer {
+final class AnnouncerPlayer: ObservableObject {
     static let shared = AnnouncerPlayer()
 
     /// Strong reference to the in-flight playback. A new `announce`/
-    /// `announceWinner` call simply replaces this, which stops (and, once
-    /// nothing else retains it, deallocates) whatever was playing before.
+    /// `announceWinner`/`announceRoundUpdate` call simply replaces this,
+    /// which stops (and, once nothing else retains it, deallocates)
+    /// whatever was playing before.
     private var queuePlayer: AVQueuePlayer?
+
+    /// Observes the last queued `AVPlayerItem`'s end-of-playback
+    /// notification so `isPlaying` flips back to `false` once the whole
+    /// sequence has finished (not just the first clip). Torn down and
+    /// replaced on every new `play(urls:attempted:)` call and in `stop()`.
+    private var endOfQueueObserver: NSObjectProtocol?
+
+    /// Whether a clip sequence is currently queued/playing. Drives the
+    /// Trends section's Announce/Stop toggle button in `GameView`.
+    @Published private(set) var isPlaying = false
 
     private struct Manifest: Decodable {
         let voices: [String]
@@ -155,6 +167,77 @@ final class AnnouncerPlayer {
         return play(urls: urls, attempted: attempted)
     }
 
+    /// Plays a single short broadcast covering the table's current trends,
+    /// replacing the old one-speaker-button-per-row UX: an optional random
+    /// intro connective, then — for up to the first 3 `insights`, in the
+    /// order given — that insight's `[name, stat?, tail]` segments (same
+    /// resolution logic as `announce`), separated by a random transition
+    /// connective between insights (never after the last), then an
+    /// optional random outro connective.
+    ///
+    /// The connective clips (`seg_<style>_intro_<i>`, `_trans_<i>`,
+    /// `_outro_<i>`) are a newer addition to `tools/generate_announcer.py`
+    /// and may not exist yet for some/all styles — missing ones are
+    /// skipped silently, same as any other clip. Same return-count
+    /// behavior as `announce`/`announceWinner`.
+    @discardableResult
+    func announceRoundUpdate(insights: [GameInsights.Insight], voice: AnnouncerVoice, style: AnnouncerStyle) -> Int {
+        let voiceRaw = voice.rawValue
+        var urls: [URL] = []
+        var attempted = 0
+
+        attempted += 1
+        if let u = connectiveURL(kind: "intro", style: style, voice: voiceRaw) { urls.append(u) }
+
+        let selected = Array(insights.prefix(3))
+        for (index, insight) in selected.enumerated() {
+            attempted += 1
+            if let u = nameURL(insight.playerName, voice: voiceRaw) { urls.append(u) }
+
+            if let statBasename = statBasename(kind: insight.kind, value: insight.value) {
+                attempted += 1
+                if let u = resolvedURL(basename: statBasename, voice: voiceRaw) { urls.append(u) }
+            }
+
+            attempted += 1
+            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voiceRaw) { urls.append(u) }
+
+            if index < selected.count - 1 {
+                attempted += 1
+                if let u = connectiveURL(kind: "trans", style: style, voice: voiceRaw) { urls.append(u) }
+            }
+        }
+
+        attempted += 1
+        if let u = connectiveURL(kind: "outro", style: style, voice: voiceRaw) { urls.append(u) }
+
+        return play(urls: urls, attempted: attempted)
+    }
+
+    /// Toggle helper for call sites (the Trends section's Announce/Stop
+    /// button): stops playback if a broadcast is already in progress,
+    /// otherwise starts one via `announceRoundUpdate`.
+    func toggleRoundUpdate(insights: [GameInsights.Insight], voice: AnnouncerVoice, style: AnnouncerStyle) {
+        if isPlaying {
+            stop()
+        } else {
+            announceRoundUpdate(insights: insights, voice: voice, style: style)
+        }
+    }
+
+    /// Stops any in-flight playback immediately and flips `isPlaying` back
+    /// to `false`.
+    func stop() {
+        queuePlayer?.pause()
+        queuePlayer?.removeAllItems()
+        queuePlayer = nil
+        if let endOfQueueObserver {
+            NotificationCenter.default.removeObserver(endOfQueueObserver)
+        }
+        endOfQueueObserver = nil
+        isPlaying = false
+    }
+
     // MARK: - Segment basenames (filename minus ".mp3")
 
     private func nameURL(_ playerName: String, voice: String) -> URL? {
@@ -197,6 +280,23 @@ final class AnnouncerPlayer {
         }
         if variant != 0, let url = resolvedURL(basename: "tail_\(style.rawValue)_\(kindName)_0", voice: voice) {
             return url
+        }
+        return nil
+    }
+
+    /// Random connective clip lookup for `announceRoundUpdate` —
+    /// `seg_<style>_<kind>_<i>` for `kind` in `"intro"`, `"trans"`,
+    /// `"outro"`. These files are a newer, still-in-progress addition to
+    /// `tools/generate_announcer.py` (see its header comment) and may not
+    /// exist for every style, or at all, yet. Unlike `tailURL` there's no
+    /// manifest-backed variant count to consult, so this just tries a
+    /// shuffled 0..<3 index order and returns the first that resolves —
+    /// `nil`, silently, if none do.
+    private func connectiveURL(kind: String, style: AnnouncerStyle, voice: String) -> URL? {
+        for i in [0, 1, 2].shuffled() {
+            if let url = resolvedURL(basename: "seg_\(style.rawValue)_\(kind)_\(i)", voice: voice) {
+                return url
+            }
         }
         return nil
     }
@@ -254,6 +354,11 @@ final class AnnouncerPlayer {
         print("Announcer: \(urls.count) segment(s) resolved, \(missing) missing (of \(attempted) attempted)")
         guard !urls.isEmpty else { return 0 }
 
+        if let endOfQueueObserver {
+            NotificationCenter.default.removeObserver(endOfQueueObserver)
+            self.endOfQueueObserver = nil
+        }
+
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .default)
         try? session.setActive(true)
@@ -261,6 +366,19 @@ final class AnnouncerPlayer {
         let items = urls.map { AVPlayerItem(url: $0) }
         let player = AVQueuePlayer(items: items)
         queuePlayer = player
+
+        // Observe the LAST item specifically (not just any item finishing)
+        // so `isPlaying` stays true through a multi-clip sequence and only
+        // flips false once the whole broadcast has played out.
+        endOfQueueObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: items.last,
+            queue: .main
+        ) { [weak self] _ in
+            self?.isPlaying = false
+        }
+
+        isPlaying = true
         player.play()
         return urls.count
     }

@@ -81,7 +81,7 @@ struct NewGameView: View {
                                 .foregroundStyle(.primary)
                             Spacer()
                             Image(systemName: "plus.circle")
-                                .foregroundStyle(.indigo)
+                                .foregroundStyle(Color.feltGreen)
                         }
                     }
                 }
@@ -133,7 +133,7 @@ struct NewGameView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.indigo)
+            .tint(.feltGreen)
             .controlSize(.large)
             .disabled(!canStart)
             .padding()
@@ -216,6 +216,6 @@ struct NewGameView: View {
     NavigationStack {
         NewGameView()
     }
-    .tint(.indigo)
+    .tint(.feltGreen)
     .modelContainer(for: [Player.self, Game.self, Round.self, AppSettings.self], inMemory: true)
 }

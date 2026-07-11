@@ -104,7 +104,7 @@ private struct HistoryRow: View {
                 HStack(spacing: 4) {
                     Image(systemName: "star.fill")
                         .font(.caption2)
-                        .foregroundStyle(.yellow)
+                        .foregroundStyle(Color.brassGold)
                     Text(winners.map(\.displayNameSnapshot).joined(separator: " & "))
                         .font(.system(size: winnerLineSize, weight: .bold))
                     Text("\u{00B7}")
@@ -129,6 +129,6 @@ private struct HistoryRow: View {
     NavigationStack {
         HistoryView()
     }
-    .tint(.indigo)
+    .tint(.feltGreen)
     .modelContainer(for: [Player.self, Game.self, Round.self, AppSettings.self], inMemory: true)
 }

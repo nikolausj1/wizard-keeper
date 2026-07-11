@@ -38,7 +38,7 @@ struct HomeView: View {
                     Label("New Game", systemImage: "plus.circle.fill")
                         .font(.body.weight(.semibold))
                 }
-                .tint(.indigo)
+                .tint(.feltGreen)
             }
 
             Section {
@@ -110,7 +110,7 @@ private struct ResumeGameRow: View {
                 .lineLimit(1)
             Text("Round \(game.currentRoundNumber) of \(game.totalRounds)")
                 .font(.subheadline.weight(.semibold).monospacedDigit())
-                .foregroundStyle(.indigo)
+                .foregroundStyle(Color.feltGreen)
         }
         .padding(.vertical, 4)
     }
@@ -120,6 +120,6 @@ private struct ResumeGameRow: View {
     NavigationStack {
         HomeView()
     }
-    .tint(.indigo)
+    .tint(.feltGreen)
     .modelContainer(for: [Player.self, Game.self, Round.self, AppSettings.self], inMemory: true)
 }

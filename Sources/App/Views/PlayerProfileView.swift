@@ -172,6 +172,7 @@ private struct StatCard: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
+        .warmCardShadow()
     }
 }
 
@@ -270,6 +271,6 @@ private struct EditPlayerSheet: View {
     NavigationStack {
         PlayerProfileView(player: Player(name: "Kelly", colorId: 1))
     }
-    .tint(.indigo)
+    .tint(.feltGreen)
     .modelContainer(for: [Player.self, Game.self, Round.self, AppSettings.self], inMemory: true)
 }

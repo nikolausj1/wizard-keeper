@@ -237,6 +237,7 @@ struct ScorepadGridView: View {
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .fill(Color(.secondarySystemGroupedBackground))
                     )
+                    .warmCardShadow()
                     .padding(.horizontal, outerHPadding)
                     .padding(.top, 8)
                 }
@@ -256,8 +257,8 @@ struct ScorepadGridView: View {
         }
     }
 
-    /// One standings-panel row: 34pt rank circle (leader gets the yellow
-    /// tint + yellow number), 20pt bold name with an inline star for the
+    /// One standings-panel row: 34pt rank circle (leader gets the brass-gold
+    /// tint + brass-gold number), 20pt bold name with an inline star for the
     /// leader, a 14pt "Leader"/"X behind" subtitle, a 14pt delta chip, and
     /// the 36pt heavy monospaced total.
     private func standingRow(_ standing: GameStanding) -> some View {
@@ -266,10 +267,10 @@ struct ScorepadGridView: View {
         return HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(standing.isLeader ? Color.yellow.opacity(0.22) : Color(.systemGray6))
+                    .fill(standing.isLeader ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
                 Text("\(standing.rank)")
                     .font(.system(size: rankNumberSize, weight: .bold))
-                    .foregroundStyle(standing.isLeader ? .yellow : .secondary)
+                    .foregroundStyle(standing.isLeader ? Color.brassGold : .secondary)
             }
             .frame(width: rankCircleSize, height: rankCircleSize)
 
@@ -280,7 +281,7 @@ struct ScorepadGridView: View {
                     if standing.isLeader {
                         Image(systemName: "star.fill")
                             .font(.system(size: standingStarSize))
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(Color.brassGold)
                     }
                 }
                 Text(standing.isLeader ? "Leader" : "\(behind) behind")
@@ -297,8 +298,8 @@ struct ScorepadGridView: View {
                         .monospacedDigit()
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
-                        .background(delta >= 0 ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
-                        .foregroundStyle(delta >= 0 ? .green : .red)
+                        .background(delta >= 0 ? Color.feltGreen.opacity(0.14) : Color.terracotta.opacity(0.13))
+                        .foregroundStyle(delta >= 0 ? Color.feltGreen : Color.terracotta)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
                 Text(ScoreFormat.score(standing.total))
@@ -364,7 +365,7 @@ struct ScorepadGridView: View {
                     if leaderIndices.contains(index) {
                         Image(systemName: "star.fill")
                             .font(.system(size: headerStarSize))
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(Color.brassGold)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -408,7 +409,7 @@ struct ScorepadGridView: View {
         }
         .padding(.vertical, 5)
         .padding(.horizontal, 6)
-        .background(tinted ? Color.indigo.opacity(0.12) : Color.clear)
+        .background(tinted ? Color.feltGreen.opacity(0.12) : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: tinted ? 8 : 0, style: .continuous))
         .overlay(alignment: .bottom) {
             Rectangle().fill(Color(.separator).opacity(0.5)).frame(height: 0.5)
@@ -428,7 +429,7 @@ struct ScorepadGridView: View {
                         Text(ScoreFormat.delta(deltas[i]))
                             .font(.system(size: cellValueSize, weight: .bold))
                             .monospacedDigit()
-                            .foregroundStyle(deltas[i] >= 0 ? .green : .red)
+                            .foregroundStyle(deltas[i] >= 0 ? Color.feltGreen : Color.terracotta)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                         Text(ScoreFormat.score(cumulative[i]))
@@ -446,13 +447,13 @@ struct ScorepadGridView: View {
         .buttonStyle(.plain)
     }
 
-    /// The in-progress round: indigo tint, "—" placeholders, and the whole
+    /// The in-progress round: felt-green tint, "—" placeholders, and the whole
     /// row is a tap target into `RoundEntryView` for `game.currentRoundNumber`.
     private func currentRow(roundNumber: Int) -> some View {
         Button {
             navigateToRoundEntry = true
         } label: {
-            rowShell(roundNumber: roundNumber, tinted: true, numberColor: .indigo) {
+            rowShell(roundNumber: roundNumber, tinted: true, numberColor: Color.feltGreen) {
                 ForEach(participants.indices, id: \.self) { _ in
                     Text("—")
                         .font(.system(size: cellValueSize, weight: .bold))
@@ -497,7 +498,7 @@ struct ScorepadGridView: View {
                     if leaderIndices.contains(index) {
                         Image(systemName: "star.fill")
                             .font(.system(size: totalStarSize))
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(Color.brassGold)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)

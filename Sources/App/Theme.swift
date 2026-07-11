@@ -15,22 +15,57 @@ extension ModelContext {
 }
 
 /// The page background used behind every screen's outermost List/ScrollView.
-/// Light mode gets the faintest warm paper shift (#F4F0E8) off pure system
-/// gray, matching `_review/texture-A-paper-whisper.html`'s "Paper Whisper"
-/// variant; dark mode is left byte-for-byte as `.systemGroupedBackground` —
-/// this treatment is light-mode only.
+/// "Warm Table" restyle: light mode is a rich parchment (#EFE6D3, matching
+/// `_review/restyle-E-warm-table.html`'s `--screen-bg`); dark mode is the
+/// "den at night" warmed background (#1E1915) rather than plain
+/// `.systemGroupedBackground`.
 extension Color {
     static let paperBase = Color(uiColor: UIColor { trait in
         trait.userInterfaceStyle == .dark
-            ? .systemGroupedBackground
-            : UIColor(red: 0.957, green: 0.941, blue: 0.910, alpha: 1)
+            ? UIColor(red: 0.118, green: 0.098, blue: 0.082, alpha: 1)
+            : UIColor(red: 0.937, green: 0.902, blue: 0.827, alpha: 1)
+    })
+
+    /// Interactive accent for the "Warm Table" restyle — replaces `.indigo`
+    /// app-wide. Light #2F5D46 (mockup `--felt`), dark #3E7A5C (a lightened
+    /// felt that holds contrast against the #1E1915 den background).
+    static let feltGreen = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.243, green: 0.478, blue: 0.361, alpha: 1)
+            : UIColor(red: 0.184, green: 0.365, blue: 0.275, alpha: 1)
+    })
+
+    /// Miss/negative-score accent — replaces score-semantic `.red`. Light
+    /// #AE4A2C (mockup `--terracotta`), dark #C96F4A (warmed equivalent).
+    static let terracotta = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.788, green: 0.435, blue: 0.290, alpha: 1)
+            : UIColor(red: 0.682, green: 0.290, blue: 0.173, alpha: 1)
+    })
+
+    /// Leader/winner accent — replaces `.yellow`. Light #A0721E (mockup
+    /// `--brass`), dark #C9A053 (lightened brass for legibility on the dark
+    /// den background).
+    static let brassGold = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.788, green: 0.627, blue: 0.325, alpha: 1)
+            : UIColor(red: 0.627, green: 0.447, blue: 0.118, alpha: 1)
+    })
+
+    /// Espresso ink — used ONLY where a view hardcodes a text color today
+    /// (currently just `ScreenHeader`'s title). Everywhere else, system
+    /// `.primary`/`.secondary` stay as-is per the restyle brief. Light
+    /// #2B2118 (mockup `--ink`), dark #EDE4D4.
+    static let espressoInk = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.929, green: 0.894, blue: 0.831, alpha: 1)
+            : UIColor(red: 0.169, green: 0.129, blue: 0.094, alpha: 1)
     })
 }
 
 /// The full page-background treatment: `paperBase` plus, in light mode only,
-/// a barely-there tiled paper-grain texture (3.5% opacity, multiply blend)
-/// over it. Dark mode renders as a flat `paperBase` fill only, so it's
-/// pixel-identical to today's plain system-grouped background. Never touches
+/// a barely-there tiled paper-grain texture (4.5% opacity, multiply blend)
+/// over it. Dark mode renders as a flat `paperBase` fill only. Never touches
 /// cards, rows, chips, or type — see `View.paperBackground()`.
 struct PaperBackground: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -41,12 +76,23 @@ struct PaperBackground: View {
             if colorScheme == .light {
                 Image("PaperGrain")
                     .resizable(resizingMode: .tile)
-                    .opacity(0.035)
+                    .opacity(0.045)
                     .blendMode(.multiply)
                     .allowsHitTesting(false)
             }
         }
         .ignoresSafeArea()
+    }
+}
+
+extension View {
+    /// Soft warm-brown drop shadow for custom-drawn (non-List) cards in the
+    /// "Warm Table" restyle — `FinalResultsView` result rows, `PlayerProfile`
+    /// StatCards, and `ScorepadGridView`'s iPad standings panel. List
+    /// (insetGrouped) rows can't easily take a custom shadow and are left
+    /// alone; the parchment background carries the warmth for those.
+    func warmCardShadow() -> some View {
+        self.shadow(color: Color(red: 0.24, green: 0.16, blue: 0.08).opacity(0.12), radius: 8, x: 0, y: 3)
     }
 }
 
@@ -121,11 +167,11 @@ struct ScreenHeader: View {
             if let eyebrow {
                 Text(eyebrow)
                     .font(.system(size: eyebrowSize, weight: .semibold))
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(Color.feltGreen)
             }
             Text(title)
                 .font(.system(size: titleSize * titleScale / 100, weight: .heavy))
-                .foregroundStyle(.primary)
+                .foregroundStyle(Color.espressoInk)
             if let subtitle {
                 Text(subtitle)
                     .font(.system(size: subtitleSize, weight: .medium))
@@ -158,7 +204,7 @@ struct PrimaryActionButton: View {
                 .frame(height: 50)
         }
         .foregroundStyle(isDisabled ? Color(.tertiaryLabel) : .white)
-        .background(isDisabled ? Color(.systemGray5) : Color.indigo)
+        .background(isDisabled ? Color(.systemGray5) : Color.feltGreen)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .disabled(isDisabled)
     }
@@ -198,13 +244,13 @@ struct SegmentedStepper: View {
             HStack(spacing: 0) {
                 stepButton(systemName: "minus", enabled: minusEnabled, action: onMinus)
                 Rectangle()
-                    .fill(Color.indigo.opacity(0.28))
+                    .fill(Color.feltGreen.opacity(0.28))
                     .frame(width: 1, height: 36)
                 stepButton(systemName: "plus", enabled: plusEnabled, action: onPlus)
             }
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.indigo.opacity(0.12))
+                    .fill(Color.feltGreen.opacity(0.12))
                     .frame(height: 36)
             )
         }
@@ -217,7 +263,7 @@ struct SegmentedStepper: View {
             // Button they'd only pad layout, not the hit target.
             Image(systemName: systemName)
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(.indigo)
+                .foregroundStyle(Color.feltGreen)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }

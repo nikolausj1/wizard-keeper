@@ -43,7 +43,7 @@ COMMON = [(n, n.capitalize()) for n in [
     "paul", "kevin", "brian", "scott", "eric", "ryan", "josh", "andy", "sam", "nick",
     "tony", "adam", "kyle", "tyler", "jack", "mary", "linda", "susan", "karen", "lisa",
     "amy", "sarah", "emily", "emma", "katie", "rachel", "megan", "ashley",
-    "grandma", "grandpa", "mom", "dad",
+    "kelly", "grandma", "grandpa", "mom", "dad",
 ]]
 
 WORDS = {2:"Two",3:"Three",4:"Four",5:"Five",6:"Six",7:"Seven",8:"Eight",9:"Nine",10:"Ten",
@@ -52,6 +52,27 @@ POINTS = {40:"Forty",50:"Fifty",60:"Sixty",70:"Seventy",80:"Eighty",90:"Ninety",
           110:"One hundred ten",120:"One hundred twenty",130:"One hundred thirty",140:"One hundred forty",
           150:"One hundred fifty",160:"One hundred sixty",170:"One hundred seventy",180:"One hundred eighty",
           190:"One hundred ninety",200:"Two hundred",210:"Two hundred ten",220:"Two hundred twenty"}
+
+# --- Broadcast connectives: style -> {intro, trans, outro} -------------
+# Glue for the one-button round broadcast: [intro] insight [trans] insight
+# [trans] insight [outro]. Name-free, number-free, tone-matched per style.
+CONNECTIVES = {
+ 1: {"intro": ["Let's check in on the table!", "Time for the round update!"],
+     "trans": ["Meanwhile...", "And elsewhere...", "There's more, folks..."],
+     "outro": ["Back to the cards!", "Good luck out there, everyone!"]},
+ 2: {"intro": ["Round update, and OH do we have notes!", "Gather 'round — the table has issues!"],
+     "trans": ["It gets better...", "Meanwhile, in less flattering news...", "And ANOTHER thing..."],
+     "outro": ["Deal 'em up — and try to do better!", "Back to the table. Some of you have work to do!"]},
+ 3: {"intro": ["ROUND UPDATE! Somebody's getting called OUT!", "STOP the presses — you need to hear this!"],
+     "trans": ["Oh, we're NOT done...", "But WAIT, there's carnage...", "And meanwhile, folks..."],
+     "outro": ["That's the update! Pray for the bottom of this table!", "Back to the cards — SHOW me something!"]},
+ 4: {"intro": ["Round update — and my GOD, where do I start?!", "Listen up! The table demands accountability!"],
+     "trans": ["Oh, it gets worse...", "And as if that wasn't enough...", "Meanwhile, in the disaster zone..."],
+     "outro": ["Update over. Some of you should reflect on your damn choices!", "Back to it — and for the love of GOD, bid better!"]},
+ 5: {"intro": ["ROUND UPDATE! Buckle the hell up!", "Holy shit, folks, what a round — let's break it down!"],
+     "trans": ["Oh, we are NOT done...", "And it gets messier...", "Meanwhile, in dumpster-fire news..."],
+     "outro": ["That's the damn update! Play better, all of you!", "Back to the table — and NO more shit bids!"]},
+}
 
 # --- Flavor tails: style -> kind -> variants ---------------------------
 # All name-free and number-free; never target age/looks/intelligence.
@@ -145,6 +166,10 @@ def jobs_for_voice():
         for kind, variants in kinds.items():
             for i, line in enumerate(variants):
                 jobs.append((f"tail_{style}_{kind}_{i}.mp3", line))
+    for style, groups in CONNECTIVES.items():
+        for group, variants in groups.items():
+            for i, line in enumerate(variants):
+                jobs.append((f"seg_{style}_{group}_{i}.mp3", line))
     for slug, spoken in COMMON:
         jobs.append((f"name_{slug}.mp3", f"{spoken}!"))
     return jobs

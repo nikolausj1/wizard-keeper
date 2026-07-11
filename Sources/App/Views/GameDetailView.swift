@@ -134,10 +134,10 @@ struct GameDetailView: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(standing.isWinner ? Color.yellow.opacity(0.22) : Color(.systemGray6))
+                    .fill(standing.isWinner ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
                 Text("\(standing.rank)")
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(standing.isWinner ? .yellow : .secondary)
+                    .foregroundStyle(standing.isWinner ? Color.brassGold : .secondary)
             }
             .frame(width: 34, height: 34)
 
@@ -147,7 +147,7 @@ struct GameDetailView: View {
                 if standing.isWinner {
                     Image(systemName: "star.fill")
                         .font(.caption2)
-                        .foregroundStyle(.yellow)
+                        .foregroundStyle(Color.brassGold)
                 }
             }
 
@@ -226,7 +226,7 @@ private struct RoundBreakdownRow: View {
                 Text(ScoreFormat.delta(delta))
                     .font(.system(size: cellDeltaSize, weight: .bold))
                     .monospacedDigit()
-                    .foregroundStyle(delta >= 0 ? .green : .red)
+                    .foregroundStyle(delta >= 0 ? Color.feltGreen : Color.terracotta)
             } else {
                 Text("\u{2013}")
                     .font(.system(size: cellDeltaSize, weight: .bold))
@@ -244,6 +244,6 @@ private struct RoundBreakdownRow: View {
             rulesSnapshot: RulesSnapshot(hookRuleEnabled: false, trickTotalCheckEnabled: true, dealerRotationEnabled: false)
         ))
     }
-    .tint(.indigo)
+    .tint(.feltGreen)
     .modelContainer(for: [Player.self, Game.self, Round.self, AppSettings.self], inMemory: true)
 }

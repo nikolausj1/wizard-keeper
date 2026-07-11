@@ -12,6 +12,10 @@ struct GameView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.modelContext) private var modelContext
 
+    /// Drives the Trends section's Announce/Stop toggle button — observed
+    /// so the label/icon flip live as the broadcast plays and finishes.
+    @ObservedObject private var announcer = AnnouncerPlayer.shared
+
     @ScaledMetric(relativeTo: .body) private var allRoundsLabelSize: CGFloat = 15
     @ScaledMetric(relativeTo: .subheadline) private var allRoundsCountSize: CGFloat = 14
     @ScaledMetric(relativeTo: .subheadline) private var dealHelperSize: CGFloat = 14
@@ -93,6 +97,20 @@ struct GameView: View {
         return GameInsights.insights(players: lines, maxCount: 3)
     }
 
+    /// Toggles the Trends section's single table-wide broadcast: reads the
+    /// persisted announcer voice/style and plays (or stops) the sequence
+    /// for all current `trendInsights` via `AnnouncerPlayer`. Missing clips
+    /// (generation may still be running) are skipped silently by
+    /// `AnnouncerPlayer`.
+    private func toggleAnnounce() {
+        guard let settings = try? AppSettings.fetchOrCreate(in: modelContext) else { return }
+        announcer.toggleRoundUpdate(
+            insights: trendInsights,
+            voice: settings.announcerVoiceSelection,
+            style: settings.announcerStyleSelection
+        )
+    }
+
     private var inProgressBody: some View {
         List {
             Section {
@@ -116,7 +134,21 @@ struct GameView: View {
                         InsightRow(insight: insight)
                     }
                 } header: {
-                    Text("Trends")
+                    HStack {
+                        Text("Trends")
+                        Spacer()
+                        Button(action: toggleAnnounce) {
+                            Label(
+                                announcer.isPlaying ? "Stop" : "Announce",
+                                systemImage: announcer.isPlaying ? "stop.fill" : "speaker.wave.2.fill"
+                            )
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.feltGreen)
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
 
@@ -228,10 +260,10 @@ struct GameView: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(standing.isLeader ? Color.yellow.opacity(0.22) : Color(.systemGray6))
+                        .fill(standing.isLeader ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
                     Text("\(standing.rank)")
                         .font(.system(size: rankNumberSize, weight: .bold))
-                        .foregroundStyle(standing.isLeader ? .yellow : .secondary)
+                        .foregroundStyle(standing.isLeader ? Color.brassGold : .secondary)
                 }
                 .frame(width: rankCircleSize, height: rankCircleSize)
 
@@ -242,7 +274,7 @@ struct GameView: View {
                         if standing.isLeader {
                             Image(systemName: "star.fill")
                                 .font(.system(size: starSize))
-                                .foregroundStyle(.yellow)
+                                .foregroundStyle(Color.brassGold)
                         }
                     }
                     Text(standing.isLeader ? "Leader" : "\(behind) behind")
@@ -259,8 +291,8 @@ struct GameView: View {
                             .monospacedDigit()
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(delta >= 0 ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
-                            .foregroundStyle(delta >= 0 ? .green : .red)
+                            .background(delta >= 0 ? Color.feltGreen.opacity(0.14) : Color.terracotta.opacity(0.13))
+                            .foregroundStyle(delta >= 0 ? Color.feltGreen : Color.terracotta)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     Text(ScoreFormat.score(standing.total))
@@ -276,13 +308,12 @@ struct GameView: View {
         }
     }
 
-    /// One row in the Trends section: an indigo SF Symbol plus
-    /// `GameInsights.Insight.text`, replacing the old per-round delta rows
-    /// (meaningless without names) with named mid-game trends/outliers.
+    /// One row in the Trends section: a felt-green SF Symbol plus
+    /// `GameInsights.Insight.text`. Per-row playback was replaced by a
+    /// single table-wide broadcast button on the section header (see
+    /// `toggleAnnounce`), so this row is icon + text only again.
     private struct InsightRow: View {
         let insight: GameInsights.Insight
-
-        @Environment(\.modelContext) private var modelContext
 
         @ScaledMetric(relativeTo: .body) private var iconWidth: CGFloat = 20
         @ScaledMetric(relativeTo: .body) private var textSize: CGFloat = 15
@@ -290,34 +321,14 @@ struct GameView: View {
         var body: some View {
             HStack(spacing: 10) {
                 Image(systemName: insight.icon)
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(Color.feltGreen)
                     .frame(width: iconWidth)
                 Text(insight.text)
                     .font(.system(size: textSize, weight: .medium))
                     .foregroundStyle(.primary)
-                Spacer(minLength: 8)
-                Button(action: announce) {
-                    Image(systemName: "speaker.wave.2.fill")
-                        .foregroundStyle(.indigo)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
             }
             .padding(.vertical, 6)
             .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-        }
-
-        /// Reads the persisted announcer voice/style and plays the clip
-        /// sequence for this insight. Missing clips (generation may still
-        /// be running) are skipped silently by `AnnouncerPlayer`.
-        private func announce() {
-            guard let settings = try? AppSettings.fetchOrCreate(in: modelContext) else { return }
-            AnnouncerPlayer.shared.announce(
-                insight: insight,
-                voice: settings.announcerVoiceSelection,
-                style: settings.announcerStyleSelection
-            )
         }
     }
 }
