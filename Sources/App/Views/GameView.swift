@@ -152,7 +152,7 @@ struct GameView: View {
             // left panel uses (see `AnnounceHeroButton` in Theme.swift).
             if !displayedInsights.isEmpty {
                 Section {
-                    AnnounceHeroButton(isPlaying: announcer.isPlaying, action: toggleAnnounce)
+                    AnnounceHeroButton(isPlaying: announcer.isPlaying, roundNumber: completedRoundCount, action: toggleAnnounce)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)

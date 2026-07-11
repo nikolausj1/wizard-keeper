@@ -440,6 +440,10 @@ struct AnnounceHeroButton: View {
     // stored inputs are unchanged, leaving stale palette colors.
     @ObservedObject private var themeManager = ThemeManager.shared
     var isPlaying: Bool
+    /// The round the commentary covers — the LAST COMPLETED round (the
+    /// broadcast recaps what just happened). Pass 0 before any round has
+    /// been completed; the label then drops the number (pregame call).
+    var roundNumber: Int = 0
     var action: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -450,10 +454,14 @@ struct AnnounceHeroButton: View {
     /// reduced motion.
     private var pulsing: Bool { !isPlaying && !reduceMotion }
 
+    private var idleTitle: String {
+        roundNumber > 0 ? "Play Round \(roundNumber) Commentary" : "Play Commentary"
+    }
+
     var body: some View {
         Button(action: action) {
             Label(
-                isPlaying ? "Stop" : "Play Round Commentary",
+                isPlaying ? "Stop" : idleTitle,
                 systemImage: isPlaying ? "stop.fill" : "speaker.wave.2.fill"
             )
             .font(.system(size: titleSize, weight: .bold))

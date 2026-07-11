@@ -396,7 +396,7 @@ struct ScorepadGridView: View {
             .padding(.top, 8)
 
             if !displayedInsights.isEmpty {
-                AnnounceHeroButton(isPlaying: announcer.isPlaying, action: toggleAnnounce)
+                AnnounceHeroButton(isPlaying: announcer.isPlaying, roundNumber: completedRoundCount, action: toggleAnnounce)
                     .padding(.horizontal, outerHPadding)
                     .padding(.top, 10)
             }

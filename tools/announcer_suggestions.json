@@ -1,1250 +1,1218 @@
 {
  "tail_1_leadChange_0": {
   "text": "A NEW leader at the table!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_leadChange_1": {
   "text": "The top spot changes hands!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_nosedive_0": {
   "text": "That one left a mark!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_nosedive_1": {
   "text": "A tough, tough round!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_everybodyHit_0": {
   "text": "EVERYBODY hit! What a round!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_everybodyHit_1": {
-  "text": "A clean sweep \u2014 everyone landed it!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "A clean sweep — everyone landed it!",
+  "suggestion": "Tight — keep."
  },
  "tail_1_carnage_0": {
-  "text": "What a round \u2014 almost nobody survived!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "What a round — almost nobody survived!",
+  "suggestion": "Tight — keep."
  },
  "tail_1_carnage_1": {
   "text": "The deck showed no mercy!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_tightRace_0": {
   "text": "It is NECK and NECK at the top!",
-  "suggestion": "Trim to: 'NECK and NECK up top!' \u2014 same punch, fewer words."
+  "suggestion": "Trim to: 'NECK and NECK up top!' — same punch, fewer words."
  },
  "tail_1_tightRace_1": {
   "text": "This one's coming down to the wire!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_kickoff_0": {
-  "text": "Shuffle up and deal \u2014 let's play!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Shuffle up and deal — let's play!",
+  "suggestion": "Tight — keep."
  },
  "tail_1_kickoff_1": {
-  "text": "Round one \u2014 here we go!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Round one — here we go!",
+  "suggestion": "Tight — keep."
  },
  "tail_1_chasing_0": {
   "text": "Right on the leader's heels!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_chasing_1": {
   "text": "The chase is ON!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_chasing_2": {
   "text": "Within striking distance!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_chasing_3": {
   "text": "Keeping the pressure on!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_trailing_0": {
-  "text": "Bringing up the rear \u2014 plenty of game left!",
-  "suggestion": "Trim to: 'Bringing up the rear, folks!' \u2014 drops the redundant 'plenty of game left.'"
+  "text": "Bringing up the rear — plenty of game left!",
+  "suggestion": "Trim to: 'Bringing up the rear, folks!' — drops the redundant 'plenty of game left.'"
  },
  "tail_1_trailing_1": {
   "text": "Last place... for now!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_trailing_2": {
   "text": "Room to grow, friend!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_trailing_3": {
   "text": "The comeback starts now!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_leading_0": {
   "text": "Out in front and cruising!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_leading_1": {
   "text": "Top of the pile, folks!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_leading_2": {
   "text": "Setting the pace so far!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_leading_3": {
   "text": "The one to catch, folks!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_reigningChamp_0": {
   "text": "The reigning champion is at the table!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_reigningChamp_1": {
   "text": "Last game's winner is BACK!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_freshGame_0": {
   "text": "A fresh scorepad! Anything can happen!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_freshGame_1": {
-  "text": "New game, clean slate \u2014 good luck, everyone!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "New game, clean slate — good luck, everyone!",
+  "suggestion": "Tight — keep."
  },
  "tail_1_perfect_0": {
   "text": "Still PERFECT! Not a single miss all game!",
-  "suggestion": "Trim to: 'Still PERFECT! Never missed!' \u2014 same punch, half the words."
+  "suggestion": "Trim to: 'Still PERFECT! Never missed!' — same punch, half the words."
  },
  "tail_1_perfect_1": {
   "text": "Flawless! The bids just keep landing!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_perfect_2": {
   "text": "A spotless record so far!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_perfect_3": {
   "text": "Not one wrong call yet!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_hotStreak_0": {
   "text": "On FIRE! Another bid, another hit!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_hotStreak_1": {
-  "text": "The streak continues \u2014 they simply do not miss!",
-  "suggestion": "Trim to: 'The streak continues \u2014 they don't miss!' \u2014 cuts 'simply.'"
+  "text": "The streak continues — they simply do not miss!",
+  "suggestion": "Trim to: 'The streak continues — they don't miss!' — cuts 'simply.'"
  },
  "tail_1_hotStreak_2": {
   "text": "Locked in right NOW!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_hotStreak_3": {
   "text": "Everything's landing!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_coldStreak_0": {
   "text": "The cold streak continues. Thoughts and prayers.",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_coldStreak_1": {
   "text": "Ice cold! Somebody grab a blanket!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_coldStreak_2": {
   "text": "Another miss! The wheels are wobbling, folks.",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_coldStreak_3": {
   "text": "The luck has GOT to turn soon.",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_coldStreak_4": {
-  "text": "A rough patch, folks \u2014 hang tight.",
-  "suggestion": "Tight \u2014 keep."
+  "text": "A rough patch, folks — hang tight.",
+  "suggestion": "Tight — keep."
  },
  "tail_1_bigRound_0": {
   "text": "BOOM! The round of the game!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_bigRound_1": {
   "text": "A MASSIVE round! The scorepad is smoking!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_zeroSpecialist_0": {
   "text": "Another perfect zero! An artist at work!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_zeroSpecialist_1": {
-  "text": "Bid nothing, took nothing \u2014 poetry, folks!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Bid nothing, took nothing — poetry, folks!",
+  "suggestion": "Tight — keep."
  },
  "tail_1_boldestBidder_0": {
-  "text": "The boldest bidder at the table \u2014 no fear!",
-  "suggestion": "Trim to: 'Boldest bid at the table \u2014 no fear!' \u2014 drops the redundant article."
+  "text": "The boldest bidder at the table — no fear!",
+  "suggestion": "Trim to: 'Boldest bid at the table — no fear!' — drops the redundant article."
  },
  "tail_1_boldestBidder_1": {
   "text": "Swinging BIG again!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_winner_0": {
   "text": "That's the GAME! We have a CHAMPION!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_1_winner_1": {
-  "text": "It's all over \u2014 what a performance!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "It's all over — what a performance!",
+  "suggestion": "Tight — keep."
  },
  "tail_1_lastPlace_0": {
-  "text": "And hey \u2014 somebody had to come in last.",
-  "suggestion": "Trim to: 'Somebody had to come in last!' \u2014 drops the throat-clearing 'And hey.'"
+  "text": "And hey — somebody had to come in last.",
+  "suggestion": "Trim to: 'Somebody had to come in last!' — drops the throat-clearing 'And hey.'"
  },
  "tail_1_lastPlace_1": {
   "text": "Better luck next game, friend.",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_leadChange_0": {
   "text": "NEW leader! Act surprised, everyone!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_leadChange_1": {
   "text": "There's been a coup at the top!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_nosedive_0": {
   "text": "That sound you hear is a score screaming!",
-  "suggestion": "Trim to: 'That sound? A score, screaming!' \u2014 same joke, fewer words."
+  "suggestion": "Trim to: 'That sound? A score, screaming!' — same joke, fewer words."
  },
  "tail_2_nosedive_1": {
   "text": "Ouch. OUCH.",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_everybodyHit_0": {
   "text": "Everybody hit?! BORING! Where's the drama?!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_everybodyHit_1": {
   "text": "All hits! Suspiciously competent!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_carnage_0": {
   "text": "CARNAGE! The deck took hostages!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_carnage_1": {
   "text": "A massacre! Somebody call for help!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_tightRace_0": {
   "text": "Photo finish territory, people!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_tightRace_1": {
   "text": "The leader can hear footsteps!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_kickoff_0": {
   "text": "Deal 'em up. Let's see who disappoints first!",
-  "suggestion": "Trim to: 'Deal 'em up \u2014 who disappoints first?' \u2014 cuts 'let's see.'"
+  "suggestion": "Trim to: 'Deal 'em up — who disappoints first?' — cuts 'let's see.'"
  },
  "tail_2_kickoff_1": {
   "text": "Round one! Places, everyone!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_chasing_0": {
-  "text": "Closing in \u2014 the leader should be nervous!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Closing in — the leader should be nervous!",
+  "suggestion": "Tight — keep."
  },
  "tail_2_chasing_1": {
   "text": "Hot on the trail!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_chasing_2": {
   "text": "Plotting a takeover as we speak!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_chasing_3": {
   "text": "Smelling blood in the water!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_trailing_0": {
   "text": "Holding down last place like it's a job!",
-  "suggestion": "Trim to: 'Holding down last place \u2014 full time!' \u2014 same joke, tighter."
+  "suggestion": "Trim to: 'Holding down last place — full time!' — same joke, tighter."
  },
  "tail_2_trailing_1": {
   "text": "The basement has a new tenant!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_trailing_2": {
   "text": "Someone start a rescue fund!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_trailing_3": {
   "text": "It's called building suspense, folks!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_leading_0": {
-  "text": "Leading the pack \u2014 for now!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Leading the pack — for now!",
+  "suggestion": "Tight — keep."
  },
  "tail_2_leading_1": {
   "text": "First place! Enjoy it while it lasts!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_leading_2": {
   "text": "Enjoying the view from the top!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_leading_3": {
-  "text": "Comfortably ahead \u2014 for now!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Comfortably ahead — for now!",
+  "suggestion": "Tight — keep."
  },
  "tail_2_reigningChamp_0": {
   "text": "The champ is back to defend the crown!",
-  "suggestion": "Trim to: 'Back to defend the crown!' \u2014 drops the redundant 'the champ is.'"
+  "suggestion": "Trim to: 'Back to defend the crown!' — drops the redundant 'the champ is.'"
  },
  "tail_2_reigningChamp_1": {
-  "text": "Reigning champion \u2014 target on their back!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Reigning champion — target on their back!",
+  "suggestion": "Tight — keep."
  },
  "tail_2_freshGame_0": {
   "text": "Clean slate! Time for some questionable bids!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_freshGame_1": {
   "text": "New game! Zero points, zero excuses!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_perfect_0": {
   "text": "Still perfect! Save some glory for the rest of the table!",
-  "suggestion": "Trim to: 'Still perfect! Save some glory, folks!' \u2014 cuts 'for the rest of the table.'"
+  "suggestion": "Trim to: 'Still perfect! Save some glory, folks!' — cuts 'for the rest of the table.'"
  },
  "tail_2_perfect_1": {
   "text": "Perfection! This is getting suspicious, folks!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_perfect_2": {
-  "text": "Flawless \u2014 and just a little smug about it!",
-  "suggestion": "Trim to: 'Flawless \u2014 and a little smug!' \u2014 drops 'just... about it.'"
+  "text": "Flawless — and just a little smug about it!",
+  "suggestion": "Trim to: 'Flawless — and a little smug!' — drops 'just... about it.'"
  },
  "tail_2_perfect_3": {
   "text": "Perfect record! The audacity!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_hotStreak_0": {
-  "text": "Another hit! Leave some for everybody else!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Red hot! The table is in TROUBLE!",
+  "suggestion": "Tight — keep."
  },
  "tail_2_hotStreak_1": {
-  "text": "Red hot! The table is in TROUBLE!",
-  "suggestion": "Tight \u2014 keep."
- },
- "tail_2_hotStreak_2": {
-  "text": "Somebody check for magnets in those cards!",
-  "suggestion": "Tight \u2014 keep."
- },
- "tail_2_hotStreak_3": {
-  "text": "Untouchable right now \u2014 annoyingly so!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Untouchable right now — annoyingly so!",
+  "suggestion": "Tight — keep."
  },
  "tail_2_coldStreak_0": {
-  "text": "Speedrunning last place, folks!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "The confidence and the scorecard are no longer on speaking terms!",
+  "suggestion": "Trim to: 'Confidence and scorecard aren't speaking!' — same joke, way fewer words. Also duplicates the 'not on speaking terms' gag used in variant 3 — if kept, swap variant 3 for something fresh."
  },
  "tail_2_coldStreak_1": {
-  "text": "The confidence and the scorecard are no longer on speaking terms!",
-  "suggestion": "Trim to: 'Confidence and scorecard aren't speaking!' \u2014 same joke, way fewer words. Also duplicates the 'not on speaking terms' gag used in variant 3 \u2014 if kept, swap variant 3 for something fresh."
+  "text": "Another miss! Hide the scorecard from the children!",
+  "suggestion": "Trim to: 'Another miss! Hide the scorecard, kids!' — same gag, fewer words."
  },
  "tail_2_coldStreak_2": {
-  "text": "Another miss! Hide the scorecard from the children!",
-  "suggestion": "Trim to: 'Another miss! Hide the scorecard, kids!' \u2014 same gag, fewer words."
+  "text": "The bids and the cards are not on speaking terms!",
+  "suggestion": "Similar to variant 1 — both use the 'not on speaking terms' joke. Consider replacing with: 'That bid filed for divorce from reality!'"
  },
  "tail_2_coldStreak_3": {
-  "text": "The bids and the cards are not on speaking terms!",
-  "suggestion": "Similar to variant 1 \u2014 both use the 'not on speaking terms' joke. Consider replacing with: 'That bid filed for divorce from reality!'"
- },
- "tail_2_coldStreak_4": {
   "text": "Cold enough to see your breath over there!",
-  "suggestion": "Trim to: 'Cold enough to see your breath!' \u2014 drops 'over there.'"
+  "suggestion": "Trim to: 'Cold enough to see your breath!' — drops 'over there.'"
  },
  "tail_2_bigRound_0": {
   "text": "A monster round! Show-off.",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_bigRound_1": {
   "text": "Massive points! Absolutely rude!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_zeroSpecialist_0": {
   "text": "Another zero! Doing nothing has never looked so good!",
-  "suggestion": "Trim to: 'Another zero! Doing nothing looks GOOD!' \u2014 cuts 'has never... so.'"
+  "suggestion": "Trim to: 'Another zero! Doing nothing looks GOOD!' — cuts 'has never... so.'"
  },
  "tail_2_zeroSpecialist_1": {
   "text": "Zero called, zero taken. Menace behavior!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_boldestBidder_0": {
   "text": "Huge bid AGAIN! Confidence level: unearned!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_boldestBidder_1": {
   "text": "The audacity is off the charts!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_2_winner_0": {
   "text": "It's OVER! Act like you've been here before!",
-  "suggestion": "Trim to: 'It's OVER! Act like you've been here!' \u2014 drops trailing 'before.'"
+  "suggestion": "Trim to: 'It's OVER! Act like you've been here!' — drops trailing 'before.'"
  },
  "tail_2_winner_1": {
-  "text": "The winner! Everyone else \u2014 take notes!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "The winner! Everyone else — take notes!",
+  "suggestion": "Tight — keep."
  },
  "tail_2_lastPlace_0": {
-  "text": "Dead last! But hey \u2014 great snacks tonight.",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Dead last! But hey — great snacks tonight.",
+  "suggestion": "Tight — keep."
  },
  "tail_2_lastPlace_1": {
   "text": "Last place! We've alerted the authorities.",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_leadChange_0": {
   "text": "A HOSTILE TAKEOVER at the top!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_leadChange_1": {
   "text": "DETHRONED! There's a new ruler!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_nosedive_0": {
   "text": "A collapse of HISTORIC proportions!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_nosedive_1": {
   "text": "That wasn't a round, that was a DEMOLITION!",
-  "suggestion": "Trim to: 'That wasn't a round \u2014 a DEMOLITION!' \u2014 cuts the repeated 'that was.'"
+  "suggestion": "Trim to: 'That wasn't a round — a DEMOLITION!' — cuts the repeated 'that was.'"
  },
  "tail_3_everybodyHit_0": {
   "text": "A PERFECT round?! Who ARE you people?!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_everybodyHit_1": {
   "text": "Everybody hit! I'm genuinely SHOCKED!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_carnage_0": {
   "text": "ABSOLUTE CARNAGE! No survivors!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_carnage_1": {
   "text": "The deck committed CRIMES that round!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_tightRace_0": {
   "text": "A KNIFE FIGHT at the top of the table!",
-  "suggestion": "Trim to: 'A KNIFE FIGHT at the top!' \u2014 drops 'of the table.'"
+  "suggestion": "Trim to: 'A KNIFE FIGHT at the top!' — drops 'of the table.'"
  },
  "tail_3_tightRace_1": {
-  "text": "Nobody breathe \u2014 this is TOO close!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Nobody breathe — this is TOO close!",
+  "suggestion": "Tight — keep."
  },
  "tail_3_kickoff_0": {
-  "text": "Shuffle up \u2014 the CARNAGE begins NOW!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Shuffle up — the CARNAGE begins NOW!",
+  "suggestion": "Tight — keep."
  },
  "tail_3_kickoff_1": {
   "text": "Round ONE! Let the chaos COMMENCE!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_chasing_0": {
   "text": "The hunt is ON! Nowhere to hide!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_chasing_1": {
   "text": "Breathing down the leader's NECK!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_chasing_2": {
   "text": "The predator has the scent!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_chasing_3": {
-  "text": "Closing FAST \u2014 someone warn the leader!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Closing FAST — someone warn the leader!",
+  "suggestion": "Tight — keep."
  },
  "tail_3_trailing_0": {
   "text": "ANCHORED to the bottom of this table!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_trailing_1": {
   "text": "Last place and digging DEEPER!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_trailing_2": {
   "text": "The basement is FULLY furnished now!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_trailing_3": {
-  "text": "Bolted to last place \u2014 BOLTED!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Bolted to last place — BOLTED!",
+  "suggestion": "Tight — keep."
  },
  "tail_3_leading_0": {
   "text": "DOMINATING! Somebody do something!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_leading_1": {
   "text": "On TOP and rubbing it in!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_leading_2": {
   "text": "RUNNING AWAY with it!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_leading_3": {
-  "text": "KING of the mountain \u2014 for now!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "KING of the mountain — for now!",
+  "suggestion": "Tight — keep."
  },
  "tail_3_reigningChamp_0": {
   "text": "The CHAMPION walks among you! BOW!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_reigningChamp_1": {
-  "text": "Back to defend the title \u2014 and talking TRASH!",
-  "suggestion": "Trim to: 'Back to defend the title \u2014 talking TRASH!' \u2014 drops the 'and.'"
+  "text": "Back to defend the title — and talking TRASH!",
+  "suggestion": "Trim to: 'Back to defend the title — talking TRASH!' — drops the 'and.'"
  },
  "tail_3_freshGame_0": {
   "text": "A NEW battle begins! May the odds ignore your history!",
-  "suggestion": "Trim to: 'A NEW battle! Forget your history!' \u2014 cuts 'begins... may the odds ignore.'"
+  "suggestion": "Trim to: 'A NEW battle! Forget your history!' — cuts 'begins... may the odds ignore.'"
  },
  "tail_3_freshGame_1": {
-  "text": "Fresh scorepad \u2014 carnage incoming!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Fresh scorepad — carnage incoming!",
+  "suggestion": "Tight — keep."
  },
  "tail_3_perfect_0": {
   "text": "PERFECT AGAIN! Everyone else can GO HOME! It's OVER!",
-  "suggestion": "Trim to: 'PERFECT AGAIN! Everyone else, GO HOME!' \u2014 cuts the redundant 'It's OVER!' tack-on."
+  "suggestion": "Trim to: 'PERFECT AGAIN! Everyone else, GO HOME!' — cuts the redundant 'It's OVER!' tack-on."
  },
  "tail_3_perfect_1": {
-  "text": "Not playing cards \u2014 committing ROBBERY!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Not playing cards — committing ROBBERY!",
+  "suggestion": "Tight — keep."
  },
  "tail_3_perfect_2": {
   "text": "Machine-like PRECISION!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_perfect_3": {
-  "text": "Still flawless \u2014 it's getting SCARY!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Still flawless — it's getting SCARY!",
+  "suggestion": "Tight — keep."
  },
  "tail_3_hotStreak_0": {
   "text": "They simply CANNOT be stopped! This is a HOSTILE TAKEOVER!",
-  "suggestion": "Trim to: 'They CANNOT be stopped! A HOSTILE TAKEOVER!' \u2014 cuts 'simply' and 'this is.'"
+  "suggestion": "Trim to: 'They CANNOT be stopped! A HOSTILE TAKEOVER!' — cuts 'simply' and 'this is.'"
  },
  "tail_3_hotStreak_1": {
   "text": "Another one! Have MERCY on this table!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_hotStreak_2": {
   "text": "A RAMPAGE! No one is safe!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_hotStreak_3": {
   "text": "Merciless! Absolutely MERCILESS!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_coldStreak_0": {
   "text": "I have seen CAR CRASHES with better outcomes!",
-  "suggestion": "Trim to: 'I've seen CAR CRASHES with better outcomes!' \u2014 contracts 'I have' to 'I've.'"
+  "suggestion": "Trim to: 'I've seen CAR CRASHES with better outcomes!' — contracts 'I have' to 'I've.'"
  },
  "tail_3_coldStreak_1": {
   "text": "The deck is just BULLYING them at this point!",
-  "suggestion": "Trim to: 'The deck is just BULLYING them now!' \u2014 swaps 'at this point' for 'now.'"
+  "suggestion": "Trim to: 'The deck is just BULLYING them now!' — swaps 'at this point' for 'now.'"
  },
  "tail_3_coldStreak_2": {
   "text": "A collapse in REAL TIME, people!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_coldStreak_3": {
-  "text": "Someone take the scorecard away \u2014 this is a CRIME SCENE!",
-  "suggestion": "Trim to: 'Someone tape off this CRIME SCENE!' \u2014 cuts 'take the scorecard away... this is.'"
+  "text": "Someone take the scorecard away — this is a CRIME SCENE!",
+  "suggestion": "Trim to: 'Someone tape off this CRIME SCENE!' — cuts 'take the scorecard away... this is.'"
  },
  "tail_3_coldStreak_4": {
   "text": "An absolute FREEFALL, people!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_coldStreak_5": {
   "text": "The wheels came OFF three exits ago!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_bigRound_0": {
-  "text": "That wasn't a round \u2014 that was a STATEMENT!",
-  "suggestion": "Trim to: 'That wasn't a round \u2014 a STATEMENT!' \u2014 cuts the repeated 'that was.'"
+  "text": "That wasn't a round — that was a STATEMENT!",
+  "suggestion": "Trim to: 'That wasn't a round — a STATEMENT!' — cuts the repeated 'that was.'"
  },
  "tail_3_bigRound_1": {
   "text": "DETONATION! The whole table felt that one!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_zeroSpecialist_0": {
   "text": "Another zero! Cold. Blooded. ASSASSIN!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_zeroSpecialist_1": {
   "text": "Doing NOTHING and getting PAID! Criminal!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_boldestBidder_0": {
   "text": "The audacity! The HUBRIS! The inevitable DISASTER!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_boldestBidder_1": {
   "text": "Betting the farm AGAIN! Somebody stop them!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_winner_0": {
   "text": "TOTAL DOMINATION! The rest of you were DECORATION!",
-  "suggestion": "Trim to: 'TOTAL DOMINATION! The rest were DECORATION!' \u2014 drops 'of you.'"
+  "suggestion": "Trim to: 'TOTAL DOMINATION! The rest were DECORATION!' — drops 'of you.'"
  },
  "tail_3_winner_1": {
   "text": "A MASSACRE! Frame this scorecard!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_3_lastPlace_0": {
   "text": "Last place! We are still LOOKING for the strategy, folks!",
-  "suggestion": "Trim to: 'Last place! Still looking for a strategy!' \u2014 cuts 'we are... folks.'"
+  "suggestion": "Trim to: 'Last place! Still looking for a strategy!' — cuts 'we are... folks.'"
  },
  "tail_3_lastPlace_1": {
   "text": "Dead last! The announcer's union says I don't have to talk about it!",
-  "suggestion": "Trim to: 'Dead last! My union won't let me elaborate!' \u2014 this was the single wordiest tail in the whole set (13 words); cuts it nearly in half."
+  "suggestion": "Trim to: 'Dead last! My union won't let me elaborate!' — this was the single wordiest tail in the whole set (13 words); cuts it nearly in half."
  },
  "tail_4_leadChange_0": {
-  "text": "The throne has been STOLEN \u2014 deal with it!",
-  "suggestion": "Trim to: 'The throne got STOLEN \u2014 deal with it!' \u2014 'got' instead of 'has been.'"
+  "text": "The throne has been STOLEN — deal with it!",
+  "suggestion": "Trim to: 'The throne got STOLEN — deal with it!' — 'got' instead of 'has been.'"
  },
  "tail_4_leadChange_1": {
   "text": "New leader! The old one should be embarrassed!",
-  "suggestion": "Trim to: 'New leader! The old one's embarrassed!' \u2014 contracts 'should be' out entirely."
+  "suggestion": "Trim to: 'New leader! The old one's embarrassed!' — contracts 'should be' out entirely."
  },
  "tail_4_nosedive_0": {
   "text": "Good LORD, what a collapse!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_nosedive_1": {
-  "text": "Somebody check on that score \u2014 it's not moving!",
-  "suggestion": "Trim to: 'Somebody check that score \u2014 it's not moving!' \u2014 drops 'on.'"
+  "text": "Somebody check on that score — it's not moving!",
+  "suggestion": "Trim to: 'Somebody check that score — it's not moving!' — drops 'on.'"
  },
  "tail_4_everybodyHit_0": {
   "text": "Everyone hit?! Fine. FINE. Show-offs, all of you!",
-  "suggestion": "Trim to: 'Everyone hit?! Fine. Show-offs, all of you!' \u2014 cuts the repeated 'FINE.'"
+  "suggestion": "Trim to: 'Everyone hit?! Fine. Show-offs, all of you!' — cuts the repeated 'FINE.'"
  },
  "tail_4_everybodyHit_1": {
   "text": "All hits! Who let the table get good?!",
-  "suggestion": "Trim to: 'All hits?! Who let y'all get good?!' \u2014 'y'all' replaces 'the table.'"
+  "suggestion": "Trim to: 'All hits?! Who let y'all get good?!' — 'y'all' replaces 'the table.'"
  },
  "tail_4_carnage_0": {
   "text": "A damn BLOODBATH! Avert your eyes!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_carnage_1": {
   "text": "The deck said NO to everyone tonight!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_tightRace_0": {
   "text": "Too close! Somebody's heart is getting broken!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_tightRace_1": {
   "text": "The margin is INSULTINGLY thin!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_kickoff_0": {
-  "text": "Deal the damn cards \u2014 destiny is waiting!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Deal the damn cards — destiny is waiting!",
+  "suggestion": "Tight — keep."
  },
  "tail_4_kickoff_1": {
   "text": "Round one! Try not to blow it immediately!",
-  "suggestion": "Trim to: 'Round one! Try not to blow it!' \u2014 drops 'immediately.'"
+  "suggestion": "Trim to: 'Round one! Try not to blow it!' — drops 'immediately.'"
  },
  "tail_4_chasing_0": {
-  "text": "Coming for the throne \u2014 and the leader KNOWS it!",
-  "suggestion": "Trim to: 'Coming for the throne \u2014 leader KNOWS it!' \u2014 drops 'and the.'"
+  "text": "Coming for the throne — and the leader KNOWS it!",
+  "suggestion": "Trim to: 'Coming for the throne — leader KNOWS it!' — drops 'and the.'"
  },
  "tail_4_chasing_1": {
   "text": "The gap is shrinking, people! PANIC!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_chasing_2": {
   "text": "Hunting the leader like rent is due!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_chasing_3": {
   "text": "One good round from a damn coup!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_trailing_0": {
-  "text": "Dead last \u2014 somebody stage a damn rescue!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Dead last — somebody stage a damn rescue!",
+  "suggestion": "Tight — keep."
  },
  "tail_4_trailing_1": {
   "text": "The basement called. They want rent!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_trailing_2": {
   "text": "The basement has their mail forwarded now!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_trailing_3": {
-  "text": "Last place called \u2014 it's getting crowded down there!",
-  "suggestion": "Trim to: 'Last place called \u2014 it's getting crowded!' \u2014 drops 'down there.'"
+  "text": "Last place called — it's getting crowded down there!",
+  "suggestion": "Trim to: 'Last place called — it's getting crowded!' — drops 'down there.'"
  },
  "tail_4_leading_0": {
   "text": "Leading, and frankly? Insufferable about it!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_leading_1": {
   "text": "First place! The rest of you should be embarrassed!",
-  "suggestion": "Trim to: 'First place! The rest of you \u2014 yikes!' \u2014 cuts 'should be embarrassed' for a punchier tag."
+  "suggestion": "Trim to: 'First place! The rest of you — yikes!' — cuts 'should be embarrassed' for a punchier tag."
  },
  "tail_4_leading_2": {
   "text": "On top and rubbing everyone's nose in it!",
-  "suggestion": "Trim to: 'On top and rubbing it in hard!' \u2014 drops 'everyone's nose.'"
+  "suggestion": "Trim to: 'On top and rubbing it in hard!' — drops 'everyone's nose.'"
  },
  "tail_4_leading_3": {
   "text": "Leading like it's a damn birthright!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_reigningChamp_0": {
-  "text": "The champ is HERE \u2014 act like it matters, people!",
-  "suggestion": "Trim to: 'The champ is HERE \u2014 act like it!' \u2014 drops trailing 'people' and 'matters.'"
+  "text": "The champ is HERE — act like it matters, people!",
+  "suggestion": "Trim to: 'The champ is HERE — act like it!' — drops trailing 'people' and 'matters.'"
  },
  "tail_4_reigningChamp_1": {
   "text": "Defending champion! Somebody take them down a damn peg!",
-  "suggestion": "Trim to: 'Defending champion! Somebody take them down!' \u2014 cuts 'a damn peg.'"
+  "suggestion": "Trim to: 'Defending champion! Somebody take them down!' — cuts 'a damn peg.'"
  },
  "tail_4_freshGame_0": {
   "text": "New game! Try not to embarrass yourselves this time!",
-  "suggestion": "Trim to: 'New game! Try not to embarrass yourselves!' \u2014 drops 'this time.'"
+  "suggestion": "Trim to: 'New game! Try not to embarrass yourselves!' — drops 'this time.'"
  },
  "tail_4_freshGame_1": {
-  "text": "Clean slate \u2014 and some of you need it, BADLY!",
-  "suggestion": "Trim to: 'Clean slate \u2014 you need it BADLY!' \u2014 drops 'and some of.'"
+  "text": "Clean slate — and some of you need it, BADLY!",
+  "suggestion": "Trim to: 'Clean slate — you need it BADLY!' — drops 'and some of.'"
  },
  "tail_4_perfect_0": {
   "text": "Perfect AGAIN! The rest of you should be ASHAMED!",
-  "suggestion": "Trim to: 'Perfect AGAIN! The rest of you \u2014 ASHAMED!' \u2014 cuts 'should be.'"
+  "suggestion": "Trim to: 'Perfect AGAIN! The rest of you — ASHAMED!' — cuts 'should be.'"
  },
  "tail_4_perfect_1": {
   "text": "Good LORD! Just hand over the trophy already!",
-  "suggestion": "Trim to: 'Good LORD! Just hand over the trophy!' \u2014 drops 'already.'"
+  "suggestion": "Trim to: 'Good LORD! Just hand over the trophy!' — drops 'already.'"
  },
  "tail_4_perfect_2": {
-  "text": "Perfect \u2014 and completely insufferable about it!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Perfect — and completely insufferable about it!",
+  "suggestion": "Tight — keep."
  },
  "tail_4_perfect_3": {
   "text": "Not a single damn mistake yet!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_hotStreak_0": {
   "text": "ANOTHER hit! This is getting disrespectful as hell!",
-  "suggestion": "Trim to: 'ANOTHER hit! This is disrespectful as hell!' \u2014 drops 'getting.'"
+  "suggestion": "Trim to: 'ANOTHER hit! This is disrespectful as hell!' — drops 'getting.'"
  },
  "tail_4_hotStreak_1": {
   "text": "Unstoppable! And frankly? Insufferable!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_hotStreak_2": {
   "text": "Disgustingly good right now!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_hotStreak_3": {
   "text": "Hot enough to fry an egg on that scorecard!",
-  "suggestion": "Trim to: 'Hot enough to fry that scorecard!' \u2014 cuts 'an egg on.'"
+  "suggestion": "Trim to: 'Hot enough to fry that scorecard!' — cuts 'an egg on.'"
  },
  "tail_4_coldStreak_0": {
   "text": "My GOD, have some self-respect!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_coldStreak_1": {
   "text": "What the HELL was that bid?!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_coldStreak_2": {
   "text": "A five-year-old with a juice box saw that coming!",
-  "suggestion": "Trim to: 'A five-year-old saw that coming!' \u2014 cuts 'with a juice box' (funny image, but this was the wordiest line in bucket 4 at 11 words)."
+  "suggestion": "Trim to: 'A five-year-old saw that coming!' — cuts 'with a juice box' (funny image, but this was the wordiest line in bucket 4 at 11 words)."
  },
  "tail_4_coldStreak_3": {
   "text": "Somebody call their emergency contact!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_coldStreak_4": {
   "text": "A slow-motion car crash, and we CAN'T look away!",
-  "suggestion": "Trim to: 'A slow-motion car crash \u2014 can't look away!' \u2014 drops 'and we.'"
+  "suggestion": "Trim to: 'A slow-motion car crash — can't look away!' — drops 'and we.'"
  },
  "tail_4_coldStreak_5": {
   "text": "Somebody revoke their bidding privileges!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_bigRound_0": {
   "text": "A damn MASTERPIECE of a round!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_bigRound_1": {
   "text": "Pack it up, everyone. Pack it ALL up.",
-  "suggestion": "Trim to: 'Pack it up \u2014 ALL of it!' \u2014 cuts the repeated 'Pack it' clause."
+  "suggestion": "Trim to: 'Pack it up — ALL of it!' — cuts the repeated 'Pack it' clause."
  },
  "tail_4_zeroSpecialist_0": {
-  "text": "Another zero \u2014 living their best damn life!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Another zero — living their best damn life!",
+  "suggestion": "Tight — keep."
  },
  "tail_4_zeroSpecialist_1": {
   "text": "Doing nothing and STILL beating half this table!",
-  "suggestion": "Trim to: 'Doing nothing \u2014 STILL beating half the table!' \u2014 swaps 'and' for a dash."
+  "suggestion": "Trim to: 'Doing nothing — STILL beating half the table!' — swaps 'and' for a dash."
  },
  "tail_4_boldestBidder_0": {
   "text": "That bid is an INSULT to everyone who has ever held cards!",
-  "suggestion": "Trim to: 'That bid INSULTS everyone who's ever played!' \u2014 this was the wordiest tail in bucket 4 (12 words); cuts it by half."
+  "suggestion": "Trim to: 'That bid INSULTS everyone who's ever played!' — this was the wordiest tail in bucket 4 (12 words); cuts it by half."
  },
  "tail_4_boldestBidder_1": {
   "text": "Bidding like rent is due TONIGHT!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_4_winner_0": {
   "text": "It's OVER! And it wasn't even CLOSE, was it?!",
-  "suggestion": "Trim to: 'It's OVER! And it wasn't even CLOSE!' \u2014 drops the tacked-on 'was it?!'"
+  "suggestion": "Trim to: 'It's OVER! And it wasn't even CLOSE!' — drops the tacked-on 'was it?!'"
  },
  "tail_4_winner_1": {
   "text": "The winner! The rest of you made damn good television!",
-  "suggestion": "Trim to: 'The winner! Rest of you \u2014 great TV!' \u2014 cuts 'made damn good television' down to size."
+  "suggestion": "Trim to: 'The winner! Rest of you — great TV!' — cuts 'made damn good television' down to size."
  },
  "tail_4_lastPlace_0": {
-  "text": "Dead last. At this point it's not luck \u2014 it's a personality trait!",
-  "suggestion": "Trim to: 'Dead last. Not luck \u2014 a personality trait!' \u2014 this was tied for the wordiest tail in the set (12 words); cuts the 'it's not... it's' scaffolding."
+  "text": "Dead last. At this point it's not luck — it's a personality trait!",
+  "suggestion": "Trim to: 'Dead last. Not luck — a personality trait!' — this was tied for the wordiest tail in the set (12 words); cuts the 'it's not... it's' scaffolding."
  },
  "tail_4_lastPlace_1": {
   "text": "Last place AGAIN! The family is WATCHING!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_leadChange_0": {
   "text": "The throne just got JACKED!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_leadChange_1": {
-  "text": "NEW leader \u2014 and the trash talk writes itself!",
-  "suggestion": "Trim to: 'NEW leader \u2014 the trash talk writes itself!' \u2014 drops 'and.'"
+  "text": "NEW leader — and the trash talk writes itself!",
+  "suggestion": "Trim to: 'NEW leader — the trash talk writes itself!' — drops 'and.'"
  },
  "tail_5_nosedive_0": {
   "text": "HOLY SHIT, what a faceplant!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_nosedive_1": {
   "text": "That round beat their ass fair and square!",
-  "suggestion": "Trim to: 'That round kicked their ass, clean!' \u2014 drops 'fair and square' for a punchier tag."
+  "suggestion": "Trim to: 'That round kicked their ass, clean!' — drops 'fair and square' for a punchier tag."
  },
  "tail_5_everybodyHit_0": {
   "text": "Everybody hit! Un-freaking-believable!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_everybodyHit_1": {
   "text": "A perfect round?! Get the hell out of here!",
-  "suggestion": "Trim to: 'A perfect round?! Get outta here!' \u2014 drops 'the hell... of.'"
+  "suggestion": "Trim to: 'A perfect round?! Get outta here!' — drops 'the hell... of.'"
  },
  "tail_5_carnage_0": {
   "text": "An absolute SHIT-SHOW of a round!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_carnage_1": {
   "text": "The deck just wrecked EVERYBODY!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_tightRace_0": {
   "text": "Ass-clenchingly close at the top!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_tightRace_1": {
   "text": "This race is TOO damn tight!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_kickoff_0": {
-  "text": "Shuffle up \u2014 and let the shit-show BEGIN!",
-  "suggestion": "Trim to: 'Shuffle up \u2014 let the shit-show BEGIN!' \u2014 drops 'and.'"
+  "text": "Shuffle up — and let the shit-show BEGIN!",
+  "suggestion": "Trim to: 'Shuffle up — let the shit-show BEGIN!' — drops 'and.'"
  },
  "tail_5_kickoff_1": {
   "text": "Round ONE, baby! LET'S GO!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_chasing_0": {
   "text": "Coming for BLOOD!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_chasing_1": {
   "text": "The leader's ass is officially on notice!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_chasing_2": {
   "text": "Coming up fast with bad intentions!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_chasing_3": {
   "text": "About to ruin somebody's whole damn night!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_trailing_0": {
   "text": "Stone. Cold. LAST. Get your shit together!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_trailing_1": {
-  "text": "Living in the basement rent-free \u2014 and it SHOWS!",
-  "suggestion": "Trim to: 'Living in the basement, rent-free!' \u2014 cuts the tacked-on 'and it SHOWS.'"
+  "text": "Living in the basement rent-free — and it SHOWS!",
+  "suggestion": "Trim to: 'Living in the basement, rent-free!' — cuts the tacked-on 'and it SHOWS.'"
  },
  "tail_5_trailing_2": {
   "text": "Dead last and somehow still confident!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_trailing_3": {
   "text": "The basement's new favorite tenant!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_leading_0": {
   "text": "On TOP! Somebody knock their ass off the throne!",
-  "suggestion": "Trim to: 'On TOP! Somebody knock 'em off!' \u2014 drops 'their ass... the throne.'"
+  "suggestion": "Trim to: 'On TOP! Somebody knock 'em off!' — drops 'their ass... the throne.'"
  },
  "tail_5_leading_1": {
   "text": "Leading the whole damn table!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_leading_2": {
   "text": "Sitting on the throne like they own the place!",
-  "suggestion": "Trim to: 'Sitting on the throne, owning it!' \u2014 cuts 'like they... the place.'"
+  "suggestion": "Trim to: 'Sitting on the throne, owning it!' — cuts 'like they... the place.'"
  },
  "tail_5_leading_3": {
   "text": "Top of the pile and talking SO much shit!",
-  "suggestion": "Trim to: 'Top of the pile, talking shit!' \u2014 drops 'SO much' intensifier."
+  "suggestion": "Trim to: 'Top of the pile, talking shit!' — drops 'SO much' intensifier."
  },
  "tail_5_reigningChamp_0": {
-  "text": "The CHAMP is back \u2014 and the trash talk is EARNED!",
-  "suggestion": "Trim to: 'The CHAMP is back \u2014 trash talk EARNED!' \u2014 drops 'and the... is.'"
+  "text": "The CHAMP is back — and the trash talk is EARNED!",
+  "suggestion": "Trim to: 'The CHAMP is back — trash talk EARNED!' — drops 'and the... is.'"
  },
  "tail_5_reigningChamp_1": {
   "text": "Reigning champion! Someone knock their ass off!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_freshGame_0": {
-  "text": "FRESH game! Zero points, zero shits given \u2014 let's GO!",
-  "suggestion": "Trim to: 'FRESH game! Zero points, zero shits given!' \u2014 drops the tacked-on 'let's GO.'"
+  "text": "FRESH game! Zero points, zero shits given — let's GO!",
+  "suggestion": "Trim to: 'FRESH game! Zero points, zero shits given!' — drops the tacked-on 'let's GO.'"
  },
  "tail_5_freshGame_1": {
-  "text": "New scorepad, same suspects \u2014 let the beatdown begin!",
-  "suggestion": "Trim to: 'New scorepad, same suspects \u2014 beatdown begins!' \u2014 drops 'let the... begin' scaffolding."
+  "text": "New scorepad, same suspects — let the beatdown begin!",
+  "suggestion": "Trim to: 'New scorepad, same suspects — beatdown begins!' — drops 'let the... begin' scaffolding."
  },
  "tail_5_perfect_0": {
   "text": "STILL perfect! You have GOT to be shitting me!",
-  "suggestion": "Trim to: 'STILL perfect! You're shitting me!' \u2014 same punch, way fewer words."
+  "suggestion": "Trim to: 'STILL perfect! You're shitting me!' — same punch, way fewer words."
  },
  "tail_5_perfect_1": {
-  "text": "UNREAL! Somebody frisk this player \u2014 I am dead serious!",
-  "suggestion": "Trim to: 'UNREAL! Somebody frisk this player \u2014 dead serious!' \u2014 cuts 'I am.'"
+  "text": "UNREAL! Somebody frisk this player — I am dead serious!",
+  "suggestion": "Trim to: 'UNREAL! Somebody frisk this player — dead serious!' — cuts 'I am.'"
  },
  "tail_5_perfect_2": {
-  "text": "Still perfect \u2014 this is bullshit-tier luck!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Still perfect — this is bullshit-tier luck!",
+  "suggestion": "Tight — keep."
  },
  "tail_5_perfect_3": {
   "text": "Flawless! Check the sleeves, check the SHOES!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_hotStreak_0": {
   "text": "ANOTHER one! This is bullshit-level lucky, folks!",
-  "suggestion": "Trim to: 'ANOTHER one! Bullshit-level lucky, folks!' \u2014 drops 'this is.'"
+  "suggestion": "Trim to: 'ANOTHER one! Bullshit-level lucky, folks!' — drops 'this is.'"
  },
  "tail_5_hotStreak_1": {
   "text": "On FIRE! The rest of this table is getting its ass KICKED!",
-  "suggestion": "Trim to: 'On FIRE! This whole table's getting KICKED!' \u2014 this was the wordiest tail in the entire set (12 words); cuts it nearly in half."
+  "suggestion": "Trim to: 'On FIRE! This whole table's getting KICKED!' — this was the wordiest tail in the entire set (12 words); cuts it nearly in half."
  },
  "tail_5_hotStreak_2": {
   "text": "Hotter than the devil's kitchen!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_hotStreak_3": {
   "text": "An absolute WRECKING BALL right now!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_coldStreak_0": {
   "text": "That was a shit bid and EVERYBODY at this table knew it!",
-  "suggestion": "Trim to: 'Everybody knew that bid was shit!' \u2014 this was tied for the wordiest tail in the set (12 words); cuts the 'and... at this table' scaffolding."
+  "suggestion": "Trim to: 'Everybody knew that bid was shit!' — this was tied for the wordiest tail in the set (12 words); cuts the 'and... at this table' scaffolding."
  },
  "tail_5_coldStreak_1": {
-  "text": "Holy hell \u2014 someone stage an intervention!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Holy hell — someone stage an intervention!",
+  "suggestion": "Tight — keep."
  },
  "tail_5_coldStreak_2": {
-  "text": "Get your shit together \u2014 the FAMILY is watching!",
-  "suggestion": "Trim to: 'Get your shit together \u2014 FAMILY's watching!' \u2014 contracts 'the... is' to 's.'"
+  "text": "Get your shit together — the FAMILY is watching!",
+  "suggestion": "Trim to: 'Get your shit together — FAMILY's watching!' — contracts 'the... is' to 's.'"
  },
  "tail_5_coldStreak_3": {
   "text": "How?! HOW does that keep happening?!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_coldStreak_4": {
   "text": "A cold streak from HELL!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_coldStreak_5": {
   "text": "The cards have personally declared war!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_bigRound_0": {
   "text": "HOLY SHIT, what a round!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_bigRound_1": {
   "text": "That is a whole-ass BEATDOWN in one hand!",
-  "suggestion": "Trim to: 'That's a whole-ass BEATDOWN, one hand!' \u2014 contracts 'That is' and drops 'in.'"
+  "suggestion": "Trim to: 'That's a whole-ass BEATDOWN, one hand!' — contracts 'That is' and drops 'in.'"
  },
  "tail_5_zeroSpecialist_0": {
   "text": "Zero called, zero taken, zero shits given! LEGEND!",
-  "suggestion": "Trim to: 'Zero called, zero taken, zero shits! LEGEND!' \u2014 drops 'given.'"
+  "suggestion": "Trim to: 'Zero called, zero taken, zero shits! LEGEND!' — drops 'given.'"
  },
  "tail_5_boldestBidder_0": {
   "text": "That bid?! BALLS of solid brass, folks!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_boldestBidder_1": {
   "text": "Betting like a maniac with NOTHING to lose!",
-  "suggestion": "Trim to: 'Betting like a maniac, NOTHING to lose!' \u2014 drops 'with.'"
+  "suggestion": "Trim to: 'Betting like a maniac, NOTHING to lose!' — drops 'with.'"
  },
  "tail_5_winner_0": {
   "text": "IT'S OVER! An ass-kicking for the AGES!",
-  "suggestion": "Trim to: 'IT'S OVER! What an ass-kicking!' \u2014 drops 'for the AGES.'"
+  "suggestion": "Trim to: 'IT'S OVER! What an ass-kicking!' — drops 'for the AGES.'"
  },
  "tail_5_winner_1": {
   "text": "CHAMPION! The rest of you got absolutely WRECKED!",
-  "suggestion": "Trim to: 'CHAMPION! The rest of you got WRECKED!' \u2014 drops 'absolutely.'"
+  "suggestion": "Trim to: 'CHAMPION! The rest of you got WRECKED!' — drops 'absolutely.'"
  },
  "tail_5_lastPlace_0": {
   "text": "Dead. Ass. LAST. Someone drive them home!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "tail_5_lastPlace_1": {
   "text": "This is an intervention. We love you. But DAMN!",
-  "suggestion": "Trim to: 'An intervention. We love you. But DAMN!' \u2014 drops the throat-clearing 'This is.'"
+  "suggestion": "Trim to: 'An intervention. We love you. But DAMN!' — drops the throat-clearing 'This is.'"
  },
  "seg_1_intro_0": {
   "text": "Let's check in on the table!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_1_intro_1": {
   "text": "Time for the round update!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_1_intro_2": {
   "text": "Here's how things stand!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_1_trans_0": {
   "text": "Meanwhile...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_1_trans_1": {
-  "text": "And elsewhere...",
-  "suggestion": "Tight \u2014 keep."
+  "text": "There's more, folks...",
+  "suggestion": "Tight — keep."
  },
  "seg_1_trans_2": {
-  "text": "There's more, folks...",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Also worth noting...",
+  "suggestion": "Tight — keep."
  },
  "seg_1_trans_3": {
-  "text": "Also worth noting...",
-  "suggestion": "Tight \u2014 keep."
- },
- "seg_1_trans_4": {
   "text": "In other news...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_1_outro_0": {
   "text": "Back to the cards!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_1_outro_1": {
   "text": "Good luck out there, everyone!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_1_outro_2": {
   "text": "Play on, everyone!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_2_intro_0": {
-  "text": "Round update, and ohh, do we have notes!",
-  "suggestion": "Trim to: 'Round update \u2014 and the notes!' \u2014 same setup, half the words."
+  "text": "Round update, and we have some notes!",
+  "suggestion": "Revised per your feedback — re-recorded 2026-07-11."
  },
  "seg_2_intro_1": {
-  "text": "Gather 'round \u2014 the table has issues!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Gather 'round — the table has issues!",
+  "suggestion": "Tight — keep."
  },
  "seg_2_intro_2": {
-  "text": "The table has developments!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "The scorepad has OPINIONS tonight!",
+  "suggestion": "Revised per your feedback — re-recorded 2026-07-11."
  },
  "seg_2_trans_0": {
   "text": "It gets better...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_2_trans_1": {
   "text": "Meanwhile, in less flattering news...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_2_trans_2": {
-  "text": "And ANOTHER thing...",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Speaking of questionable choices...",
+  "suggestion": "Tight — keep."
  },
  "seg_2_trans_3": {
-  "text": "Speaking of questionable choices...",
-  "suggestion": "Tight \u2014 keep."
- },
- "seg_2_trans_4": {
   "text": "Which brings us to...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_2_outro_0": {
-  "text": "Deal 'em up \u2014 and try to do better!",
-  "suggestion": "Trim to: 'Deal 'em up \u2014 do better!' \u2014 drops 'and try to.'"
+  "text": "Deal 'em up — and try to do better!",
+  "suggestion": "Trim to: 'Deal 'em up — do better!' — drops 'and try to.'"
  },
  "seg_2_outro_1": {
   "text": "Back to the table. Some of you have work to do!",
-  "suggestion": "Trim to: 'Back to the table \u2014 get to work!' \u2014 this was the wordiest connective in the whole set (11 words); cuts it by a third."
+  "suggestion": "Trim to: 'Back to the table — get to work!' — this was the wordiest connective in the whole set (11 words); cuts it by a third."
  },
  "seg_2_outro_2": {
-  "text": "Shuffle up \u2014 and do better!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Shuffle up — and do better!",
+  "suggestion": "Tight — keep."
  },
  "seg_3_intro_0": {
   "text": "ROUND UPDATE! Somebody's getting called OUT!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_3_intro_1": {
-  "text": "STOP the presses \u2014 you need to hear this!",
-  "suggestion": "Trim to: 'STOP the presses \u2014 hear THIS!' \u2014 drops 'you need to.'"
+  "text": "STOP the presses — you need to hear this!",
+  "suggestion": "Trim to: 'STOP the presses — hear THIS!' — drops 'you need to.'"
  },
  "seg_3_intro_2": {
-  "text": "BREAKING news from the felt!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "EMERGENCY meeting — look at this scorepad!",
+  "suggestion": "Revised per your feedback — re-recorded 2026-07-11."
  },
  "seg_3_trans_0": {
   "text": "Oh, we're NOT done...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_3_trans_1": {
   "text": "But WAIT, there's carnage...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_3_trans_2": {
-  "text": "And meanwhile, folks...",
-  "suggestion": "Tight \u2014 keep."
+  "text": "And it gets JUICIER...",
+  "suggestion": "Tight — keep."
  },
  "seg_3_trans_3": {
-  "text": "And it gets JUICIER...",
-  "suggestion": "Tight \u2014 keep."
- },
- "seg_3_trans_4": {
   "text": "Hold on, there's MORE...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_3_outro_0": {
-  "text": "That's the update! Pray for the bottom of this table!",
-  "suggestion": "Trim to: 'That's the update! Pray for the bottom!' \u2014 drops 'of this table.'"
+  "text": "Back to the cards!",
+  "suggestion": "Tight — keep."
  },
  "seg_3_outro_1": {
-  "text": "Back to the cards \u2014 SHOW me something!",
-  "suggestion": "Trim to: 'Back to the cards \u2014 SHOW me!' \u2014 drops 'something' for a punchier button."
- },
- "seg_3_outro_2": {
-  "text": "That's the damage \u2014 back to WAR!",
-  "suggestion": "Tight \u2014 keep."
+  "text": "That's the damage — back to WAR!",
+  "suggestion": "Tight — keep."
  },
  "seg_4_intro_0": {
-  "text": "Round update \u2014 and my GOD, where do I start?!",
-  "suggestion": "Trim to: 'Round update \u2014 where do I even START?!' \u2014 drops 'and my GOD.'"
+  "text": "Round update — and my GOD, where do I start?!",
+  "suggestion": "Trim to: 'Round update — where do I even START?!' — drops 'and my GOD.'"
  },
  "seg_4_intro_1": {
-  "text": "Listen up! The table demands accountability!",
-  "suggestion": "Tight \u2014 keep."
- },
- "seg_4_intro_2": {
   "text": "Gather round for the damage report!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_4_trans_0": {
   "text": "Oh, it gets worse...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_4_trans_1": {
   "text": "And as if that wasn't enough...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_4_trans_2": {
   "text": "Meanwhile, in the disaster zone...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_4_trans_3": {
   "text": "And because the universe is cruel...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_4_trans_4": {
   "text": "Oh, and one more disaster...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_4_outro_0": {
   "text": "Update over. Some of you should reflect on your damn choices!",
-  "suggestion": "Trim to: 'Update over. Reflect on your damn choices!' \u2014 this was the wordiest connective in bucket 4 (11 words); cuts 'some of you should' scaffolding."
+  "suggestion": "Trim to: 'Update over. Reflect on your damn choices!' — this was the wordiest connective in bucket 4 (11 words); cuts 'some of you should' scaffolding."
  },
  "seg_4_outro_1": {
-  "text": "Back to it \u2014 and for the love of GOD, bid better!",
-  "suggestion": "Trim to: 'Back to it \u2014 bid better, dammit!' \u2014 this was tied for the wordiest connective in the whole set (11 words); cuts 'and for the love of GOD.'"
+  "text": "Back to it — and for the love of GOD, bid better!",
+  "suggestion": "Trim to: 'Back to it — bid better, dammit!' — this was tied for the wordiest connective in the whole set (11 words); cuts 'and for the love of GOD.'"
  },
  "seg_4_outro_2": {
-  "text": "Back at it \u2014 and for God's sake, focus!",
-  "suggestion": "Trim to: 'Back at it \u2014 for God's sake, focus!' \u2014 drops 'and.'"
+  "text": "Back at it — and for God's sake, do better!",
+  "suggestion": "Revised per your feedback — re-recorded 2026-07-11."
  },
  "seg_5_intro_0": {
   "text": "ROUND UPDATE! Buckle the hell up!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_5_intro_1": {
-  "text": "Holy shit, folks, what a round \u2014 let's break it down!",
-  "suggestion": "Trim to: 'Holy shit, folks \u2014 what a round!' \u2014 drops the redundant 'let's break it down.'"
+  "text": "Holy shit, folks, what a round — let's break it down!",
+  "suggestion": "Trim to: 'Holy shit, folks — what a round!' — drops the redundant 'let's break it down.'"
  },
  "seg_5_intro_2": {
   "text": "Strap in for the damn update!",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_5_trans_0": {
-  "text": "Oh, we are NOT done...",
-  "suggestion": "Tight \u2014 keep."
+  "text": "Hold my beer, there's more...",
+  "suggestion": "Revised per your feedback — re-recorded 2026-07-11."
  },
  "seg_5_trans_1": {
-  "text": "And it gets messier...",
-  "suggestion": "Tight \u2014 keep."
+  "text": "And it gets worse...",
+  "suggestion": "Revised per your feedback — re-recorded 2026-07-11."
  },
  "seg_5_trans_2": {
   "text": "Meanwhile, in dumpster-fire news...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_5_trans_3": {
   "text": "And in worse news...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_5_trans_4": {
   "text": "Hold my drink, there's more...",
-  "suggestion": "Tight \u2014 keep."
+  "suggestion": "Tight — keep."
  },
  "seg_5_outro_0": {
   "text": "That's the damn update! Play better, all of you!",
-  "suggestion": "Trim to: 'That's the damn update! Play better!' \u2014 drops 'all of you.'"
+  "suggestion": "Trim to: 'That's the damn update! Play better!' — drops 'all of you.'"
  },
  "seg_5_outro_1": {
-  "text": "Back to the table \u2014 and NO more shit bids!",
-  "suggestion": "Trim to: 'Back to the table \u2014 NO more shit bids!' \u2014 drops 'and.'"
+  "text": "Back to the table — and NO more shit bids!",
+  "suggestion": "Trim to: 'Back to the table — NO more shit bids!' — drops 'and.'"
  },
  "seg_5_outro_2": {
   "text": "Now get back in there and raise hell!",
-  "suggestion": "Trim to: 'Get back in there and raise hell!' \u2014 drops 'Now.'"
+  "suggestion": "Trim to: 'Get back in there and raise hell!' — drops 'Now.'"
  }
 }
