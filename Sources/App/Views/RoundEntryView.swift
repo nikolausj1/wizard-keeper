@@ -15,6 +15,7 @@ struct RoundEntryView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var round: Round?
     @State private var showHookAlert = false
@@ -168,6 +169,7 @@ private struct BiddingView: View {
     @Bindable var game: Game
     @Bindable var round: Round
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
     let onConfirm: () -> Void
 
     private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
@@ -291,7 +293,7 @@ private struct BiddingView: View {
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
 
-            Section("Players") {
+            Section {
                 // Rendered in `game.bidOrder(forRound:)` order, not raw
                 // seating — once the first bidder is inferred, that seat is
                 // always the top row, since the scorer works top to bottom.
@@ -350,10 +352,13 @@ private struct BiddingView: View {
                             }
                             .padding(.vertical, 8)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                            .listRowBackground(untouched ? Color.feltGreen.opacity(0.05) : Color(.secondarySystemGroupedBackground))
+                            .listRowBackground(Color.cardSurface.overlay(untouched ? Color.feltGreen.opacity(0.05) : Color.clear))
                         }
                     }
                 }
+            } header: {
+                Text("Players")
+                    .foregroundStyle(Color.paperSecondary)
             }
         }
         .listStyle(.insetGrouped)
@@ -412,6 +417,7 @@ private struct ResultsView: View {
     @Bindable var game: Game
     @Bindable var round: Round
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
     let onConfirm: () -> Void
 
     private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
@@ -560,7 +566,7 @@ private struct ResultsView: View {
 
             // Rendered in `game.bidOrder(forRound:)` order — see
             // `BiddingView`'s identical row ordering above.
-            Section("Players") {
+            Section {
                 ForEach(game.bidOrder(forRound: round.roundNumber), id: \.self) { seatIndex in
                     if game.participants.indices.contains(seatIndex) {
                         let participant = game.participants[seatIndex]
@@ -637,10 +643,13 @@ private struct ResultsView: View {
                             }
                             .padding(.vertical, 8)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                            .listRowBackground(untouched ? Color.feltGreen.opacity(0.05) : Color(.secondarySystemGroupedBackground))
+                            .listRowBackground(Color.cardSurface.overlay(untouched ? Color.feltGreen.opacity(0.05) : Color.clear))
                         }
                     }
                 }
+            } header: {
+                Text("Players")
+                    .foregroundStyle(Color.paperSecondary)
             }
         }
         .listStyle(.insetGrouped)
@@ -681,6 +690,7 @@ private struct EditRoundView: View {
     @Bindable var game: Game
     @Bindable var round: Round
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
     let onSave: () -> Void
 
     private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
@@ -740,7 +750,7 @@ private struct EditRoundView: View {
 
             // Rendered in `game.bidOrder(forRound:)` order — see
             // `BiddingView`'s identical row ordering above.
-            Section("Players") {
+            Section {
                 ForEach(game.bidOrder(forRound: round.roundNumber), id: \.self) { seatIndex in
                     if game.participants.indices.contains(seatIndex) {
                         let participant = game.participants[seatIndex]
@@ -749,6 +759,9 @@ private struct EditRoundView: View {
                         }
                     }
                 }
+            } header: {
+                Text("Players")
+                    .foregroundStyle(Color.paperSecondary)
             }
         }
         .listStyle(.insetGrouped)
@@ -844,7 +857,7 @@ private struct EditRoundView: View {
         }
         .padding(.vertical, 8)
         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-        .listRowBackground(Color(.secondarySystemGroupedBackground))
+        .listRowBackground(Color.cardSurface)
     }
 
     private func setBid(_ value: Int, at index: Int) {

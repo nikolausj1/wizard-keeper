@@ -9,6 +9,7 @@ import SwiftData
 /// `RoundEntryView` in edit mode (the round is already `.complete`).
 struct RoundsListView: View {
     @Bindable var game: Game
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     /// Completed rounds, newest-first — the reverse of seating/round order,
     /// so the most recently played round is always at the top.
@@ -42,6 +43,7 @@ struct RoundsListView: View {
                         } label: {
                             RoundRow(round: round, participants: game.participants)
                         }
+                        .listRowBackground(Color.cardSurface)
                     }
                 }
             }
@@ -60,6 +62,7 @@ struct RoundsListView: View {
 private struct RoundRow: View {
     let round: Round
     let participants: [Participant]
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     private var cellSpacing: CGFloat {
         participants.count >= 6 ? 4 : 8

@@ -25,6 +25,24 @@ struct WizardKeeperApp: App {
             fatalError("Failed to create ModelContainer: \(error)")
         }
 
+        // Seed the color theme BEFORE the first frame renders: a theme
+        // applied later (RootView.onAppear) repaints via observation, but
+        // the very first frame would flash the default palette and List
+        // row backgrounds have been seen to miss that repaint. Launch-arg
+        // override first (sim screenshots), then the persisted setting.
+        if let arg = Self.launchArgumentValue("-uiTheme", in: arguments) {
+            switch arg {
+            case "parchment": ThemeManager.shared.theme = .parchment
+            case "cardTable": ThemeManager.shared.theme = .cardTable
+            case "walnut": ThemeManager.shared.theme = .walnut
+            default: break
+            }
+        } else if !isDemo,
+                  let settings = try? modelContainer.mainContext.fetch(FetchDescriptor<AppSettings>()).first,
+                  let theme = AppTheme(rawValue: settings.appTheme) {
+            ThemeManager.shared.theme = theme
+        }
+
         if isDemo {
             let context = ModelContext(modelContainer)
             if isDemoFinal {

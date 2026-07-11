@@ -39,6 +39,28 @@ struct ThemePalette {
     /// reads on both the dark page AND white card surfaces.
     let tint: Color
 
+    /// Card/cell surface — List rows, standings cards, entry cells, stat
+    /// tiles. Parchment keeps the system grouped-card color (today's
+    /// white/dark look); the dark-page themes use parchment-beige cards,
+    /// completing Justin's "felt background, beige elsewhere" ask: paper
+    /// cards lying on a felt or walnut table.
+    let cardSurface: Color
+
+    /// Forced color scheme for the navigation bar, or `nil` to follow the
+    /// system. UIKit draws `navigationTitle` text in its own label color —
+    /// black in light mode — which is illegible on the dark-page themes'
+    /// felt/walnut, so those force `.dark` nav chrome (white titles) in
+    /// both appearances.
+    let navBarScheme: ColorScheme?
+
+    /// `PrimaryActionButton` fill + label. Parchment: felt green / white
+    /// (unchanged). Card Table: cream / deep felt — a dark-green button
+    /// disappears against the felt page, and cream both pops and is the
+    /// "beige elsewhere". Walnut: the lightened felt green / white, which
+    /// holds contrast on the wood.
+    let ctaFill: Color
+    let ctaText: Color
+
     /// Opacity of the tiled paper-grain texture in light mode (see
     /// `PaperBackground`). Ignored when `showGrain` is `false`.
     let grainOpacity: Double
@@ -78,6 +100,10 @@ extension ThemePalette {
         espressoInk: dynamic(light: (0.169, 0.129, 0.094), dark: (0.929, 0.894, 0.831)),
         warmDisabled: dynamic(light: (0.867, 0.827, 0.753), dark: (0.227, 0.196, 0.165)),
         tint: dynamic(light: (0.184, 0.365, 0.275), dark: (0.243, 0.478, 0.361)),
+        cardSurface: Color(uiColor: .secondarySystemGroupedBackground),
+        navBarScheme: nil,
+        ctaFill: dynamic(light: (0.184, 0.365, 0.275), dark: (0.243, 0.478, 0.361)),
+        ctaText: .white,
         grainOpacity: 0.045,
         showGrain: true
     )
@@ -98,6 +124,10 @@ extension ThemePalette {
         espressoInk: dynamic(light: (0.949, 0.918, 0.847), dark: (0.937, 0.902, 0.827)),
         warmDisabled: dynamic(light: (0.278, 0.420, 0.349), dark: (0.165, 0.247, 0.200)),
         tint: dynamic(light: (0.788, 0.627, 0.325), dark: (0.831, 0.690, 0.416)),
+        cardSurface: dynamic(light: (0.957, 0.925, 0.863), dark: (0.149, 0.247, 0.196)),
+        navBarScheme: .dark,
+        ctaFill: dynamic(light: (0.937, 0.902, 0.827), dark: (0.890, 0.847, 0.761)),
+        ctaText: dynamic(light: (0.122, 0.271, 0.204), dark: (0.122, 0.239, 0.184)),
         grainOpacity: 0,
         showGrain: false
     )
@@ -115,6 +145,10 @@ extension ThemePalette {
         espressoInk: dynamic(light: (0.949, 0.910, 0.835), dark: (0.929, 0.894, 0.831)),
         warmDisabled: dynamic(light: (0.369, 0.298, 0.212), dark: (0.208, 0.157, 0.102)),
         tint: dynamic(light: (0.831, 0.690, 0.416), dark: (0.831, 0.690, 0.416)),
+        cardSurface: dynamic(light: (0.949, 0.910, 0.835), dark: (0.196, 0.157, 0.102)),
+        navBarScheme: .dark,
+        ctaFill: dynamic(light: (0.243, 0.478, 0.361), dark: (0.243, 0.478, 0.361)),
+        ctaText: .white,
         grainOpacity: 0.06,
         showGrain: true
     )
@@ -175,6 +209,9 @@ extension Color {
     static var espressoInk: Color { ThemeManager.shared.theme.palette.espressoInk }
     static var warmDisabled: Color { ThemeManager.shared.theme.palette.warmDisabled }
     static var appTint: Color { ThemeManager.shared.theme.palette.tint }
+    static var cardSurface: Color { ThemeManager.shared.theme.palette.cardSurface }
+    static var ctaFill: Color { ThemeManager.shared.theme.palette.ctaFill }
+    static var ctaText: Color { ThemeManager.shared.theme.palette.ctaText }
 
     /// Muted text that sits DIRECTLY on the page background (List section
     /// headers, panel labels, helper captions under the bottom CTA).
@@ -252,6 +289,10 @@ extension View {
 /// so the choice sticks and the Settings picker stays in sync. From
 /// `.system` it jumps to the opposite of the current effective scheme.
 struct AppearanceToggleButton: View {
+    // Observes the theme so this leaf re-renders on a live theme
+    // switch — SwiftUI's diffing would otherwise skip it when its
+    // stored inputs are unchanged, leaving stale palette colors.
+    @ObservedObject private var themeManager = ThemeManager.shared
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
 
@@ -311,6 +352,10 @@ enum ScoreFormat {
 /// scrolls away like a system large title rather than floating in a
 /// safe-area inset.
 struct ScreenHeader: View {
+    // Observes the theme so this leaf re-renders on a live theme
+    // switch — SwiftUI's diffing would otherwise skip it when its
+    // stored inputs are unchanged, leaving stale palette colors.
+    @ObservedObject private var themeManager = ThemeManager.shared
     var eyebrow: String?
     var title: String
     var subtitle: String?
@@ -364,6 +409,7 @@ struct PrimaryActionButton: View {
     var action: () -> Void
 
     @ScaledMetric(relativeTo: .body) private var titleSize: CGFloat = 17
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     var body: some View {
         Button(action: action) {
@@ -372,8 +418,8 @@ struct PrimaryActionButton: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
         }
-        .foregroundStyle(isDisabled ? Color(.tertiaryLabel) : .white)
-        .background(isDisabled ? Color.warmDisabled : Color.feltGreen)
+        .foregroundStyle(isDisabled ? Color(.tertiaryLabel) : Color.ctaText)
+        .background(isDisabled ? Color.warmDisabled : Color.ctaFill)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .disabled(isDisabled)
     }
@@ -389,6 +435,10 @@ struct PrimaryActionButton: View {
 /// classy, not a strobe. The pulse stops the instant playback starts and
 /// never runs at all when Reduce Motion is on.
 struct AnnounceHeroButton: View {
+    // Observes the theme so this leaf re-renders on a live theme
+    // switch — SwiftUI's diffing would otherwise skip it when its
+    // stored inputs are unchanged, leaving stale palette colors.
+    @ObservedObject private var themeManager = ThemeManager.shared
     var isPlaying: Bool
     var action: () -> Void
 
@@ -450,6 +500,10 @@ struct AnnounceHeroButton: View {
 /// visible pill is only 32pt, so the enlarged hit area doesn't affect the
 /// pill's rendered size.
 struct SegmentedStepper: View {
+    // Observes the theme so this leaf re-renders on a live theme
+    // switch — SwiftUI's diffing would otherwise skip it when its
+    // stored inputs are unchanged, leaving stale palette colors.
+    @ObservedObject private var themeManager = ThemeManager.shared
     var displayValue: Int
     var dimmed: Bool = false
     var minusEnabled: Bool
@@ -518,6 +572,10 @@ enum HapticsGate {
 /// metadata-badge treatment: 11pt bold secondary text on a systemGray5
 /// capsule. Only ever shown when `RulesSnapshot.dealerRotationEnabled`.
 struct DealerTag: View {
+    // Observes the theme so this leaf re-renders on a live theme
+    // switch — SwiftUI's diffing would otherwise skip it when its
+    // stored inputs are unchanged, leaving stale palette colors.
+    @ObservedObject private var themeManager = ThemeManager.shared
     @ScaledMetric(relativeTo: .caption) private var textSize: CGFloat = 11
 
     var body: some View {

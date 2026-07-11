@@ -11,6 +11,7 @@ struct GameView: View {
     @State private var showUndoConfirm = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     /// Drives the Trends section's Announce/Stop toggle button — observed
     /// so the label/icon flip live as the broadcast plays and finishes.
@@ -173,6 +174,7 @@ struct GameView: View {
                         }
                         .padding(.vertical, 2)
                     }
+                    .listRowBackground(Color.cardSurface)
                 }
             }
         }
@@ -257,6 +259,7 @@ struct GameView: View {
     private struct StandingRow: View {
         let standing: GameStanding
         let leaderTotal: Int
+        @ObservedObject private var themeManager = ThemeManager.shared
 
         private var behind: Int { max(leaderTotal - standing.total, 0) }
 
@@ -272,7 +275,7 @@ struct GameView: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(standing.isLeader ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
+                        .fill(standing.isLeader ? Color.brassGold.opacity(0.22) : Color.warmDisabled.opacity(0.55))
                     Text("\(standing.rank)")
                         .font(.system(size: rankNumberSize, weight: .bold))
                         .foregroundStyle(standing.isLeader ? Color.brassGold : .secondary)
@@ -317,6 +320,7 @@ struct GameView: View {
             .padding(.vertical, 2)
             .frame(minHeight: 56)
             .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+            .listRowBackground(Color.cardSurface)
         }
     }
 
@@ -327,6 +331,7 @@ struct GameView: View {
     /// text only again.
     private struct InsightRow: View {
         let insight: GameInsights.Insight
+        @ObservedObject private var themeManager = ThemeManager.shared
 
         @ScaledMetric(relativeTo: .body) private var iconWidth: CGFloat = 20
         @ScaledMetric(relativeTo: .body) private var textSize: CGFloat = 15
@@ -342,6 +347,7 @@ struct GameView: View {
             }
             .padding(.vertical, 6)
             .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+            .listRowBackground(Color.cardSurface)
         }
     }
 }

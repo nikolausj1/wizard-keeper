@@ -11,6 +11,7 @@ struct PlayerProfileView: View {
     @Bindable var player: Player
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @Query private var allGames: [Game]
     @Query private var allPlayers: [Player]
@@ -97,6 +98,7 @@ struct PlayerProfileView: View {
                     Text("Delete Player")
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
+                .listRowBackground(Color.cardSurface)
             }
         }
         .listStyle(.insetGrouped)
@@ -149,6 +151,7 @@ struct PlayerProfileView: View {
 private struct StatCard: View {
     let label: String
     let value: String
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @ScaledMetric(relativeTo: .largeTitle) private var valueSize: CGFloat = 30
     @ScaledMetric(relativeTo: .caption) private var labelSize: CGFloat = 13
@@ -170,7 +173,7 @@ private struct StatCard: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.cardSurface)
         )
         .warmCardShadow()
     }
@@ -184,6 +187,7 @@ private struct EditPlayerSheet: View {
     let existingNames: [String]
 
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var name: String = ""
     @State private var colorId: Int = 0
@@ -197,12 +201,14 @@ private struct EditPlayerSheet: View {
                     TextField("Name", text: $name)
                         .focused($nameFieldFocused)
                         .textInputAutocapitalization(.words)
+                        .listRowBackground(Color.cardSurface)
                 }
 
                 if let errorMessage {
                     Text(errorMessage)
                         .font(.footnote)
                         .foregroundStyle(.red)
+                        .listRowBackground(Color.cardSurface)
                 }
 
                 Section {
@@ -212,6 +218,7 @@ private struct EditPlayerSheet: View {
                         }
                     }
                     .padding(.vertical, 4)
+                    .listRowBackground(Color.cardSurface)
                 } header: {
                     Text("Color")
                         .foregroundStyle(Color.paperSecondary)

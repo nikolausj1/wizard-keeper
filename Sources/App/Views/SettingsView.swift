@@ -12,6 +12,7 @@ import SwiftData
 /// invariant to the user via a footer note rather than leaving it implicit.
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var settings: AppSettings?
 
     var body: some View {
@@ -36,6 +37,7 @@ struct SettingsView: View {
 private struct SettingsForm: View {
     @Bindable var settings: AppSettings
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     /// Drives the Announcer section's Preview Voice/Stop toggle — observed
     /// so the label/icon flip live as the sample plays and finishes, same
@@ -74,7 +76,9 @@ private struct SettingsForm: View {
 
             Section {
                 Toggle("Dealer's hook", isOn: $settings.hookRuleEnabled)
+                    .listRowBackground(Color.cardSurface)
                 Toggle("Trick total check", isOn: $settings.trickTotalCheckEnabled)
+                    .listRowBackground(Color.cardSurface)
             } header: {
                 Text("House Rules")
                     .foregroundStyle(Color.paperSecondary)
@@ -91,12 +95,14 @@ private struct SettingsForm: View {
 
             Section {
                 Toggle("Full length", isOn: fullLengthBinding)
+                    .listRowBackground(Color.cardSurface)
                 if !settings.useFullLength {
                     Stepper(
                         "Default rounds: \(settings.customRoundCount ?? 10)",
                         value: customRoundCountBinding,
                         in: 1...20
                     )
+                    .listRowBackground(Color.cardSurface)
                 }
             } header: {
                 Text("Game Length")
@@ -108,11 +114,13 @@ private struct SettingsForm: View {
 
             Section {
                 Toggle("Haptics", isOn: $settings.hapticsEnabled)
+                    .listRowBackground(Color.cardSurface)
                 Picker("Appearance", selection: $settings.appearance) {
                     Text("System").tag(Appearance.system)
                     Text("Light").tag(Appearance.light)
                     Text("Dark").tag(Appearance.dark)
                 }
+                .listRowBackground(Color.cardSurface)
                 Picker("Theme", selection: $settings.appThemeSelection) {
                     ForEach(AppTheme.allCases) { theme in
                         Text(theme.displayName).tag(theme)
@@ -122,6 +130,7 @@ private struct SettingsForm: View {
                     ThemeManager.shared.theme = newValue
                     modelContext.saveNow()
                 }
+                .listRowBackground(Color.cardSurface)
             } header: {
                 Text("Feel")
                     .foregroundStyle(Color.paperSecondary)
@@ -137,18 +146,21 @@ private struct SettingsForm: View {
                     }
                 }
                 .onChange(of: settings.announcerVoiceSelection) { _, _ in modelContext.saveNow() }
+                .listRowBackground(Color.cardSurface)
                 Picker("Style", selection: $settings.announcerStyleSelection) {
                     ForEach(AnnouncerStyle.allCases) { style in
                         Text(style.displayName).tag(style)
                     }
                 }
                 .onChange(of: settings.announcerStyleSelection) { _, _ in modelContext.saveNow() }
+                .listRowBackground(Color.cardSurface)
                 Button(action: togglePreview) {
                     Label(
                         announcer.isPlaying ? "Stop" : "Preview Voice",
                         systemImage: announcer.isPlaying ? "stop.fill" : "speaker.wave.2.fill"
                     )
                 }
+                .listRowBackground(Color.cardSurface)
             } header: {
                 Text("Announcer")
                     .foregroundStyle(Color.paperSecondary)
@@ -162,8 +174,10 @@ private struct SettingsForm: View {
 
             Section {
                 LabeledContent("Version", value: "0.1.0")
+                    .listRowBackground(Color.cardSurface)
                 Text("Made for family game night")
                     .foregroundStyle(.secondary)
+                    .listRowBackground(Color.cardSurface)
             } header: {
                 Text("About")
                     .foregroundStyle(Color.paperSecondary)

@@ -7,6 +7,7 @@ import UIKit
 /// Phase 6.
 struct GameDetailView: View {
     let game: Game
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var recapImage: UIImage?
 
@@ -77,11 +78,13 @@ struct GameDetailView: View {
                     Text("No player data available for this game.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .listRowBackground(Color.cardSurface)
                 }
             } else {
                 Section {
                     ForEach(standings) { standing in
                         standingRow(standing)
+                            .listRowBackground(Color.cardSurface)
                     }
                 } header: {
                     Text("Final Standings")
@@ -94,6 +97,7 @@ struct GameDetailView: View {
                     Text("No rounds were recorded for this game.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .listRowBackground(Color.cardSurface)
                 } header: {
                     Text("Rounds")
                         .foregroundStyle(Color.paperSecondary)
@@ -102,6 +106,7 @@ struct GameDetailView: View {
                 Section {
                     ForEach(completedRounds, id: \.roundNumber) { round in
                         RoundBreakdownRow(round: round, participants: game.participants)
+                            .listRowBackground(Color.cardSurface)
                     }
                 } header: {
                     Text("Rounds")
@@ -137,7 +142,7 @@ struct GameDetailView: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(standing.isWinner ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
+                    .fill(standing.isWinner ? Color.brassGold.opacity(0.22) : Color.warmDisabled.opacity(0.55))
                 Text("\(standing.rank)")
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(standing.isWinner ? Color.brassGold : .secondary)
@@ -169,6 +174,7 @@ struct GameDetailView: View {
 private struct RoundBreakdownRow: View {
     let round: Round
     let participants: [Participant]
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     // Dynamic Type: sizes below are `@ScaledMetric`-driven rather than
     // fixed literals so this screen scales with the system text size.

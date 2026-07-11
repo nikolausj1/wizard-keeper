@@ -39,10 +39,10 @@ struct RootView: View {
     @Query private var settingsRecords: [AppSettings]
 
     // Observed so a theme switch (from `SettingsView`, which writes
-    // straight to this singleton) is visible here too — `rootContent`'s
-    // `.id(themeManager.theme)` below is what actually forces the
-    // re-render, since the six themed `Color` statics are plain computed
-    // vars SwiftUI's diffing can't see inside.
+    // straight to this singleton) re-renders this view directly — the six
+    // themed `Color` statics are plain computed vars SwiftUI's diffing
+    // can't see inside, so `.tint(.appTint)` below only picks up a new
+    // theme once RootView itself re-evaluates its body.
     @ObservedObject private var themeManager = ThemeManager.shared
 
     private var preferredColorScheme: ColorScheme? {
@@ -56,7 +56,6 @@ struct RootView: View {
     var body: some View {
         NavigationStack {
             rootContent
-                .id(themeManager.theme)
         }
         // `.appTint`, not `.feltGreen`: nav-bar chrome sits directly on the
         // page background, and the dark-page themes (Card Table, Walnut)
@@ -64,6 +63,9 @@ struct RootView: View {
         // on a felt or walnut page. Re-evaluated on theme change because
         // this view observes `themeManager`.
         .tint(.appTint)
+        // Dark-page themes force white nav-bar titles (see
+        // `ThemePalette.navBarScheme`); Parchment passes nil = system.
+        .toolbarColorScheme(themeManager.theme.palette.navBarScheme, for: .navigationBar)
         .preferredColorScheme(preferredColorScheme)
         .onAppear(perform: fireAnnouncerTestIfNeeded)
         .onAppear(perform: loadPersistedTheme)
@@ -162,6 +164,7 @@ struct RootView: View {
 /// Only reachable via `-uiScreen`; shows a clear fallback if seeding failed.
 private struct DemoGameHost<Content: View>: View {
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
     @ViewBuilder let content: (Game) -> Content
 
     var body: some View {
@@ -182,6 +185,7 @@ private struct DemoGameHost<Content: View>: View {
 /// `-uiScreen gameDetail`; shows a clear fallback if seeding failed.
 private struct DemoCompletedGameHost<Content: View>: View {
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
     @ViewBuilder let content: (Game) -> Content
 
     var body: some View {
@@ -206,6 +210,7 @@ private struct DemoCompletedGameHost<Content: View>: View {
 /// shows a clear fallback if seeding failed or the name isn't found.
 private struct DemoPlayerHost<Content: View>: View {
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
     let name: String
     @ViewBuilder let content: (Player) -> Content
 

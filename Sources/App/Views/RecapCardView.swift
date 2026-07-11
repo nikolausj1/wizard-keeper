@@ -38,6 +38,7 @@ struct RecapData {
 /// conversion pass, since a share-card canvas has no reflow room.
 struct RecapCardView: View {
     let data: RecapData
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     /// Card canvas size in points. Render with `ImageRenderer.scale = 3` to
     /// get a 1080×1350px export.
@@ -109,7 +110,7 @@ struct RecapCardView: View {
         HStack(spacing: 10) {
             ZStack {
                 Circle()
-                    .fill(row.isWinner ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
+                    .fill(row.isWinner ? Color.brassGold.opacity(0.22) : Color.warmDisabled.opacity(0.55))
                 Text("\(row.rank)")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(row.isWinner ? Color.brassGold : .secondary)
@@ -137,7 +138,7 @@ struct RecapCardView: View {
         .padding(.vertical, 5)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(row.isWinner ? Color.brassGold.opacity(0.12) : Color(.secondarySystemGroupedBackground))
+                .fill(row.isWinner ? Color.brassGold.opacity(0.12) : Color.cardSurface)
         )
     }
 

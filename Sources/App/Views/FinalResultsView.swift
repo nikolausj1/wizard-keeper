@@ -9,6 +9,7 @@ struct FinalResultsView: View {
     @Bindable var game: Game
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var didAppear = false
     @State private var rematchGame: Game?
@@ -93,6 +94,11 @@ struct FinalResultsView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 18) {
+                    // Inline ScreenHeader instead of the nav large title —
+                    // nav titles draw in UIKit's label color and go
+                    // illegible on the dark-page themes.
+                    ScreenHeader(eyebrow: nil, title: "Final Results")
+                        .padding(.horizontal)
                     header
                     hearTheCallButton
                     VStack(spacing: 10) {
@@ -133,8 +139,8 @@ struct FinalResultsView: View {
             .padding()
             .background(Color.paperBase.opacity(0.96))
         }
-        .navigationTitle("Final Results")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             if let recapImage {
@@ -197,6 +203,9 @@ struct FinalResultsView: View {
             Text(winnerNames.isEmpty ? "Game Complete" : "\(winnerNames) Wins!")
                 .font(.title.weight(.bold))
                 .multilineTextAlignment(.center)
+                // Sits on the page background — theme ink, not `.primary`,
+                // so it stays readable on the dark-page themes.
+                .foregroundStyle(Color.espressoInk)
         }
         .padding(.horizontal)
     }
@@ -257,7 +266,7 @@ struct FinalResultsView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.cardSurface)
         )
         .warmCardShadow()
     }
@@ -266,7 +275,7 @@ struct FinalResultsView: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(standing.isWinner ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
+                    .fill(standing.isWinner ? Color.brassGold.opacity(0.22) : Color.warmDisabled.opacity(0.55))
                 Text("\(standing.rank)")
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(standing.isWinner ? Color.brassGold : .secondary)
@@ -292,7 +301,7 @@ struct FinalResultsView: View {
         .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.cardSurface)
         )
         .warmCardShadow()
     }

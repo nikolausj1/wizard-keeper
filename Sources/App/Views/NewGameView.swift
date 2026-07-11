@@ -6,6 +6,7 @@ import SwiftData
 struct NewGameView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Player.name) private var players: [Player]
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var selectedPlayerIDs: [UUID] = []
     @State private var showAddPlayer = false
@@ -41,11 +42,22 @@ struct NewGameView: View {
 
     var body: some View {
         List {
+            // Inline ScreenHeader instead of `.navigationTitle` — nav
+            // large titles draw in UIKit's label color and go illegible on
+            // the dark-page themes; ScreenHeader ink tracks the theme.
+            Section {
+                ScreenHeader(eyebrow: nil, title: "New Game")
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
             Section {
                 if selectedPlayerIDs.isEmpty {
                     Text("Select 3–6 players below to seat them for this game.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .listRowBackground(Color.cardSurface)
                 } else {
                     ForEach(selectedPlayers) { player in
                         HStack(spacing: 10) {
@@ -54,6 +66,7 @@ struct NewGameView: View {
                                 .frame(width: 12, height: 12)
                             Text(player.name)
                         }
+                        .listRowBackground(Color.cardSurface)
                     }
                     .onMove(perform: moveSelected)
                     .onDelete(perform: unseatSelected)
@@ -86,6 +99,7 @@ struct NewGameView: View {
                                 .foregroundStyle(Color.feltGreen)
                         }
                     }
+                    .listRowBackground(Color.cardSurface)
                 }
 
                 Button {
@@ -93,6 +107,7 @@ struct NewGameView: View {
                 } label: {
                     Label("Add Player", systemImage: "person.badge.plus")
                 }
+                .listRowBackground(Color.cardSurface)
             } header: {
                 Text("Saved Players")
                     .foregroundStyle(Color.paperSecondary)
@@ -105,12 +120,14 @@ struct NewGameView: View {
 
             Section {
                 Toggle("Quick Game", isOn: $quickGame.animation())
+                    .listRowBackground(Color.cardSurface)
                 if quickGame, let full = fullRoundCount {
                     Stepper(
                         "\(quickRoundCount) round\(quickRoundCount == 1 ? "" : "s")",
                         value: $quickRoundCount,
                         in: 1...full
                     )
+                    .listRowBackground(Color.cardSurface)
                 }
             } footer: {
                 if let count = effectiveRoundCount {
@@ -125,7 +142,8 @@ struct NewGameView: View {
         .listStyle(.insetGrouped)
         .listSectionSpacing(.compact)
         .paperBackground()
-        .navigationTitle("New Game")
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 EditButton()

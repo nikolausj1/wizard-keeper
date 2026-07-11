@@ -8,6 +8,7 @@ struct PlayersView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Player.name) private var players: [Player]
     @Query private var allGames: [Game]
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var showAddPlayer = false
 
@@ -50,6 +51,7 @@ struct PlayersView: View {
                         } label: {
                             PlayerRow(player: player, wins: winCount(for: player))
                         }
+                        .listRowBackground(Color.cardSurface)
                     }
                 }
             }
@@ -81,6 +83,7 @@ struct PlayersView: View {
 private struct PlayerRow: View {
     let player: Player
     let wins: Int
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @ScaledMetric(relativeTo: .body) private var nameSize: CGFloat = 18
     @ScaledMetric(relativeTo: .body) private var winsSize: CGFloat = 15

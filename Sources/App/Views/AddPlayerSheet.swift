@@ -5,6 +5,7 @@ import SwiftUI
 /// Used by both `NewGameView` (seating flow) and `PlayersView` (roster "+").
 struct AddPlayerSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     let existingNames: [String]
     let nextColorId: Int
@@ -23,12 +24,14 @@ struct AddPlayerSheet: View {
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
                         .onSubmit(attemptAdd)
+                        .listRowBackground(Color.cardSurface)
                 }
 
                 if let errorMessage {
                     Text(errorMessage)
                         .font(.footnote)
                         .foregroundStyle(.red)
+                        .listRowBackground(Color.cardSurface)
                 }
             }
             .navigationTitle("Add Player")

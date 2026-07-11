@@ -12,6 +12,7 @@ struct ScorepadGridView: View {
     @Bindable var game: Game
     @State private var navigateToRoundEntry = false
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var selectedRoundNumber: Int?
     @State private var showUndoConfirm = false
 
@@ -279,7 +280,7 @@ struct ScorepadGridView: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(.secondarySystemGroupedBackground))
+                            .fill(Color.cardSurface)
                     )
                     .warmCardShadow()
                     .padding(.horizontal, outerHPadding)
@@ -313,7 +314,7 @@ struct ScorepadGridView: View {
         return HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(standing.isLeader ? Color.brassGold.opacity(0.22) : Color(.systemGray6))
+                    .fill(standing.isLeader ? Color.brassGold.opacity(0.22) : Color.warmDisabled.opacity(0.55))
                 Text("\(standing.rank)")
                     .font(.system(size: rankNumberSize, weight: .bold))
                     .foregroundStyle(standing.isLeader ? Color.brassGold : .secondary)
@@ -388,7 +389,7 @@ struct ScorepadGridView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.cardSurface)
             )
             .warmCardShadow()
             .padding(.horizontal, outerHPadding)
@@ -459,7 +460,7 @@ struct ScorepadGridView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.cardSurface)
             )
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .warmCardShadow()

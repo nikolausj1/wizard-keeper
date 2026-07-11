@@ -15,6 +15,7 @@ import SwiftData
 struct GameOptionsMenu: View {
     @Bindable var game: Game
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var showLengthSheet = false
     @State private var showEndGameConfirm = false
@@ -140,6 +141,7 @@ private struct GameLengthSheet: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var roundCount: Int
 
@@ -187,6 +189,7 @@ private struct GameLengthSheet: View {
                         value: $roundCount,
                         in: safeRange
                     )
+                    .listRowBackground(Color.cardSurface)
                 } footer: {
                     Text("\(completedRoundCount) round\(completedRoundCount == 1 ? "" : "s") already played.")
                         .foregroundStyle(Color.paperSecondary)
@@ -232,6 +235,7 @@ private struct AddPlayerToGameSheet: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var themeManager = ThemeManager.shared
     @Query(sort: \Player.name) private var players: [Player]
 
     @State private var showAddPlayer = false
@@ -263,7 +267,7 @@ private struct AddPlayerToGameSheet: View {
                 .listRowSeparator(.hidden)
 
                 if !availablePlayers.isEmpty {
-                    Section("Saved Players") {
+                    Section {
                         ForEach(availablePlayers) { player in
                             Button {
                                 seat(player)
@@ -277,7 +281,11 @@ private struct AddPlayerToGameSheet: View {
                                     Spacer()
                                 }
                             }
+                            .listRowBackground(Color.cardSurface)
                         }
+                    } header: {
+                        Text("Saved Players")
+                            .foregroundStyle(Color.paperSecondary)
                     }
                 }
 
@@ -287,6 +295,7 @@ private struct AddPlayerToGameSheet: View {
                     } label: {
                         Label("New Player…", systemImage: "person.badge.plus")
                     }
+                    .listRowBackground(Color.cardSurface)
                 }
             }
             .listStyle(.insetGrouped)

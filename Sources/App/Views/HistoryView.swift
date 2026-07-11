@@ -10,6 +10,7 @@ import SwiftData
 /// few hundred rows at most), so this is cheap enough to do in-memory.
 struct HistoryView: View {
     @Query private var allGames: [Game]
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     private var completedGames: [Game] {
         allGames
@@ -46,6 +47,7 @@ struct HistoryView: View {
                         } label: {
                             HistoryRow(game: game)
                         }
+                        .listRowBackground(Color.cardSurface)
                     }
                 }
             }
@@ -61,6 +63,7 @@ struct HistoryView: View {
 /// One row: date, seated player names, and the winner line.
 private struct HistoryRow: View {
     let game: Game
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     private var participants: [Participant] { game.participants }
 

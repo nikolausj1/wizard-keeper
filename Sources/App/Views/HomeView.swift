@@ -5,6 +5,7 @@ import SwiftData
 /// New Game, and placeholder navigation to History/Players/Settings.
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var inProgressGame: Game?
     @State private var navigateToNewGame = false
@@ -12,6 +13,18 @@ struct HomeView: View {
 
     var body: some View {
         List {
+            // Inline ScreenHeader instead of `.navigationTitle`: UIKit
+            // draws nav large titles in its own label color (black in
+            // light mode), which is illegible on the dark-page themes —
+            // ScreenHeader's espresso ink tracks the theme. Same pattern
+            // as every other screen.
+            Section {
+                ScreenHeader(eyebrow: nil, title: "Wizard Keeper")
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
             if let game = inProgressGame {
                 Section {
                     NavigationLink {
@@ -19,6 +32,7 @@ struct HomeView: View {
                     } label: {
                         ResumeGameRow(game: game)
                     }
+                    .listRowBackground(Color.cardSurface)
                 } header: {
                     Text("Continue")
                         .foregroundStyle(Color.paperSecondary)
@@ -29,6 +43,7 @@ struct HomeView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 4)
+                        .listRowBackground(Color.cardSurface)
                 }
             }
 
@@ -40,24 +55,29 @@ struct HomeView: View {
                         .font(.body.weight(.semibold))
                 }
                 .tint(.feltGreen)
+                .listRowBackground(Color.cardSurface)
             }
 
             Section {
                 NavigationLink("History") {
                     HistoryView()
                 }
+                .listRowBackground(Color.cardSurface)
                 NavigationLink("Players") {
                     PlayersView()
                 }
+                .listRowBackground(Color.cardSurface)
                 NavigationLink("Settings") {
                     SettingsView()
                 }
+                .listRowBackground(Color.cardSurface)
             }
         }
         .listStyle(.insetGrouped)
         .listSectionSpacing(.compact)
         .paperBackground()
-        .navigationTitle("Wizard Keeper")
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToNewGame) {
             NewGameView()
         }
@@ -100,6 +120,7 @@ struct HomeView: View {
 /// Resume-card content: seated players and current round progress.
 private struct ResumeGameRow: View {
     let game: Game
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
