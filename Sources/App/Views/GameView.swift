@@ -63,6 +63,23 @@ struct GameView: View {
         return game.participants[index].displayNameSnapshot
     }
 
+    /// Up to 3 ranked mid-game trends/outliers, computed via
+    /// `GameInsights.insights` from each participant's completed-round
+    /// (bid, tricksTaken) history in seating order. Empty (and the Trends
+    /// section omitted entirely) until at least `GameInsights.minimumRounds`
+    /// rounds are complete.
+    private var trendInsights: [GameInsights.Insight] {
+        let lines = game.participants.map { participant -> GameInsights.PlayerLine in
+            let entries = completedRounds.compactMap { round -> (bid: Int, tricksTaken: Int)? in
+                guard let entry = round.entries.first(where: { $0.playerId == participant.playerId }),
+                      let bid = entry.bid, let tricksTaken = entry.tricksTaken else { return nil }
+                return (bid, tricksTaken)
+            }
+            return GameInsights.PlayerLine(name: participant.displayNameSnapshot, entries: entries)
+        }
+        return GameInsights.insights(players: lines, maxCount: 3)
+    }
+
     private var inProgressBody: some View {
         List {
             Section {
@@ -80,16 +97,31 @@ struct GameView: View {
                 Text("Standings")
             }
 
-            if !completedRounds.isEmpty {
+            if !trendInsights.isEmpty {
                 Section {
-                    // Newest-first: highest completed round number at top.
-                    ForEach(completedRounds.reversed(), id: \.roundNumber) { round in
-                        NavigationLink(value: round.roundNumber) {
-                            RoundSummaryRow(game: game, round: round)
-                        }
+                    ForEach(Array(trendInsights.enumerated()), id: \.offset) { _, insight in
+                        InsightRow(insight: insight)
                     }
                 } header: {
-                    Text("Rounds")
+                    Text("Trends")
+                }
+            }
+
+            if !completedRounds.isEmpty {
+                Section {
+                    NavigationLink {
+                        RoundsListView(game: game)
+                    } label: {
+                        HStack {
+                            Text("All Rounds")
+                                .font(.system(size: 15, weight: .semibold))
+                            Spacer()
+                            Text("\(completedRoundCount) played")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 2)
+                    }
                 }
             }
         }
@@ -138,9 +170,6 @@ struct GameView: View {
         }
         .navigationDestination(isPresented: $navigateToRoundEntry) {
             RoundEntryView(game: game, roundNumber: game.currentRoundNumber)
-        }
-        .navigationDestination(for: Int.self) { roundNumber in
-            RoundEntryView(game: game, roundNumber: roundNumber)
         }
     }
 
@@ -217,35 +246,23 @@ struct GameView: View {
         }
     }
 
-    /// One row in the Rounds section: round label plus every player's
-    /// delta for that round, seating order, monospaced and green/red.
-    private struct RoundSummaryRow: View {
-        let game: Game
-        let round: Round
-
-        private var deltaText: Text {
-            let parts = game.participants.map { participant -> Text in
-                let delta = round.score(for: participant.playerId) ?? 0
-                return Text(ScoreFormat.delta(delta)).foregroundStyle(delta >= 0 ? .green : .red)
-            }
-            guard var combined = parts.first else { return Text("") }
-            for part in parts.dropFirst() {
-                combined = combined + Text(" \u{00B7} ").foregroundStyle(.secondary) + part
-            }
-            return combined
-        }
+    /// One row in the Trends section: an indigo SF Symbol plus
+    /// `GameInsights.Insight.text`, replacing the old per-round delta rows
+    /// (meaningless without names) with named mid-game trends/outliers.
+    private struct InsightRow: View {
+        let insight: GameInsights.Insight
 
         var body: some View {
-            HStack {
-                Text("Round \(round.roundNumber)")
-                    .font(.system(size: 15, weight: .semibold))
-                Spacer()
-                deltaText
-                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+            HStack(spacing: 10) {
+                Image(systemName: insight.icon)
+                    .foregroundStyle(.indigo)
+                    .frame(width: 20)
+                Text(insight.text)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.primary)
             }
-            .padding(.vertical, 2)
-            .frame(minHeight: 44)
-            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+            .padding(.vertical, 6)
+            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
         }
     }
 }

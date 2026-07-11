@@ -240,8 +240,8 @@ private struct BiddingView: View {
                                 }
                             )
                         }
-                        .padding(.vertical, 2)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                        .padding(.vertical, 8)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .listRowBackground(untouched ? Color.indigo.opacity(0.05) : Color(.secondarySystemGroupedBackground))
                     }
                 }
@@ -376,8 +376,8 @@ private struct ResultsView: View {
                                 )
                             }
                         }
-                        .padding(.vertical, 2)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                        .padding(.vertical, 8)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .listRowBackground(untouched ? Color.indigo.opacity(0.05) : Color(.secondarySystemGroupedBackground))
                     }
                 }
@@ -525,8 +525,8 @@ private struct EditRoundView: View {
                 }
             }
         }
-        .padding(.vertical, 2)
-        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+        .padding(.vertical, 8)
+        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
         .listRowBackground(Color(.secondarySystemGroupedBackground))
     }
 

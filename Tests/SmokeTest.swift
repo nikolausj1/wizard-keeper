@@ -110,6 +110,51 @@ check("sim p3 total", totals[3], 60)
 check("sim placements", WizardEngine.placements(totals: totals), [1, 4, 2, 3])
 check("sim winner", WizardEngine.winners(totals: totals), [0])
 
+// MARK: GameInsights (trends/outliers on the scoreboard)
+typealias Line = GameInsights.PlayerLine
+// Too few rounds → nothing
+check("insights: <3 rounds → none",
+      GameInsights.insights(players: [Line(name: "A", entries: [(0, 0), (1, 1)])]).count, 0)
+// Perfect so far
+let perfect = GameInsights.insights(players: [
+    Line(name: "Kelly", entries: [(0, 0), (1, 1), (2, 2), (0, 0)]),
+    Line(name: "Nan", entries: [(0, 1), (1, 0), (0, 0), (1, 1)]),
+])
+check("insights: perfect detected", perfect.contains { $0.text == "Kelly has hit every bid (4 for 4)" }, true)
+// Hot streak (not perfect): miss then 3 hits
+let hot = GameInsights.insights(players: [Line(name: "J", entries: [(1, 0), (0, 0), (1, 1), (2, 2)])])
+check("insights: hot streak", hot.contains { $0.text == "J is on a 3-hit streak" }, true)
+// Cold streak: trailing misses
+let cold = GameInsights.insights(players: [Line(name: "N", entries: [(0, 0), (1, 0), (2, 0), (1, 3)])])
+check("insights: cold streak", cold.contains { $0.text == "N has missed 3 in a row" }, true)
+// Zero specialist
+let zero = GameInsights.insights(players: [Line(name: "Z", entries: [(0, 0), (0, 0), (1, 0), (0, 0)])])
+check("insights: zero specialist", zero.contains { $0.text == "Z has landed 3 zero bids" }, true)
+// Big round: bid 4 hit in round 2 → +60 (no competing streaks on K:
+// only one trailing miss, so big round is K's most interesting insight)
+let big = GameInsights.insights(players: [
+    Line(name: "K", entries: [(0, 1), (4, 4), (1, 1), (0, 1)]),
+    Line(name: "B", entries: [(0, 0), (0, 0), (1, 1), (0, 0)]),
+])
+check("insights: big round", big.contains { $0.text == "K's +60 in round 2 is the round of the game" }, true)
+// Dedupe: perfect player also has big round → only one insight for them, the perfect one
+let dedupe = GameInsights.insights(players: [
+    Line(name: "K", entries: [(4, 4), (0, 0), (1, 1)]),
+    Line(name: "B", entries: [(0, 1), (1, 0), (0, 1)]),
+])
+check("insights: dedupe keeps highest",
+      dedupe.filter { $0.text.hasPrefix("K") }.count, 1)
+check("insights: dedupe kept perfect",
+      dedupe.contains { $0.text == "K has hit every bid (3 for 3)" }, true)
+// Max count respected
+let capped = GameInsights.insights(players: [
+    Line(name: "A", entries: [(0, 0), (0, 0), (0, 0), (0, 0)]),
+    Line(name: "B", entries: [(1, 1), (1, 1), (1, 1), (1, 1)]),
+    Line(name: "C", entries: [(2, 2), (2, 2), (2, 2), (2, 2)]),
+    Line(name: "D", entries: [(0, 0), (1, 1), (0, 0), (1, 1)]),
+], maxCount: 3)
+check("insights: capped at 3", capped.count, 3)
+
 // MARK: Result
 if failures == 0 {
     print("OK — all \(checks) checks passed")
