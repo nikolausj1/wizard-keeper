@@ -108,6 +108,29 @@ extension View {
     }
 }
 
+/// Quick light/dark toggle for the scoreboard toolbar — dark mode saves
+/// battery on OLED phones during long game nights. Writes through to the
+/// persisted `AppSettings.appearance` (which `RootView` applies globally),
+/// so the choice sticks and the Settings picker stays in sync. From
+/// `.system` it jumps to the opposite of the current effective scheme.
+struct AppearanceToggleButton: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: toggle) {
+            Image(systemName: colorScheme == .dark ? "sun.max.fill" : "moon.fill")
+        }
+        .accessibilityLabel(colorScheme == .dark ? "Switch to light mode" : "Switch to dark mode")
+    }
+
+    private func toggle() {
+        guard let settings = try? AppSettings.fetchOrCreate(in: modelContext) else { return }
+        settings.appearance = colorScheme == .dark ? .light : .dark
+        modelContext.saveNow()
+    }
+}
+
 /// Fixed 8-color palette for player avatars/rows, indexed by `Player.colorId`
 /// (and `Participant.colorIdSnapshot`). All entries are system colors so
 /// dark mode adapts automatically — never hardcode hex here.

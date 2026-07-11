@@ -192,6 +192,9 @@ struct GameView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
+                AppearanceToggleButton()
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
                 GameOptionsMenu(game: game)
             }
             if lastCompletedRoundNumber != nil {
