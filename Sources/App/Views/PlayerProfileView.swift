@@ -214,6 +214,7 @@ private struct EditPlayerSheet: View {
                     .padding(.vertical, 4)
                 } header: {
                     Text("Color")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             }
             .navigationTitle("Edit Player")

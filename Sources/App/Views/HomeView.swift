@@ -21,6 +21,7 @@ struct HomeView: View {
                     }
                 } header: {
                     Text("Continue")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             } else {
                 Section {

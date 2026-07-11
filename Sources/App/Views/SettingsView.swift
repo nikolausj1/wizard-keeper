@@ -77,11 +77,15 @@ private struct SettingsForm: View {
                 Toggle("Trick total check", isOn: $settings.trickTotalCheckEnabled)
             } header: {
                 Text("House Rules")
+                    .foregroundStyle(Color.paperSecondary)
             } footer: {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Bids can't total the tricks in a round.")
+                        .foregroundStyle(Color.paperSecondary)
                     Text("Warn when tricks entered don't match the cards dealt.")
+                        .foregroundStyle(Color.paperSecondary)
                     Text("Rule changes apply to new games — games in progress keep the rules they started with.")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             }
 
@@ -96,8 +100,10 @@ private struct SettingsForm: View {
                 }
             } header: {
                 Text("Game Length")
+                    .foregroundStyle(Color.paperSecondary)
             } footer: {
                 Text("Full length deals 60 \u{00F7} players cards per game.")
+                    .foregroundStyle(Color.paperSecondary)
             }
 
             Section {
@@ -107,8 +113,21 @@ private struct SettingsForm: View {
                     Text("Light").tag(Appearance.light)
                     Text("Dark").tag(Appearance.dark)
                 }
+                Picker("Theme", selection: $settings.appThemeSelection) {
+                    ForEach(AppTheme.allCases) { theme in
+                        Text(theme.displayName).tag(theme)
+                    }
+                }
+                .onChange(of: settings.appThemeSelection) { _, newValue in
+                    ThemeManager.shared.theme = newValue
+                    modelContext.saveNow()
+                }
             } header: {
                 Text("Feel")
+                    .foregroundStyle(Color.paperSecondary)
+            } footer: {
+                Text("Theme and Appearance combine — pick a color theme, then light or dark within it.")
+                    .foregroundStyle(Color.paperSecondary)
             }
 
             Section {
@@ -132,11 +151,13 @@ private struct SettingsForm: View {
                 }
             } header: {
                 Text("Announcer")
+                    .foregroundStyle(Color.paperSecondary)
             } footer: {
                 // Spicy (buckets 4-5) uses mild-to-real profanity — strip it
                 // before any App Store submission (see `AnnouncerStyle`'s
                 // doc comment in Announcer.swift).
                 Text("Spicy is for adult tables.")
+                    .foregroundStyle(Color.paperSecondary)
             }
 
             Section {
@@ -145,6 +166,7 @@ private struct SettingsForm: View {
                     .foregroundStyle(.secondary)
             } header: {
                 Text("About")
+                    .foregroundStyle(Color.paperSecondary)
             }
         }
         .listStyle(.insetGrouped)

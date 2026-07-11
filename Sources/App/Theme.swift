@@ -14,79 +14,207 @@ extension ModelContext {
     }
 }
 
-/// The page background used behind every screen's outermost List/ScrollView.
-/// "Warm Table" restyle: light mode is a rich parchment (#EFE6D3, matching
-/// `_review/restyle-E-warm-table.html`'s `--screen-bg`); dark mode is the
-/// "den at night" warmed background (#1E1915) rather than plain
-/// `.systemGroupedBackground`.
-extension Color {
-    static let paperBase = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark
-            ? UIColor(red: 0.118, green: 0.098, blue: 0.082, alpha: 1)
-            : UIColor(red: 0.937, green: 0.902, blue: 0.827, alpha: 1)
-    })
+/// One themeable color palette: the six semantic colors ("Warm Table"
+/// restyle's `paperBase`/`feltGreen`/`terracotta`/`brassGold`/`espressoInk`/
+/// `warmDisabled`) plus the page-background grain treatment, bundled so
+/// `AppTheme` can vend a complete look in one shot. Each color is built
+/// with `ThemePalette.dynamic(light:dark:)`, the same UIColor
+/// dynamic-provider pattern the original static `let`s used — so
+/// consuming call sites (`Color.paperBase`, `ScreenHeader`,
+/// `PrimaryActionButton`, ...) never change; only where the RGB values
+/// come from does.
+struct ThemePalette {
+    let paperBase: Color
+    let feltGreen: Color
+    let terracotta: Color
+    let brassGold: Color
+    let espressoInk: Color
+    let warmDisabled: Color
 
-    /// Interactive accent for the "Warm Table" restyle — replaces `.indigo`
-    /// app-wide. Light #2F5D46 (mockup `--felt`), dark #3E7A5C (a lightened
-    /// felt that holds contrast against the #1E1915 den background).
-    static let feltGreen = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark
-            ? UIColor(red: 0.243, green: 0.478, blue: 0.361, alpha: 1)
-            : UIColor(red: 0.184, green: 0.365, blue: 0.275, alpha: 1)
-    })
+    /// Accent for chrome that sits directly on the page background — nav
+    /// bar buttons, `ScreenHeader` eyebrows, and the global `.tint`.
+    /// Parchment keeps this identical to `feltGreen` (today's look); the
+    /// dark-page themes (Card Table, Walnut) swap to brass, because a deep
+    /// green control on a felt or walnut page all but vanishes while brass
+    /// reads on both the dark page AND white card surfaces.
+    let tint: Color
 
-    /// Miss/negative-score accent — replaces score-semantic `.red`. Light
-    /// #AE4A2C (mockup `--terracotta`), dark #C96F4A (warmed equivalent).
-    static let terracotta = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark
-            ? UIColor(red: 0.788, green: 0.435, blue: 0.290, alpha: 1)
-            : UIColor(red: 0.682, green: 0.290, blue: 0.173, alpha: 1)
-    })
+    /// Opacity of the tiled paper-grain texture in light mode (see
+    /// `PaperBackground`). Ignored when `showGrain` is `false`.
+    let grainOpacity: Double
 
-    /// Leader/winner accent — replaces `.yellow`. Light #A0721E (mockup
-    /// `--brass`), dark #C9A053 (lightened brass for legibility on the dark
-    /// den background).
-    static let brassGold = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark
-            ? UIColor(red: 0.788, green: 0.627, blue: 0.325, alpha: 1)
-            : UIColor(red: 0.627, green: 0.447, blue: 0.118, alpha: 1)
-    })
-
-    /// Espresso ink — used ONLY where a view hardcodes a text color today
-    /// (currently just `ScreenHeader`'s title). Everywhere else, system
-    /// `.primary`/`.secondary` stay as-is per the restyle brief. Light
-    /// #2B2118 (mockup `--ink`), dark #EDE4D4.
-    static let espressoInk = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark
-            ? UIColor(red: 0.929, green: 0.894, blue: 0.831, alpha: 1)
-            : UIColor(red: 0.169, green: 0.129, blue: 0.094, alpha: 1)
-    })
-
-    /// Disabled-button fill for `PrimaryActionButton` — replaces the cold
-    /// system-gray5 fill (broke the "Warm Table" palette) with a warm
-    /// neutral that harmonizes with `paperBase`'s parchment. Light #DDD3C0,
-    /// dark #3A322A.
-    static let warmDisabled = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark
-            ? UIColor(red: 0.227, green: 0.196, blue: 0.165, alpha: 1)
-            : UIColor(red: 0.867, green: 0.827, blue: 0.753, alpha: 1)
-    })
+    /// Whether `PaperBackground` should draw the grain texture at all —
+    /// off for a felt page background (Card Table) where a paper texture
+    /// reads wrong; on (at a theme-appropriate opacity) for Parchment and
+    /// Walnut.
+    let showGrain: Bool
 }
 
-/// The full page-background treatment: `paperBase` plus, in light mode only,
-/// a barely-there tiled paper-grain texture (4.5% opacity, multiply blend)
-/// over it. Dark mode renders as a flat `paperBase` fill only. Never touches
-/// cards, rows, chips, or type — see `View.paperBackground()`.
+extension ThemePalette {
+    /// Builds a `Color` that resolves to `light` in light mode and `dark`
+    /// in dark mode — component tuples are `(red, green, blue)` in the
+    /// 0...1 range, matching `UIColor(red:green:blue:alpha:)`.
+    fileprivate static func dynamic(
+        light: (Double, Double, Double),
+        dark: (Double, Double, Double)
+    ) -> Color {
+        Color(uiColor: UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: dark.0, green: dark.1, blue: dark.2, alpha: 1)
+                : UIColor(red: light.0, green: light.1, blue: light.2, alpha: 1)
+        })
+    }
+
+    /// The original "Warm Table" palette — parchment page, felt-green
+    /// accent. Default theme; values unchanged from the pre-theming
+    /// static `let`s. Light mode is a rich parchment (#EFE6D3, matching
+    /// `_review/restyle-E-warm-table.html`'s `--screen-bg`); dark mode is
+    /// the "den at night" warmed background (#1E1915).
+    static let parchment = ThemePalette(
+        paperBase: dynamic(light: (0.937, 0.902, 0.827), dark: (0.118, 0.098, 0.082)),
+        feltGreen: dynamic(light: (0.184, 0.365, 0.275), dark: (0.243, 0.478, 0.361)),
+        terracotta: dynamic(light: (0.682, 0.290, 0.173), dark: (0.788, 0.435, 0.290)),
+        brassGold: dynamic(light: (0.627, 0.447, 0.118), dark: (0.788, 0.627, 0.325)),
+        espressoInk: dynamic(light: (0.169, 0.129, 0.094), dark: (0.929, 0.894, 0.831)),
+        warmDisabled: dynamic(light: (0.867, 0.827, 0.753), dark: (0.227, 0.196, 0.165)),
+        tint: dynamic(light: (0.184, 0.365, 0.275), dark: (0.243, 0.478, 0.361)),
+        grainOpacity: 0.045,
+        showGrain: true
+    )
+
+    /// Felt-table look: the page background swaps to felt green — Justin's
+    /// "what would it look like with the felt green as the background and
+    /// the beige somewhere else" ask (#2F5D46 light, deep felt #22352B at
+    /// night). `espressoInk` flips to cream (#F2EAD8/#EFE6D3) so titles
+    /// rendered on that felt page stay legible in both modes, the
+    /// interactive green deepens to a forest tone that still contrasts on
+    /// white system cards, and the paper grain is switched off since it
+    /// only suits an actual paper background.
+    static let cardTable = ThemePalette(
+        paperBase: dynamic(light: (0.184, 0.365, 0.275), dark: (0.133, 0.208, 0.169)),
+        feltGreen: dynamic(light: (0.122, 0.271, 0.204), dark: (0.306, 0.557, 0.424)),
+        terracotta: dynamic(light: (0.788, 0.435, 0.290), dark: (0.851, 0.545, 0.412)),
+        brassGold: dynamic(light: (0.788, 0.627, 0.325), dark: (0.831, 0.690, 0.416)),
+        espressoInk: dynamic(light: (0.949, 0.918, 0.847), dark: (0.937, 0.902, 0.827)),
+        warmDisabled: dynamic(light: (0.278, 0.420, 0.349), dark: (0.165, 0.247, 0.200)),
+        tint: dynamic(light: (0.788, 0.627, 0.325), dark: (0.831, 0.690, 0.416)),
+        grainOpacity: 0,
+        showGrain: false
+    )
+
+    /// Warm wood look: a deep walnut page background (#4A3A28 — light mode
+    /// is intentionally deep-toned, #241C12 at night), cream ink
+    /// (#F2E8D5/#EDE4D4) for legibility against the wood in both modes,
+    /// and a slightly stronger wood-grain-ish texture (0.06 vs.
+    /// Parchment's 0.045) using the same tile.
+    static let walnut = ThemePalette(
+        paperBase: dynamic(light: (0.290, 0.227, 0.157), dark: (0.141, 0.110, 0.071)),
+        feltGreen: dynamic(light: (0.243, 0.478, 0.361), dark: (0.243, 0.478, 0.361)),
+        terracotta: dynamic(light: (0.851, 0.545, 0.412), dark: (0.851, 0.545, 0.412)),
+        brassGold: dynamic(light: (0.831, 0.690, 0.416), dark: (0.831, 0.690, 0.416)),
+        espressoInk: dynamic(light: (0.949, 0.910, 0.835), dark: (0.929, 0.894, 0.831)),
+        warmDisabled: dynamic(light: (0.369, 0.298, 0.212), dark: (0.208, 0.157, 0.102)),
+        tint: dynamic(light: (0.831, 0.690, 0.416), dark: (0.831, 0.690, 0.416)),
+        grainOpacity: 0.06,
+        showGrain: true
+    )
+}
+
+/// Selectable app-wide color theme. Persisted as `AppSettings.appTheme`
+/// (raw `Int`, matching this enum's `rawValue`) and applied globally by
+/// `ThemeManager`; picked from `SettingsView`'s "Theme" row.
+enum AppTheme: Int, CaseIterable, Identifiable {
+    case parchment = 1
+    case cardTable = 2
+    case walnut = 3
+
+    var id: Int { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .parchment: return "Parchment"
+        case .cardTable: return "Card Table"
+        case .walnut: return "Walnut"
+        }
+    }
+
+    var palette: ThemePalette {
+        switch self {
+        case .parchment: return .parchment
+        case .cardTable: return .cardTable
+        case .walnut: return .walnut
+        }
+    }
+}
+
+/// Live-observed holder for the app's active `AppTheme`. The `Color`
+/// statics below (`.paperBase`, `.feltGreen`, `.terracotta`, `.brassGold`,
+/// `.espressoInk`, `.warmDisabled`) read `ThemeManager.shared.theme
+/// .palette` each time they're evaluated, so a theme switch only shows up
+/// once something re-renders — `RootView` applies `.id(themeManager
+/// .theme)` to its root content to force that full re-render on change.
+/// `RootView` also loads the persisted theme (`AppSettings.appTheme`) into
+/// this singleton at startup.
+final class ThemeManager: ObservableObject {
+    static let shared = ThemeManager()
+
+    @Published var theme: AppTheme = .parchment
+
+    private init() {}
+}
+
+/// The six semantic colors from the "Warm Table" restyle, now sourced from
+/// the active `ThemeManager.shared.theme.palette` (see `ThemePalette`)
+/// instead of fixed values — consuming views read `Color.paperBase` etc.
+/// exactly as before; only the theme engine underneath changed.
+extension Color {
+    static var paperBase: Color { ThemeManager.shared.theme.palette.paperBase }
+    static var feltGreen: Color { ThemeManager.shared.theme.palette.feltGreen }
+    static var terracotta: Color { ThemeManager.shared.theme.palette.terracotta }
+    static var brassGold: Color { ThemeManager.shared.theme.palette.brassGold }
+    static var espressoInk: Color { ThemeManager.shared.theme.palette.espressoInk }
+    static var warmDisabled: Color { ThemeManager.shared.theme.palette.warmDisabled }
+    static var appTint: Color { ThemeManager.shared.theme.palette.tint }
+
+    /// Muted text that sits DIRECTLY on the page background (List section
+    /// headers, panel labels, helper captions under the bottom CTA).
+    /// System `.secondary` stays gray regardless of theme and disappears
+    /// against the dark felt/walnut pages, so page-level muted text uses
+    /// this espresso-derived tone instead — it tracks each theme's ink and
+    /// reads on every page color. Text inside cards keeps `.secondary`.
+    static var paperSecondary: Color { espressoInk.opacity(0.72) }
+}
+
+/// Convenience enum accessor over `AppSettings.appTheme`'s raw storage —
+/// mirrors `AnnouncerVoice`/`AnnouncerStyle`'s accessor pattern in
+/// `Announcer.swift`. Defined here (App layer) rather than in
+/// `Models/AppSettings.swift` so the Models layer never has to import an
+/// App-layer enum.
+extension AppSettings {
+    var appThemeSelection: AppTheme {
+        get { AppTheme(rawValue: appTheme) ?? .parchment }
+        set { appTheme = newValue.rawValue }
+    }
+}
+
+/// The full page-background treatment: `paperBase` plus, in light mode
+/// only, the active theme's tiled paper-grain texture (opacity from
+/// `ThemePalette.grainOpacity`, multiply blend) over it — skipped entirely
+/// when the active theme's `showGrain` is `false` (Card Table's felt
+/// background). Dark mode renders as a flat `paperBase` fill only. Never
+/// touches cards, rows, chips, or type — see `View.paperBackground()`.
 struct PaperBackground: View {
     @Environment(\.colorScheme) private var colorScheme
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     var body: some View {
+        let palette = themeManager.theme.palette
         ZStack {
             Color.paperBase
-            if colorScheme == .light {
+            if colorScheme == .light && palette.showGrain {
                 Image("PaperGrain")
                     .resizable(resizingMode: .tile)
-                    .opacity(0.045)
+                    .opacity(palette.grainOpacity)
                     .blendMode(.multiply)
                     .allowsHitTesting(false)
             }
@@ -200,7 +328,7 @@ struct ScreenHeader: View {
             if let eyebrow {
                 Text(eyebrow)
                     .font(.system(size: eyebrowSize, weight: .semibold))
-                    .foregroundStyle(Color.feltGreen)
+                    .foregroundStyle(Color.appTint)
             }
             Text(title)
                 .font(.system(size: titleSize * titleScale / 100, weight: .heavy))
@@ -208,7 +336,7 @@ struct ScreenHeader: View {
             if let subtitle {
                 Text(subtitle)
                     .font(.system(size: subtitleSize, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.paperSecondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -275,10 +403,12 @@ struct AnnounceHeroButton: View {
     var body: some View {
         Button(action: action) {
             Label(
-                isPlaying ? "Stop" : "Announce",
+                isPlaying ? "Stop" : "Play Round Commentary",
                 systemImage: isPlaying ? "stop.fill" : "speaker.wave.2.fill"
             )
             .font(.system(size: titleSize, weight: .bold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .frame(maxWidth: .infinity)
             .frame(height: 50)
         }

@@ -365,13 +365,13 @@ private struct BiddingView: View {
             VStack(spacing: 10) {
                 footerText
                     .font(.system(size: footerSize, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.paperSecondary)
                 PrimaryActionButton(title: "Confirm Bids", isDisabled: !allBidsIn, action: onConfirm)
             }
             .padding(.horizontal)
             .padding(.top, 8)
             .padding(.bottom, 10)
-            .background(.bar)
+            .background(Color.paperBase.opacity(0.96))
         }
     }
 
@@ -652,13 +652,13 @@ private struct ResultsView: View {
             VStack(spacing: 10) {
                 (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
                     .font(.system(size: footerSize, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.paperSecondary)
                 PrimaryActionButton(title: confirmState.label, isDisabled: confirmState.disabled, action: onConfirm)
             }
             .padding(.horizontal)
             .padding(.top, 8)
             .padding(.bottom, 10)
-            .background(.bar)
+            .background(Color.paperBase.opacity(0.96))
         }
     }
 
@@ -760,13 +760,13 @@ private struct EditRoundView: View {
             VStack(spacing: 10) {
                 (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
                     .font(.system(size: footerSize, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.paperSecondary)
                 PrimaryActionButton(title: saveState.label, isDisabled: saveState.disabled, action: onSave)
             }
             .padding(.horizontal)
             .padding(.top, 8)
             .padding(.bottom, 10)
-            .background(.bar)
+            .background(Color.paperBase.opacity(0.96))
         }
     }
 

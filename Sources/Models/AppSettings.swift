@@ -60,6 +60,15 @@ final class AppSettings {
     /// App layer for the mapping; styles 4-5 are adults-only.
     var announcerStyle: Int = 1
 
+    /// Backing storage for the selected color theme — raw `AppTheme
+    /// .rawValue` (1 Parchment, 2 Card Table, 3 Walnut). The `AppTheme`
+    /// enum lives in the App layer (`Sources/App/Theme.swift`), not here,
+    /// so this Models-layer file stays UI-free; App-layer code maps this
+    /// raw value through that enum. Additive field — defaults to 1
+    /// (Parchment) so existing stores migrate to the current look
+    /// unchanged.
+    var appTheme: Int = 1
+
     init(
         hookRuleEnabled: Bool = false,
         trickTotalCheckEnabled: Bool = true,
@@ -69,7 +78,8 @@ final class AppSettings {
         hapticsEnabled: Bool = true,
         appearance: Appearance = .system,
         announcerVoiceRaw: String = "charlie",
-        announcerStyle: Int = 1
+        announcerStyle: Int = 1,
+        appTheme: Int = 1
     ) {
         self.hookRuleEnabled = hookRuleEnabled
         self.trickTotalCheckEnabled = trickTotalCheckEnabled
@@ -80,6 +90,7 @@ final class AppSettings {
         self.appearanceRaw = appearance.rawValue
         self.announcerVoiceRaw = announcerVoiceRaw
         self.announcerStyle = announcerStyle
+        self.appTheme = appTheme
     }
 
     /// Fetches the single settings record, creating and inserting one

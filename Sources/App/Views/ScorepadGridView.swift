@@ -293,7 +293,7 @@ struct ScorepadGridView: View {
             VStack(spacing: 10) {
                 dealHelperText
                     .font(.system(size: dealTextSize, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.paperSecondary)
 
                 PrimaryActionButton(title: "Enter Round \(game.currentRoundNumber)") {
                     navigateToRoundEntry = true
@@ -371,7 +371,7 @@ struct ScorepadGridView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("TRENDS")
                 .font(.system(size: trendsHeaderSize, weight: .bold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.paperSecondary)
                 .padding(.horizontal, outerHPadding)
                 .padding(.top, 16)
 
@@ -426,29 +426,46 @@ struct ScorepadGridView: View {
             ScreenHeader(eyebrow: nil, title: "Scorepad", subtitle: subtitleText, titleSize: 34)
                 .padding(.horizontal, outerHPadding)
 
-            headerRow
-                .padding(.horizontal, outerHPadding)
-                .padding(.vertical, 10)
-                .overlay(alignment: .bottom) {
-                    Rectangle().fill(Color(.separator)).frame(height: 1)
-                }
-
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(rows) { row in
-                        rowView(row)
+            // The grid itself lives on a card "sheet" (same surface as the
+            // standings/trends cards) rather than bare on the page: its
+            // dense `.primary`/`.secondary` type is tuned for a card-light
+            // surface and would go illegible straight on the dark-page
+            // themes' felt/walnut backgrounds. On Parchment it reads as a
+            // paper scorepad sheet lying on the table.
+            VStack(spacing: 0) {
+                headerRow
+                    .padding(.horizontal, outerHPadding)
+                    .padding(.vertical, 10)
+                    .overlay(alignment: .bottom) {
+                        Rectangle().fill(Color(.separator)).frame(height: 1)
                     }
-                }
-                .padding(.horizontal, outerHPadding)
-            }
 
-            totalRow
-                .padding(.horizontal, outerHPadding)
-                .padding(.top, 10)
-                .padding(.bottom, 12)
-                .overlay(alignment: .top) {
-                    Rectangle().fill(Color(.separator)).frame(height: 1)
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(rows) { row in
+                            rowView(row)
+                        }
+                    }
+                    .padding(.horizontal, outerHPadding)
                 }
+
+                totalRow
+                    .padding(.horizontal, outerHPadding)
+                    .padding(.top, 10)
+                    .padding(.bottom, 12)
+                    .overlay(alignment: .top) {
+                        Rectangle().fill(Color(.separator)).frame(height: 1)
+                    }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .warmCardShadow()
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 12)
         }
     }
 

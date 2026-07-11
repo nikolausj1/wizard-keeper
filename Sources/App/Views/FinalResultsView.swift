@@ -118,7 +118,7 @@ struct FinalResultsView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.feltGreen)
+                .tint(.appTint)
                 .controlSize(.large)
 
                 Button {
@@ -131,7 +131,7 @@ struct FinalResultsView: View {
                 .controlSize(.large)
             }
             .padding()
-            .background(.bar)
+            .background(Color.paperBase.opacity(0.96))
         }
         .navigationTitle("Final Results")
         .navigationBarTitleDisplayMode(.large)
@@ -223,7 +223,7 @@ struct FinalResultsView: View {
                     .font(.subheadline.weight(.semibold))
             }
             .buttonStyle(.bordered)
-            .tint(.feltGreen)
+            .tint(.appTint)
         }
     }
 
@@ -234,7 +234,7 @@ struct FinalResultsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Game Story")
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.paperSecondary)
                 .padding(.horizontal, 4)
             VStack(spacing: 10) {
                 ForEach(Array(gameStory.enumerated()), id: \.offset) { _, insight in

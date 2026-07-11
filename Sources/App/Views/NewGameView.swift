@@ -60,9 +60,11 @@ struct NewGameView: View {
                 }
             } header: {
                 Text("Seating Order")
+                    .foregroundStyle(Color.paperSecondary)
             } footer: {
                 if !selectedPlayerIDs.isEmpty {
                     Text("Drag to reorder — first seat deals first. Swipe to remove.")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             }
 
@@ -93,9 +95,11 @@ struct NewGameView: View {
                 }
             } header: {
                 Text("Saved Players")
+                    .foregroundStyle(Color.paperSecondary)
             } footer: {
                 if !players.isEmpty && unseatedPlayers.isEmpty {
                     Text("Everyone's seated.")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             }
 
@@ -111,8 +115,10 @@ struct NewGameView: View {
             } footer: {
                 if let count = effectiveRoundCount {
                     Text("\(selectedPlayerIDs.count) players · \(count) rounds")
+                        .foregroundStyle(Color.paperSecondary)
                 } else {
                     Text("Select 3–6 players to see the round count.")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             }
         }
@@ -129,7 +135,7 @@ struct NewGameView: View {
         .safeAreaInset(edge: .bottom) {
             PrimaryActionButton(title: "Start Game", isDisabled: !canStart, action: startGame)
                 .padding()
-                .background(.bar)
+                .background(Color.paperBase.opacity(0.96))
         }
         .sheet(isPresented: $showAddPlayer) {
             AddPlayerSheet(existingNames: players.map(\.name), nextColorId: nextColorId) { name, colorId in

@@ -189,6 +189,7 @@ private struct GameLengthSheet: View {
                     )
                 } footer: {
                     Text("\(completedRoundCount) round\(completedRoundCount == 1 ? "" : "s") already played.")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             }
             .listStyle(.insetGrouped)

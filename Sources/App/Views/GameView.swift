@@ -125,7 +125,11 @@ struct GameView: View {
                     StandingRow(standing: standing, leaderTotal: leaderTotal)
                 }
             } header: {
+                // Section headers sit on the page background, so they use
+                // the theme-tracking muted ink — system `.secondary` dies
+                // against the dark-page themes' felt/walnut.
                 Text("Standings")
+                    .foregroundStyle(Color.paperSecondary)
             }
 
             // Always shown for an in-progress game: pregame framing before
@@ -138,6 +142,7 @@ struct GameView: View {
                 }
             } header: {
                 Text("Trends")
+                    .foregroundStyle(Color.paperSecondary)
             }
 
             // Hero CTA for the Trends section's single table-wide
@@ -178,7 +183,7 @@ struct GameView: View {
             VStack(spacing: 10) {
                 dealHelperText
                     .font(.system(size: dealHelperSize, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.paperSecondary)
 
                 PrimaryActionButton(title: "Enter Round \(game.currentRoundNumber)") {
                     navigateToRoundEntry = true
@@ -187,7 +192,10 @@ struct GameView: View {
             .padding(.horizontal)
             .padding(.top, 8)
             .padding(.bottom, 10)
-            .background(.bar)
+            // `paperBase`, not `.bar`: the system material renders as a
+            // light gray band that clashes with the dark-page themes; a
+            // near-opaque page-color wash blends into every theme.
+            .background(Color.paperBase.opacity(0.96))
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)

@@ -85,6 +85,7 @@ struct GameDetailView: View {
                     }
                 } header: {
                     Text("Final Standings")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             }
 
@@ -95,6 +96,7 @@ struct GameDetailView: View {
                         .foregroundStyle(.secondary)
                 } header: {
                     Text("Rounds")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             } else {
                 Section {
@@ -103,6 +105,7 @@ struct GameDetailView: View {
                     }
                 } header: {
                     Text("Rounds")
+                        .foregroundStyle(Color.paperSecondary)
                 }
             }
         }

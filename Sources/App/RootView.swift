@@ -20,11 +20,30 @@ struct RootView: View {
         "-uiScreen", in: ProcessInfo.processInfo.arguments
     )
 
+    /// Sim-verify hook: `-uiTheme parchment|cardTable|walnut` forces a
+    /// color theme for screenshots, overriding the persisted setting —
+    /// same spirit as `-uiScreen`.
+    private static let uiTheme: AppTheme? = {
+        switch WizardKeeperApp.launchArgumentValue("-uiTheme", in: ProcessInfo.processInfo.arguments) {
+        case "parchment": .parchment
+        case "cardTable": .cardTable
+        case "walnut": .walnut
+        default: nil
+        }
+    }()
+
     // Singleton `AppSettings` record — see `AppSettings.fetchOrCreate`. A
     // plain `@Query` (no predicate needed) is enough to observe it live so
     // toggling "Appearance" in `SettingsView` recolors the whole app
     // immediately.
     @Query private var settingsRecords: [AppSettings]
+
+    // Observed so a theme switch (from `SettingsView`, which writes
+    // straight to this singleton) is visible here too — `rootContent`'s
+    // `.id(themeManager.theme)` below is what actually forces the
+    // re-render, since the six themed `Color` statics are plain computed
+    // vars SwiftUI's diffing can't see inside.
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     private var preferredColorScheme: ColorScheme? {
         switch settingsRecords.first?.appearance ?? .system {
@@ -37,10 +56,34 @@ struct RootView: View {
     var body: some View {
         NavigationStack {
             rootContent
+                .id(themeManager.theme)
         }
-        .tint(.feltGreen)
+        // `.appTint`, not `.feltGreen`: nav-bar chrome sits directly on the
+        // page background, and the dark-page themes (Card Table, Walnut)
+        // swap that accent to brass — a deep green control all but vanishes
+        // on a felt or walnut page. Re-evaluated on theme change because
+        // this view observes `themeManager`.
+        .tint(.appTint)
         .preferredColorScheme(preferredColorScheme)
         .onAppear(perform: fireAnnouncerTestIfNeeded)
+        .onAppear(perform: loadPersistedTheme)
+        .onChange(of: settingsRecords.first?.appTheme) { _, _ in loadPersistedTheme() }
+    }
+
+    /// Loads `AppSettings.appTheme` into `ThemeManager.shared` — called on
+    /// appear (in case the settings record already exists) and again
+    /// whenever the persisted value changes (in case the `@Query` hadn't
+    /// loaded it yet on first appear, or it changed some other way).
+    /// `SettingsView`'s Theme picker also writes `ThemeManager.shared
+    /// .theme` directly on selection, so this is mainly what seeds the
+    /// theme at launch.
+    private func loadPersistedTheme() {
+        if let override = Self.uiTheme {
+            themeManager.theme = override
+            return
+        }
+        guard let raw = settingsRecords.first?.appTheme, let theme = AppTheme(rawValue: raw) else { return }
+        themeManager.theme = theme
     }
 
     /// Verification hook for the announcer feature: `-announcerTest`
