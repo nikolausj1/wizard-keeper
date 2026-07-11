@@ -24,22 +24,34 @@ enum AnnouncerVoice: String, CaseIterable, Identifiable {
 /// mild-to-real profanity — see `tools/generate_announcer.py`'s header
 /// comment — and are adults-only; strip them before any App Store
 /// submission.
+/// Three listener-facing tiers over five generated clip buckets — the
+/// original five tones were too close together at the table, so each tier
+/// draws from a MERGED pool of its underlying buckets (doubling variety):
+/// Classic = bucket 1, Fun = buckets 2+3 (roasts the scoreboard), Spicy =
+/// buckets 4+5 (adults-only: expletives — strip before any App Store
+/// submission, never on the kids' iPads).
 enum AnnouncerStyle: Int, CaseIterable, Identifiable {
     case classic = 1
-    case spicy = 2
-    case scorched = 3
-    case vicious = 4
-    case unhinged = 5
+    case fun = 2
+    case spicy = 3
 
     var id: Int { rawValue }
 
     var displayName: String {
         switch self {
         case .classic: return "Classic"
+        case .fun: return "Fun"
         case .spicy: return "Spicy"
-        case .scorched: return "Scorched"
-        case .vicious: return "Vicious"
-        case .unhinged: return "Unhinged"
+        }
+    }
+
+    /// The on-disk clip-style buckets this tier draws from (file naming
+    /// still uses the original five: tail_<bucket>_<kind>_<i>).
+    var buckets: [Int] {
+        switch self {
+        case .classic: return [1]
+        case .fun: return [2, 3]
+        case .spicy: return [4, 5]
         }
     }
 }
@@ -54,7 +66,15 @@ extension AppSettings {
     }
 
     var announcerStyleSelection: AnnouncerStyle {
-        get { AnnouncerStyle(rawValue: announcerStyle) ?? .classic }
+        get {
+            // Migration from the original five-tier storage: 1 Classic,
+            // 2 Spicy / 3 Scorched → Fun, 4 Vicious / 5 Unhinged → Spicy.
+            switch announcerStyle {
+            case 1: return .classic
+            case 2, 3: return .fun
+            default: return announcerStyle >= 4 ? .spicy : .classic
+            }
+        }
         set { announcerStyle = newValue.rawValue }
     }
 }
@@ -193,7 +213,7 @@ final class AnnouncerPlayer: ObservableObject {
         attempted += 1
         if let u = tailURL(kindName: "winner", style: style, voice: voiceRaw) { urls.append(u) }
 
-        if let lastPlaceName, style.rawValue >= AnnouncerStyle.spicy.rawValue {
+        if let lastPlaceName, style.rawValue >= AnnouncerStyle.fun.rawValue {
             attempted += 1
             if let u = nameURL(lastPlaceName, voice: voiceRaw) { urls.append(u) }
             attempted += 1
@@ -297,7 +317,7 @@ final class AnnouncerPlayer: ObservableObject {
             if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voiceRaw) { urls.append(u) }
         }
 
-        if let lastPlaceName, style.rawValue >= AnnouncerStyle.spicy.rawValue {
+        if let lastPlaceName, style.rawValue >= AnnouncerStyle.fun.rawValue {
             attempted += 1
             if let u = nameURL(lastPlaceName, voice: voiceRaw) { urls.append(u) }
             attempted += 1
@@ -334,6 +354,27 @@ final class AnnouncerPlayer: ObservableObject {
 
         attempted += 1
         if let u = tailURL(kindName: "kickoff", style: style, voice: voiceRaw) { urls.append(u) }
+
+        return play(urls: urls, attempted: attempted)
+    }
+
+    /// Plays a short sample of the given voice/style for the Settings
+    /// "Preview Voice" button: [seg intro] + [tail winner], same
+    /// resolution/skip logic and shape as `announcePregame`. Callers
+    /// (`SettingsView`) handle the stop-if-playing toggle themselves via
+    /// `isPlaying`/`stop()` — this method just plays.
+    @discardableResult
+    func preview(voice: AnnouncerVoice, style: AnnouncerStyle) -> Int {
+        beginAssembly()
+        let voiceRaw = voice.rawValue
+        var urls: [URL] = []
+        var attempted = 0
+
+        attempted += 1
+        if let u = connectiveURL(kind: "intro", style: style, voice: voiceRaw) { urls.append(u) }
+
+        attempted += 1
+        if let u = tailURL(kindName: "winner", style: style, voice: voiceRaw) { urls.append(u) }
 
         return play(urls: urls, attempted: attempted)
     }
@@ -471,12 +512,23 @@ final class AnnouncerPlayer: ObservableObject {
     /// on disk yet (generation may still be in progress). Returns `nil`
     /// only if nothing is resolvable.
     private func tailURL(kindName: String, style: AnnouncerStyle, voice: String) -> URL? {
-        guard let count = manifest?.styles[String(style.rawValue)]?[kindName], count > 0 else { return nil }
-        let variant = pickVariant(category: "tail_\(kindName)", count: count, styleRaw: style.rawValue)
-        if let url = resolvedURL(basename: "tail_\(style.rawValue)_\(kindName)_\(variant)", voice: voice) {
+        // Merged pool across the tier's clip buckets: flat index space over
+        // every (bucket, variant) pair, so Fun draws from both the old
+        // Spicy and Scorched corpora, etc. — twice the variety per tier.
+        var pool: [(bucket: Int, variant: Int)] = []
+        for bucket in style.buckets {
+            let count = manifest?.styles[String(bucket)]?[kindName] ?? 0
+            for v in 0..<count { pool.append((bucket, v)) }
+        }
+        guard !pool.isEmpty else { return nil }
+        let flat = pickVariant(category: "tail_\(kindName)", count: pool.count, styleRaw: style.rawValue)
+        let pick = pool[flat]
+        if let url = resolvedURL(basename: "tail_\(pick.bucket)_\(kindName)_\(pick.variant)", voice: voice) {
             return url
         }
-        if variant != 0, let url = resolvedURL(basename: "tail_\(style.rawValue)_\(kindName)_0", voice: voice) {
+        // Fallback: first pool entry (generation may still be in flight).
+        let first = pool[0]
+        if flat != 0, let url = resolvedURL(basename: "tail_\(first.bucket)_\(kindName)_\(first.variant)", voice: voice) {
             return url
         }
         return nil
@@ -491,21 +543,29 @@ final class AnnouncerPlayer: ObservableObject {
     /// shuffled 0..<3 index order and returns the first that resolves —
     /// `nil`, silently, if none do.
     private func connectiveURL(kind: String, style: AnnouncerStyle, voice: String) -> URL? {
-        let cacheKey = "\(voice)_\(style.rawValue)_\(kind)"
-        let count: Int
-        if let cached = connectiveCounts[cacheKey] {
-            count = cached
-        } else {
-            var probed = 0
-            while probed < 8, resolvedURL(basename: "seg_\(style.rawValue)_\(kind)_\(probed)", voice: voice) != nil {
-                probed += 1
+        // Merged pool across the tier's buckets, mirroring tailURL. Counts
+        // are probed per (voice, bucket, kind) since connectives aren't in
+        // the manifest.
+        var pool: [(bucket: Int, variant: Int)] = []
+        for bucket in style.buckets {
+            let cacheKey = "\(voice)_\(bucket)_\(kind)"
+            let count: Int
+            if let cached = connectiveCounts[cacheKey] {
+                count = cached
+            } else {
+                var probed = 0
+                while probed < 8, resolvedURL(basename: "seg_\(bucket)_\(kind)_\(probed)", voice: voice) != nil {
+                    probed += 1
+                }
+                connectiveCounts[cacheKey] = probed
+                count = probed
             }
-            connectiveCounts[cacheKey] = probed
-            count = probed
+            for v in 0..<count { pool.append((bucket, v)) }
         }
-        guard count > 0 else { return nil }
-        let variant = pickVariant(category: "seg_\(kind)", count: count, styleRaw: style.rawValue)
-        return resolvedURL(basename: "seg_\(style.rawValue)_\(kind)_\(variant)", voice: voice)
+        guard !pool.isEmpty else { return nil }
+        let flat = pickVariant(category: "seg_\(kind)", count: pool.count, styleRaw: style.rawValue)
+        let pick = pool[flat]
+        return resolvedURL(basename: "seg_\(pick.bucket)_\(kind)_\(pick.variant)", voice: voice)
     }
 
     /// On-disk connective variant counts, probed once per (voice, style,

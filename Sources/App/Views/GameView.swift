@@ -137,22 +137,19 @@ struct GameView: View {
                     InsightRow(insight: insight)
                 }
             } header: {
-                HStack {
-                    Text("Trends")
-                    Spacer()
-                    if !displayedInsights.isEmpty {
-                        Button(action: toggleAnnounce) {
-                            Label(
-                                announcer.isPlaying ? "Stop" : "Announce",
-                                systemImage: announcer.isPlaying ? "stop.fill" : "speaker.wave.2.fill"
-                            )
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Color.feltGreen)
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
+                Text("Trends")
+            }
+
+            // Hero CTA for the Trends section's single table-wide
+            // broadcast — full-width, pulses while idle to encourage the
+            // dealer to press it. Same component ScorepadGridView's iPad
+            // left panel uses (see `AnnounceHeroButton` in Theme.swift).
+            if !displayedInsights.isEmpty {
+                Section {
+                    AnnounceHeroButton(isPlaying: announcer.isPlaying, action: toggleAnnounce)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
             }
 
@@ -317,8 +314,9 @@ struct GameView: View {
 
     /// One row in the Trends section: a felt-green SF Symbol plus
     /// `GameInsights.Insight.text`. Per-row playback was replaced by a
-    /// single table-wide broadcast button on the section header (see
-    /// `toggleAnnounce`), so this row is icon + text only again.
+    /// single table-wide broadcast — now the full-width `AnnounceHeroButton`
+    /// below the Trends card (see `toggleAnnounce`) — so this row is icon +
+    /// text only again.
     private struct InsightRow: View {
         let insight: GameInsights.Insight
 

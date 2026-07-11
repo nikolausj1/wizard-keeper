@@ -81,7 +81,7 @@ struct RootView: View {
                     value: nil
                 ),
             ]
-            let segments = AnnouncerPlayer.shared.announceRoundUpdate(insights: insights, voice: .charlie, style: .scorched)
+            let segments = AnnouncerPlayer.shared.announceRoundUpdate(insights: insights, voice: .charlie, style: .fun)
             print("announcer test fired, segments: \(segments)")
         }
     }

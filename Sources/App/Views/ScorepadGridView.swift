@@ -49,7 +49,6 @@ struct ScorepadGridView: View {
     @ScaledMetric(relativeTo: .caption) private var trendsHeaderSize: CGFloat = 12
     @ScaledMetric(relativeTo: .body) private var trendIconWidth: CGFloat = 20
     @ScaledMetric(relativeTo: .body) private var trendTextSize: CGFloat = 15
-    @ScaledMetric(relativeTo: .footnote) private var trendAnnounceSize: CGFloat = 13
 
     private enum RowKind {
         /// `deltas[i]` is `nil` when `Round.score(for:)` can't find an entry
@@ -364,32 +363,17 @@ struct ScorepadGridView: View {
     /// The standings panel's Trends block — parity with `GameView`'s
     /// iPhone Trends section (see `displayedInsights`/`toggleAnnounce`
     /// above), filling the dead space that used to sit below the standings
-    /// card on iPad: a small-caps "TRENDS" label with a trailing
-    /// Announce/Stop button, then up to 3 insight rows in a warm-shadow
-    /// card.
+    /// card on iPad: a small-caps "TRENDS" label, then up to 3 insight rows
+    /// in a warm-shadow card. The Announce/Stop control itself now lives
+    /// below this block as the full-width `AnnounceHeroButton` (see
+    /// `standingsPanel`), not in this header.
     private var trendsBlock: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("TRENDS")
-                    .font(.system(size: trendsHeaderSize, weight: .bold))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                if !displayedInsights.isEmpty {
-                    Button(action: toggleAnnounce) {
-                        Label(
-                            announcer.isPlaying ? "Stop" : "Announce",
-                            systemImage: announcer.isPlaying ? "stop.fill" : "speaker.wave.2.fill"
-                        )
-                        .font(.system(size: trendAnnounceSize, weight: .semibold))
-                        .foregroundStyle(Color.feltGreen)
-                        .frame(minHeight: 44)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, outerHPadding)
-            .padding(.top, 16)
+            Text("TRENDS")
+                .font(.system(size: trendsHeaderSize, weight: .bold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, outerHPadding)
+                .padding(.top, 16)
 
             VStack(spacing: 0) {
                 ForEach(Array(displayedInsights.enumerated()), id: \.offset) { index, insight in
@@ -409,6 +393,12 @@ struct ScorepadGridView: View {
             .warmCardShadow()
             .padding(.horizontal, outerHPadding)
             .padding(.top, 8)
+
+            if !displayedInsights.isEmpty {
+                AnnounceHeroButton(isPlaying: announcer.isPlaying, action: toggleAnnounce)
+                    .padding(.horizontal, outerHPadding)
+                    .padding(.top, 10)
+            }
         }
     }
 

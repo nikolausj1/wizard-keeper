@@ -37,6 +37,22 @@ private struct SettingsForm: View {
     @Bindable var settings: AppSettings
     @Environment(\.modelContext) private var modelContext
 
+    /// Drives the Announcer section's Preview Voice/Stop toggle — observed
+    /// so the label/icon flip live as the sample plays and finishes, same
+    /// pattern as `GameView`'s Trends broadcast button.
+    @ObservedObject private var announcer = AnnouncerPlayer.shared
+
+    /// Toggle for the "Preview Voice" row: stops if a sample (or any other
+    /// broadcast) is already playing, otherwise plays a short sample in the
+    /// currently-selected voice and style.
+    private func togglePreview() {
+        if announcer.isPlaying {
+            announcer.stop()
+        } else {
+            announcer.preview(voice: settings.announcerVoiceSelection, style: settings.announcerStyleSelection)
+        }
+    }
+
     /// `customRoundCount` is `nil` whenever `useFullLength == true` (see
     /// the model's doc comment); this binding fills in the spec's default
     /// of 10 for display/editing and writes real values straight back.
@@ -108,13 +124,19 @@ private struct SettingsForm: View {
                     }
                 }
                 .onChange(of: settings.announcerStyleSelection) { _, _ in modelContext.saveNow() }
+                Button(action: togglePreview) {
+                    Label(
+                        announcer.isPlaying ? "Stop" : "Preview Voice",
+                        systemImage: announcer.isPlaying ? "stop.fill" : "speaker.wave.2.fill"
+                    )
+                }
             } header: {
                 Text("Announcer")
             } footer: {
-                // Styles 4-5 (Vicious, Unhinged) use mild-to-real profanity —
-                // strip them before any App Store submission (see
-                // `AnnouncerStyle`'s doc comment in Announcer.swift).
-                Text("Vicious and Unhinged are for adult tables.")
+                // Spicy (buckets 4-5) uses mild-to-real profanity — strip it
+                // before any App Store submission (see `AnnouncerStyle`'s
+                // doc comment in Announcer.swift).
+                Text("Spicy is for adult tables.")
             }
 
             Section {

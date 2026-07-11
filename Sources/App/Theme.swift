@@ -251,6 +251,65 @@ struct PrimaryActionButton: View {
     }
 }
 
+/// Full-width 50pt hero CTA for the Trends section's single table-wide
+/// broadcast, shared by `GameView` (iPhone) and `ScorepadGridView` (iPad) so
+/// both platforms get an identical hero treatment: brassGold fill (distinct
+/// from `PrimaryActionButton`'s feltGreen Enter Round CTA), 14pt corner
+/// radius, white bold label with a speaker/stop icon. While idle, a gentle
+/// repeating "breathing" glow (brassGold shadow opacity 0.25→0.6 plus a
+/// hair of scale, 1.0→1.02) nudges the dealer to press it — subtle and
+/// classy, not a strobe. The pulse stops the instant playback starts and
+/// never runs at all when Reduce Motion is on.
+struct AnnounceHeroButton: View {
+    var isPlaying: Bool
+    var action: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pulseUp = false
+    @ScaledMetric(relativeTo: .body) private var titleSize: CGFloat = 17
+
+    /// Only breathe while idle and only when the system isn't asking for
+    /// reduced motion.
+    private var pulsing: Bool { !isPlaying && !reduceMotion }
+
+    var body: some View {
+        Button(action: action) {
+            Label(
+                isPlaying ? "Stop" : "Announce",
+                systemImage: isPlaying ? "stop.fill" : "speaker.wave.2.fill"
+            )
+            .font(.system(size: titleSize, weight: .bold))
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+        }
+        .foregroundStyle(.white)
+        .background(Color.brassGold)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(
+            color: Color.brassGold.opacity(pulsing ? (pulseUp ? 0.6 : 0.25) : 0),
+            radius: pulsing && pulseUp ? 16 : 6
+        )
+        .scaleEffect(pulsing && pulseUp ? 1.02 : 1.0)
+        .onAppear { syncPulse() }
+        .onChange(of: pulsing) { _, _ in syncPulse() }
+    }
+
+    /// Starts (or stops) the repeating breathing animation to match
+    /// `pulsing`'s current value — called on appear and whenever `isPlaying`
+    /// or Reduce Motion flips.
+    private func syncPulse() {
+        if pulsing {
+            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+                pulseUp = true
+            }
+        } else {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                pulseUp = false
+            }
+        }
+    }
+}
+
 /// Shared bid/tricks stepper matching the mockup's `.stepnum` + `.stepper`:
 /// the numeric value sits left of a single pill (32pt tall, 8pt corner
 /// radius, indigo-tint background) split into a minus button, a hairline
