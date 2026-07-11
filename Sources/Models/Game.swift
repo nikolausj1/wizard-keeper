@@ -76,6 +76,17 @@ final class Game {
     /// represent ties.
     var winnerPlayerIds: [UUID]
 
+    /// Seat index (into `participants`) of the round-1 first bidder,
+    /// inferred from the first bid interaction; `nil` until observed.
+    ///
+    /// The scorekeeper doesn't necessarily arrange seating to match deal
+    /// order, so this is inferred rather than assumed: Wizard bids start
+    /// left of the dealer and the dealer bids last, so whichever seat's
+    /// stepper is tapped first in round 1 is the first bidder, and every
+    /// later round's first bidder rotates one seat from there. See
+    /// `bidOrder(forRound:)`.
+    var firstBidderSeat: Int?
+
     /// The current lifecycle status of this game.
     var status: GameStatus {
         get { GameStatus(rawValue: statusRaw) ?? .inProgress }
@@ -91,7 +102,8 @@ final class Game {
         totalRounds: Int,
         rulesSnapshot: RulesSnapshot,
         rounds: [Round] = [],
-        winnerPlayerIds: [UUID] = []
+        winnerPlayerIds: [UUID] = [],
+        firstBidderSeat: Int? = nil
     ) {
         self.id = id
         self.createdAt = createdAt
@@ -102,6 +114,7 @@ final class Game {
         self.rulesSnapshot = rulesSnapshot
         self.rounds = rounds
         self.winnerPlayerIds = winnerPlayerIds
+        self.firstBidderSeat = firstBidderSeat
     }
 
     /// Rounds sorted by `roundNumber`. SwiftData relationship arrays have
@@ -139,6 +152,22 @@ final class Game {
         }
         let next = (ordered.last?.roundNumber ?? 0) + 1
         return min(next, totalRounds)
+    }
+
+    /// Seat indices (into `participants`) in bidding order for round `n`.
+    ///
+    /// Pre-inference (`firstBidderSeat == nil`) this is just seating order —
+    /// `Array(participants.indices)` — so screens render top-to-bottom by
+    /// seat until a first bid interaction pins down where bidding actually
+    /// starts. Once known, the order rotates one seat per round starting
+    /// from `firstBidderSeat`, wrapping around the table. The LAST index in
+    /// the returned order is that round's dealer (bidding starts left of
+    /// the dealer, so the dealer bids last).
+    func bidOrder(forRound n: Int) -> [Int] {
+        let count = participants.count
+        guard let firstBidderSeat, count > 0 else { return Array(participants.indices) }
+        let start = (firstBidderSeat + (n - 1)) % count
+        return (0..<count).map { (start + $0) % count }
     }
 
     /// Locates the single in-progress game, if any.

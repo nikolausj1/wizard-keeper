@@ -88,12 +88,21 @@ struct ScorepadGridView: View {
         game.orderedRounds.last { $0.phase == .complete }?.roundNumber
     }
 
-    /// Whose deal it is this round, when the house dealer-rotation rule is
-    /// on — derived from the same formula `RoundEntryView.ensureRound`
-    /// uses, since the current round may not be created yet.
+    /// Whose deal it is this round. Prefers the inferred dealer (the last
+    /// seat in `game.bidOrder(forRound:)`, once `game.firstBidderSeat` is
+    /// known) for parity with `RoundEntryView`'s dealer callouts and
+    /// `GameView`'s identical iPhone helper. Falls back to the old
+    /// toggle-driven formula — the same one `RoundEntryView.ensureRound`
+    /// seeds `Round.dealerPlayerId` with — since the current round may not
+    /// be created yet.
     private var dealerName: String? {
+        let n = game.currentRoundNumber
+        if game.firstBidderSeat != nil {
+            guard let dealerSeat = game.bidOrder(forRound: n).last, participants.indices.contains(dealerSeat) else { return nil }
+            return participants[dealerSeat].displayNameSnapshot
+        }
         guard game.rulesSnapshot.dealerRotationEnabled, !participants.isEmpty else { return nil }
-        let index = (game.currentRoundNumber - 1) % participants.count
+        let index = (n - 1) % participants.count
         return participants[index].displayNameSnapshot
     }
 

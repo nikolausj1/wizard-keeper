@@ -15,6 +15,7 @@ struct GameView: View {
     @ScaledMetric(relativeTo: .body) private var allRoundsLabelSize: CGFloat = 15
     @ScaledMetric(relativeTo: .subheadline) private var allRoundsCountSize: CGFloat = 14
     @ScaledMetric(relativeTo: .subheadline) private var dealHelperSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .body) private var dealHelperCountSize: CGFloat = 17
 
     var body: some View {
         Group {
@@ -58,13 +59,20 @@ struct GameView: View {
         completedRounds.last?.roundNumber
     }
 
-    /// Whose deal it is this round, when the house dealer-rotation rule is
-    /// on — `Round.dealerPlayerId` may not exist yet for a not-yet-created
-    /// current round, so this is derived straight from the same formula
-    /// `RoundEntryView.ensureRound` uses.
+    /// Whose deal it is this round. Prefers the inferred dealer (the last
+    /// seat in `game.bidOrder(forRound:)`, once `game.firstBidderSeat` is
+    /// known) so this matches `RoundEntryView`'s dealer callouts. Falls back
+    /// to the old toggle-driven formula — the same one
+    /// `RoundEntryView.ensureRound` seeds `Round.dealerPlayerId` with —
+    /// since the current round may not be created yet.
     private var dealerName: String? {
+        let n = game.currentRoundNumber
+        if game.firstBidderSeat != nil {
+            guard let dealerSeat = game.bidOrder(forRound: n).last, game.participants.indices.contains(dealerSeat) else { return nil }
+            return game.participants[dealerSeat].displayNameSnapshot
+        }
         guard game.rulesSnapshot.dealerRotationEnabled, !game.participants.isEmpty else { return nil }
-        let index = (game.currentRoundNumber - 1) % game.participants.count
+        let index = (n - 1) % game.participants.count
         return game.participants[index].displayNameSnapshot
     }
 
@@ -179,13 +187,16 @@ struct GameView: View {
         }
     }
 
-    /// "Deal **N cards** to each player" — bold only on the card-count
-    /// segment, matching the mockup's `<b>` wrapping. When dealer rotation
-    /// is on, appends " · <Name> deals".
+    /// "Deal **N cards** to each player" — the card-count segment is the
+    /// hero (17pt heavy primary) against the rest of the line's ambient
+    /// secondary/semibold styling. When a dealer is known (inferred or
+    /// toggle-driven), appends " · <Name> deals".
     private var dealHelperText: Text {
         let n = game.currentRoundNumber
         var text = Text("Deal ")
-            + Text("\(n) card\(n == 1 ? "" : "s")").fontWeight(.bold)
+            + Text("\(n) card\(n == 1 ? "" : "s")")
+            .font(.system(size: dealHelperCountSize, weight: .heavy))
+            .foregroundStyle(.primary)
             + Text(" to each player")
         if let dealerName {
             text = text + Text(" · \(dealerName) deals")
