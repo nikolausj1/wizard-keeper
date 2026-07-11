@@ -56,19 +56,22 @@ struct NewGameView: View {
                         }
                     }
                     .onMove(perform: moveSelected)
+                    .onDelete(perform: unseatSelected)
                 }
             } header: {
                 Text("Seating Order")
             } footer: {
                 if !selectedPlayerIDs.isEmpty {
-                    Text("Drag to reorder. First seat deals first.")
+                    Text("Drag to reorder — first seat deals first. Swipe to remove.")
                 }
             }
 
+            // Seated players move OUT of this list (no name appears twice);
+            // removing them from Seating Order puts them back here.
             Section {
-                ForEach(players) { player in
+                ForEach(unseatedPlayers) { player in
                     Button {
-                        toggle(player)
+                        seat(player)
                     } label: {
                         HStack(spacing: 10) {
                             Circle()
@@ -77,11 +80,8 @@ struct NewGameView: View {
                             Text(player.name)
                                 .foregroundStyle(.primary)
                             Spacer()
-                            if selectedPlayerIDs.contains(player.id) {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(.indigo)
-                                    .font(.body.weight(.semibold))
-                            }
+                            Image(systemName: "plus.circle")
+                                .foregroundStyle(.indigo)
                         }
                     }
                 }
@@ -93,6 +93,10 @@ struct NewGameView: View {
                 }
             } header: {
                 Text("Saved Players")
+            } footer: {
+                if !players.isEmpty && unseatedPlayers.isEmpty {
+                    Text("Everyone's seated.")
+                }
             }
 
             Section {
@@ -139,7 +143,9 @@ struct NewGameView: View {
             AddPlayerSheet(existingNames: players.map(\.name), nextColorId: nextColorId) { name, colorId in
                 let player = Player(name: name, colorId: colorId)
                 modelContext.insert(player)
-                selectedPlayerIDs.append(player.id)
+                // Seat the new player if there's room; otherwise they stay
+                // in Saved Players (table is already full at 6).
+                seat(player)
             }
         }
         .navigationDestination(isPresented: $navigateToGame) {
@@ -167,12 +173,23 @@ struct NewGameView: View {
         }
     }
 
-    private func toggle(_ player: Player) {
-        if let index = selectedPlayerIDs.firstIndex(of: player.id) {
-            selectedPlayerIDs.remove(at: index)
-        } else {
-            guard selectedPlayerIDs.count < WizardEngine.maxPlayers else { return }
+    /// Saved players not yet seated — the only ones shown in the Saved
+    /// Players section, so no name ever appears in both lists.
+    private var unseatedPlayers: [Player] {
+        players.filter { !selectedPlayerIDs.contains($0.id) }
+    }
+
+    private func seat(_ player: Player) {
+        guard selectedPlayerIDs.count < WizardEngine.maxPlayers,
+              !selectedPlayerIDs.contains(player.id) else { return }
+        withAnimation {
             selectedPlayerIDs.append(player.id)
+        }
+    }
+
+    private func unseatSelected(at offsets: IndexSet) {
+        withAnimation {
+            selectedPlayerIDs.remove(atOffsets: offsets)
         }
     }
 
