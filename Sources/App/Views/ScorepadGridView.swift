@@ -20,6 +20,27 @@ struct ScorepadGridView: View {
     private let outerHPadding: CGFloat = 20
     private let standingsPanelWidth: CGFloat = 400
 
+    // Font sizes scale with Dynamic Type; the fixed geometry above (column
+    // width, panel width, outer padding) stays put per the iPad layout
+    // spec — only text (and the rank-circle diameter it sits beside) grows.
+    @ScaledMetric(relativeTo: .subheadline) private var dealTextSize: CGFloat = 15
+    @ScaledMetric(relativeTo: .body) private var rankCircleSize: CGFloat = 34
+    @ScaledMetric(relativeTo: .body) private var rankNumberSize: CGFloat = 16
+    @ScaledMetric(relativeTo: .body) private var standingNameSize: CGFloat = 20
+    @ScaledMetric(relativeTo: .caption) private var standingStarSize: CGFloat = 12
+    @ScaledMetric(relativeTo: .subheadline) private var standingSubtitleSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .caption) private var standingDeltaSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .largeTitle) private var standingTotalSize: CGFloat = 36
+    @ScaledMetric(relativeTo: .caption) private var headerRndSize: CGFloat = 12
+    @ScaledMetric(relativeTo: .body) private var headerNameSize: CGFloat = 18
+    @ScaledMetric(relativeTo: .caption) private var headerStarSize: CGFloat = 13
+    @ScaledMetric(relativeTo: .subheadline) private var rowNumberSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .body) private var cellValueSize: CGFloat = 18
+    @ScaledMetric(relativeTo: .caption) private var cellCumulativeSize: CGFloat = 13
+    @ScaledMetric(relativeTo: .subheadline) private var totalLabelSize: CGFloat = 15
+    @ScaledMetric(relativeTo: .largeTitle) private var totalScoreSize: CGFloat = 30
+    @ScaledMetric(relativeTo: .caption) private var totalStarSize: CGFloat = 15
+
     private enum RowKind {
         case completed(deltas: [Int], cumulative: [Int])
         case current
@@ -210,7 +231,7 @@ struct ScorepadGridView: View {
 
             VStack(spacing: 10) {
                 dealHelperText
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: dealTextSize, weight: .semibold))
                     .foregroundStyle(.secondary)
 
                 PrimaryActionButton(title: "Enter Round \(game.currentRoundNumber)") {
@@ -233,23 +254,23 @@ struct ScorepadGridView: View {
                 Circle()
                     .fill(standing.isLeader ? Color.yellow.opacity(0.22) : Color(.systemGray6))
                 Text("\(standing.rank)")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: rankNumberSize, weight: .bold))
                     .foregroundStyle(standing.isLeader ? .yellow : .secondary)
             }
-            .frame(width: 34, height: 34)
+            .frame(width: rankCircleSize, height: rankCircleSize)
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(standing.name)
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: standingNameSize, weight: .bold))
                     if standing.isLeader {
                         Image(systemName: "star.fill")
-                            .font(.system(size: 12))
+                            .font(.system(size: standingStarSize))
                             .foregroundStyle(.yellow)
                     }
                 }
                 Text(standing.isLeader ? "Leader" : "\(behind) behind")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: standingSubtitleSize, weight: .medium))
                     .foregroundStyle(.secondary)
             }
 
@@ -258,7 +279,7 @@ struct ScorepadGridView: View {
             VStack(alignment: .trailing, spacing: 4) {
                 if let delta = standing.delta {
                     Text(ScoreFormat.delta(delta))
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: standingDeltaSize, weight: .bold))
                         .monospacedDigit()
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
@@ -267,8 +288,10 @@ struct ScorepadGridView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
                 Text(ScoreFormat.score(standing.total))
-                    .font(.system(size: 36, weight: .heavy))
+                    .font(.system(size: standingTotalSize, weight: .heavy))
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
         }
         .padding(.horizontal, 16)
@@ -314,19 +337,19 @@ struct ScorepadGridView: View {
     private var headerRow: some View {
         HStack(spacing: 0) {
             Text("RND")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: headerRndSize, weight: .bold))
                 .foregroundStyle(.secondary)
                 .frame(width: roundColumnWidth, alignment: .leading)
 
             ForEach(Array(participants.enumerated()), id: \.offset) { index, participant in
                 HStack(spacing: 4) {
                     Text(participant.displayNameSnapshot)
-                        .font(.system(size: 18, weight: .heavy))
+                        .font(.system(size: headerNameSize, weight: .heavy))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                     if leaderIndices.contains(index) {
                         Image(systemName: "star.fill")
-                            .font(.system(size: 13))
+                            .font(.system(size: headerStarSize))
                             .foregroundStyle(.yellow)
                     }
                 }
@@ -363,7 +386,7 @@ struct ScorepadGridView: View {
     ) -> some View {
         HStack(spacing: 0) {
             Text("\(roundNumber)")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: rowNumberSize, weight: .bold))
                 .monospacedDigit()
                 .foregroundStyle(numberColor)
                 .frame(width: roundColumnWidth, alignment: .leading)
@@ -389,13 +412,17 @@ struct ScorepadGridView: View {
                 ForEach(participants.indices, id: \.self) { i in
                     VStack(alignment: .center, spacing: 1) {
                         Text(ScoreFormat.delta(deltas[i]))
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: cellValueSize, weight: .bold))
                             .monospacedDigit()
                             .foregroundStyle(deltas[i] >= 0 ? .green : .red)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                         Text(ScoreFormat.score(cumulative[i]))
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: cellCumulativeSize, weight: .semibold))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
@@ -414,7 +441,7 @@ struct ScorepadGridView: View {
             rowShell(roundNumber: roundNumber, tinted: true, numberColor: .indigo) {
                 ForEach(participants.indices, id: \.self) { _ in
                     Text("—")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: cellValueSize, weight: .bold))
                         .foregroundStyle(Color(.tertiaryLabel))
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
@@ -428,7 +455,7 @@ struct ScorepadGridView: View {
         rowShell(roundNumber: roundNumber, tinted: false, numberColor: .secondary) {
             ForEach(participants.indices, id: \.self) { _ in
                 Text("·")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: cellValueSize, weight: .bold))
                     .foregroundStyle(Color(.tertiaryLabel))
                     .frame(maxWidth: .infinity, alignment: .center)
             }
@@ -441,19 +468,21 @@ struct ScorepadGridView: View {
     private var totalRow: some View {
         HStack(spacing: 0) {
             Text("Total")
-                .font(.system(size: 15, weight: .heavy))
+                .font(.system(size: totalLabelSize, weight: .heavy))
                 .foregroundStyle(.primary)
                 .frame(width: roundColumnWidth, alignment: .leading)
 
             ForEach(Array(participants.enumerated()), id: \.offset) { index, _ in
                 HStack(spacing: 4) {
                     Text(ScoreFormat.score(totals[index]))
-                        .font(.system(size: 30, weight: .heavy))
+                        .font(.system(size: totalScoreSize, weight: .heavy))
                         .monospacedDigit()
                         .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                     if leaderIndices.contains(index) {
                         Image(systemName: "star.fill")
-                            .font(.system(size: 15))
+                            .font(.system(size: totalStarSize))
                             .foregroundStyle(.yellow)
                     }
                 }

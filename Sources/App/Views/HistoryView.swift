@@ -83,15 +83,19 @@ private struct HistoryRow: View {
         return date.formatted(.relative(presentation: .named))
     }
 
+    @ScaledMetric(relativeTo: .subheadline) private var dateSize: CGFloat = 13.5
+    @ScaledMetric(relativeTo: .subheadline) private var namesSize: CGFloat = 15.5
+    @ScaledMetric(relativeTo: .body) private var winnerLineSize: CGFloat = 15
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(dateText)
-                .font(.system(size: 13.5, weight: .medium))
+                .font(.system(size: dateSize, weight: .medium))
                 .foregroundStyle(.secondary)
 
             if !playerNames.isEmpty {
                 Text(playerNames)
-                    .font(.system(size: 15.5, weight: .regular))
+                    .font(.system(size: namesSize, weight: .regular))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -102,16 +106,16 @@ private struct HistoryRow: View {
                         .font(.caption2)
                         .foregroundStyle(.yellow)
                     Text(winners.map(\.displayNameSnapshot).joined(separator: " & "))
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.system(size: winnerLineSize, weight: .bold))
                     Text("\u{00B7}")
                         .foregroundStyle(.secondary)
                     Text(ScoreFormat.score(winnerScore))
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.system(size: winnerLineSize, weight: .bold))
                         .monospacedDigit()
                 }
             } else {
                 Text("No winner recorded")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: winnerLineSize, weight: .medium))
                     .foregroundStyle(.secondary)
             }
         }

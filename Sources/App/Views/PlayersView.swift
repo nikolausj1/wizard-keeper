@@ -82,19 +82,23 @@ private struct PlayerRow: View {
     let player: Player
     let wins: Int
 
+    @ScaledMetric(relativeTo: .body) private var nameSize: CGFloat = 18
+    @ScaledMetric(relativeTo: .body) private var winsSize: CGFloat = 15
+    @ScaledMetric(relativeTo: .body) private var dotSize: CGFloat = 12
+
     var body: some View {
         HStack(spacing: 12) {
             Circle()
                 .fill(PlayerPalette.color(player.colorId))
-                .frame(width: 12, height: 12)
+                .frame(width: dotSize, height: dotSize)
 
             Text(player.name)
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: nameSize, weight: .bold))
 
             Spacer()
 
             Text("\(wins) win\(wins == 1 ? "" : "s")")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: winsSize, weight: .semibold))
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)

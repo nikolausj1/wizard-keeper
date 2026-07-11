@@ -65,12 +65,18 @@ private struct RoundRow: View {
         participants.count >= 6 ? 4 : 8
     }
 
+    @ScaledMetric(relativeTo: .subheadline) private var roundLabelSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .subheadline) private var roundLabelWidth: CGFloat = 28
+    @ScaledMetric(relativeTo: .caption) private var nameSize: CGFloat = 11
+    @ScaledMetric(relativeTo: .caption) private var bidTakenSize: CGFloat = 13
+    @ScaledMetric(relativeTo: .caption) private var deltaSize: CGFloat = 14
+
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Text("R\(round.roundNumber)")
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .font(.system(size: roundLabelSize, weight: .bold, design: .monospaced))
                 .foregroundStyle(.secondary)
-                .frame(width: 28, alignment: .leading)
+                .frame(width: roundLabelWidth, alignment: .leading)
 
             HStack(spacing: cellSpacing) {
                 ForEach(participants, id: \.playerId) { participant in
@@ -95,28 +101,32 @@ private struct RoundRow: View {
 
         VStack(spacing: 2) {
             Text(firstName(participant.displayNameSnapshot))
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: nameSize, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .truncationMode(.tail)
 
             if let bid, let tricksTaken {
                 Text("\(bid)\u{2013}\(tricksTaken)")
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .font(.system(size: bidTakenSize, weight: .semibold, design: .monospaced))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             } else {
                 Text("\u{2013}")
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .font(.system(size: bidTakenSize, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.tertiary)
             }
 
             if let delta {
                 Text(ScoreFormat.delta(delta))
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: deltaSize, weight: .bold))
                     .monospacedDigit()
                     .foregroundStyle(delta >= 0 ? .green : .red)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             } else {
                 Text("\u{2013}")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: deltaSize, weight: .bold))
                     .foregroundStyle(.tertiary)
             }
         }

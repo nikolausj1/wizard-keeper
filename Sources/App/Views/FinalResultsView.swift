@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 /// Screen E: final standings once `game.status == .completed`. Winner(s)
 /// get a gold star and a brief spring scale-in. "Rematch" seats the same
@@ -14,6 +15,13 @@ struct FinalResultsView: View {
     @State private var navigateToRematch = false
     @State private var showUndoConfirm = false
     @State private var hapticsEnabled = true
+    @State private var recapImage: UIImage?
+
+    // Dynamic Type: sizes below are `@ScaledMetric`-driven rather than
+    // fixed literals so this screen scales with the system text size.
+    @ScaledMetric(relativeTo: .largeTitle) private var winnerStarSize: CGFloat = 44
+    @ScaledMetric(relativeTo: .body) private var resultNameSize: CGFloat = 18
+    @ScaledMetric(relativeTo: .largeTitle) private var resultTotalSize: CGFloat = 30
 
     /// The most recently completed round, if any — Undo reopens exactly
     /// this one, per `Game.reopenLastCompletedRound`. Once tapped, the
@@ -101,6 +109,16 @@ struct FinalResultsView: View {
         .navigationBarTitleDisplayMode(.large)
         .navigationBarBackButtonHidden(true)
         .toolbar {
+            if let recapImage {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    ShareLink(
+                        item: Image(uiImage: recapImage),
+                        preview: SharePreview("Game Recap", image: Image(uiImage: recapImage))
+                    ) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+            }
             if lastCompletedRoundNumber != nil {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -127,6 +145,9 @@ struct FinalResultsView: View {
             withAnimation(.spring(response: 0.45, dampingFraction: 0.62)) {
                 didAppear = true
             }
+            if recapImage == nil {
+                recapImage = RecapCardRenderer.renderRecapImage(for: game)
+            }
         }
         .task { hapticsEnabled = HapticsGate.isEnabled(in: modelContext) }
         .sensoryFeedback(trigger: didAppear) { _, _ in hapticsEnabled ? .success : nil }
@@ -140,7 +161,7 @@ struct FinalResultsView: View {
     private var header: some View {
         VStack(spacing: 6) {
             Image(systemName: "star.fill")
-                .font(.system(size: 44))
+                .font(.system(size: winnerStarSize))
                 .foregroundStyle(.yellow)
                 .scaleEffect(didAppear ? 1 : 0.4)
                 .opacity(didAppear ? 1 : 0)
@@ -164,7 +185,7 @@ struct FinalResultsView: View {
 
             HStack(spacing: 4) {
                 Text(standing.name)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: resultNameSize, weight: .semibold))
                 if standing.isWinner {
                     Image(systemName: "star.fill")
                         .font(.caption2)
@@ -175,7 +196,7 @@ struct FinalResultsView: View {
             Spacer()
 
             Text(ScoreFormat.score(standing.total))
-                .font(.system(size: 30, weight: .heavy))
+                .font(.system(size: resultTotalSize, weight: .heavy))
                 .monospacedDigit()
         }
         .padding(10)

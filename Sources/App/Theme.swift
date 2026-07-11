@@ -97,19 +97,26 @@ struct ScreenHeader: View {
     var subtitle: String?
     var titleSize: CGFloat = 32
 
+    // `titleSize` is a caller-supplied base (32 by default, 34 on the iPad
+    // scorepad panes) — scaled via the multiply trick rather than a direct
+    // `@ScaledMetric` so any base value tracks Dynamic Type identically.
+    @ScaledMetric(relativeTo: .largeTitle) private var titleScale: CGFloat = 100
+    @ScaledMetric(relativeTo: .subheadline) private var eyebrowSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .subheadline) private var subtitleSize: CGFloat = 15.5
+
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             if let eyebrow {
                 Text(eyebrow)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: eyebrowSize, weight: .semibold))
                     .foregroundStyle(.indigo)
             }
             Text(title)
-                .font(.system(size: titleSize, weight: .heavy))
+                .font(.system(size: titleSize * titleScale / 100, weight: .heavy))
                 .foregroundStyle(.primary)
             if let subtitle {
                 Text(subtitle)
-                    .font(.system(size: 15.5, weight: .medium))
+                    .font(.system(size: subtitleSize, weight: .medium))
                     .foregroundStyle(.secondary)
             }
         }
@@ -129,10 +136,12 @@ struct PrimaryActionButton: View {
     var isDisabled: Bool = false
     var action: () -> Void
 
+    @ScaledMetric(relativeTo: .body) private var titleSize: CGFloat = 17
+
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 17, weight: .bold))
+                .font(.system(size: titleSize, weight: .bold))
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
         }
@@ -160,13 +169,19 @@ struct SegmentedStepper: View {
     var onMinus: () -> Void
     var onPlus: () -> Void
 
+    // The value is the "big number" of the stepper — scale it (and the
+    // min-width that keeps it from cramping the pill) with Dynamic Type;
+    // the pill and its 44pt tap targets stay fixed, per design.
+    @ScaledMetric(relativeTo: .largeTitle) private var valueSize: CGFloat = 26
+    @ScaledMetric(relativeTo: .largeTitle) private var valueMinWidth: CGFloat = 34
+
     var body: some View {
         HStack(spacing: 14) {
             Text("\(displayValue)")
-                .font(.system(size: 26, weight: .heavy))
+                .font(.system(size: valueSize, weight: .heavy))
                 .monospacedDigit()
                 .foregroundStyle(dimmed ? Color(.tertiaryLabel) : .primary)
-                .frame(minWidth: 34, alignment: .center)
+                .frame(minWidth: valueMinWidth, alignment: .center)
 
             HStack(spacing: 0) {
                 stepButton(systemName: "minus", enabled: minusEnabled, action: onMinus)
@@ -215,9 +230,11 @@ enum HapticsGate {
 /// metadata-badge treatment: 11pt bold secondary text on a systemGray5
 /// capsule. Only ever shown when `RulesSnapshot.dealerRotationEnabled`.
 struct DealerTag: View {
+    @ScaledMetric(relativeTo: .caption) private var textSize: CGFloat = 11
+
     var body: some View {
         Text("DEALER")
-            .font(.system(size: 11, weight: .bold))
+            .font(.system(size: textSize, weight: .bold))
             .foregroundStyle(.secondary)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

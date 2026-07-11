@@ -1,11 +1,19 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 /// Screen F detail: a completed game's final standings plus its per-round
 /// breakdown of bids/tricks/deltas. Read-only — editing past rounds is
 /// Phase 6.
 struct GameDetailView: View {
     let game: Game
+
+    @State private var recapImage: UIImage?
+
+    // Dynamic Type: sizes below are `@ScaledMetric`-driven rather than
+    // fixed literals so this screen scales with the system text size.
+    @ScaledMetric(relativeTo: .body) private var standingNameSize: CGFloat = 18
+    @ScaledMetric(relativeTo: .largeTitle) private var standingTotalSize: CGFloat = 30
 
     private struct Standing: Identifiable {
         let id: UUID
@@ -103,6 +111,23 @@ struct GameDetailView: View {
         .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let recapImage {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    ShareLink(
+                        item: Image(uiImage: recapImage),
+                        preview: SharePreview("Game Recap", image: Image(uiImage: recapImage))
+                    ) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+            }
+        }
+        .onAppear {
+            if recapImage == nil, game.status == .completed {
+                recapImage = RecapCardRenderer.renderRecapImage(for: game)
+            }
+        }
     }
 
     private func standingRow(_ standing: Standing) -> some View {
@@ -118,7 +143,7 @@ struct GameDetailView: View {
 
             HStack(spacing: 4) {
                 Text(standing.name)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: standingNameSize, weight: .semibold))
                 if standing.isWinner {
                     Image(systemName: "star.fill")
                         .font(.caption2)
@@ -129,7 +154,7 @@ struct GameDetailView: View {
             Spacer()
 
             Text(ScoreFormat.score(standing.total))
-                .font(.system(size: 30, weight: .heavy))
+                .font(.system(size: standingTotalSize, weight: .heavy))
                 .monospacedDigit()
         }
         .padding(.vertical, 4)
@@ -142,6 +167,13 @@ private struct RoundBreakdownRow: View {
     let round: Round
     let participants: [Participant]
 
+    // Dynamic Type: sizes below are `@ScaledMetric`-driven rather than
+    // fixed literals so this screen scales with the system text size.
+    @ScaledMetric(relativeTo: .caption) private var roundLabelSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .caption2) private var cellNameSize: CGFloat = 11
+    @ScaledMetric(relativeTo: .caption) private var cellScoreSize: CGFloat = 13
+    @ScaledMetric(relativeTo: .caption) private var cellDeltaSize: CGFloat = 14
+
     private var cellSpacing: CGFloat {
         participants.count >= 6 ? 4 : 8
     }
@@ -149,7 +181,7 @@ private struct RoundBreakdownRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Text("R\(round.roundNumber)")
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .font(.system(size: roundLabelSize, weight: .bold, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .frame(width: 28, alignment: .leading)
 
@@ -176,28 +208,28 @@ private struct RoundBreakdownRow: View {
 
         VStack(spacing: 2) {
             Text(firstName(participant.displayNameSnapshot))
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: cellNameSize, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .truncationMode(.tail)
 
             if let bid, let tricksTaken {
                 Text("\(bid)\u{2013}\(tricksTaken)")
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .font(.system(size: cellScoreSize, weight: .semibold, design: .monospaced))
             } else {
                 Text("\u{2013}")
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .font(.system(size: cellScoreSize, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.tertiary)
             }
 
             if let delta {
                 Text(ScoreFormat.delta(delta))
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: cellDeltaSize, weight: .bold))
                     .monospacedDigit()
                     .foregroundStyle(delta >= 0 ? .green : .red)
             } else {
                 Text("\u{2013}")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: cellDeltaSize, weight: .bold))
                     .foregroundStyle(.tertiary)
             }
         }

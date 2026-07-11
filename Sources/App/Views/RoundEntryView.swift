@@ -165,6 +165,10 @@ private struct BiddingView: View {
     /// signal for an over/under-booked round (never a warning, by rule).
     private var bidTotal: Int { round.entries.compactMap(\.bid).reduce(0, +) }
 
+    @ScaledMetric(relativeTo: .body) private var nameSize: CGFloat = 17.5
+    @ScaledMetric(relativeTo: .subheadline) private var statusSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .subheadline) private var footerSize: CGFloat = 14.5
+
     /// First not-yet-bid participant in seating order, or nil once every
     /// bid is in.
     private var firstWaitingName: String? {
@@ -203,18 +207,18 @@ private struct BiddingView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack(spacing: 6) {
                                     Text(participant.displayNameSnapshot)
-                                        .font(.system(size: 17.5, weight: .bold))
+                                        .font(.system(size: nameSize, weight: .bold))
                                     if isDealer(participant) {
                                         DealerTag()
                                     }
                                 }
                                 if untouched {
                                     Text("Bidding now")
-                                        .font(.system(size: 14, weight: .semibold))
+                                        .font(.system(size: statusSize, weight: .semibold))
                                         .foregroundStyle(.indigo)
                                 } else {
                                     Text("\(game.runningTotal(for: participant.playerId)) pts")
-                                        .font(.system(size: 14, weight: .medium))
+                                        .font(.system(size: statusSize, weight: .medium))
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -255,7 +259,7 @@ private struct BiddingView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 footerText
-                    .font(.system(size: 14.5, weight: .semibold))
+                    .font(.system(size: footerSize, weight: .semibold))
                     .foregroundStyle(.secondary)
                 PrimaryActionButton(title: "Confirm Bids", isDisabled: firstWaitingName != nil, action: onConfirm)
             }
@@ -304,6 +308,11 @@ private struct ResultsView: View {
 
     private var allTricksIn: Bool { round.entries.allSatisfy { $0.tricksTaken != nil } }
 
+    @ScaledMetric(relativeTo: .body) private var nameSize: CGFloat = 17.5
+    @ScaledMetric(relativeTo: .subheadline) private var subInfoSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .caption) private var tagSize: CGFloat = 13
+    @ScaledMetric(relativeTo: .subheadline) private var footerSize: CGFloat = 14.5
+
     /// Whether `participant` deals this round — only meaningful (and only
     /// ever `true`) when `dealerRotationEnabled`, per `Round.dealerPlayerId`.
     private func isDealer(_ participant: Participant) -> Bool {
@@ -332,13 +341,13 @@ private struct ResultsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack(spacing: 6) {
                                     Text(participant.displayNameSnapshot)
-                                        .font(.system(size: 17.5, weight: .bold))
+                                        .font(.system(size: nameSize, weight: .bold))
                                     if isDealer(participant) {
                                         DealerTag()
                                     }
                                 }
                                 Text("Bid \(entry.bid ?? 0)")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(.system(size: subInfoSize, weight: .medium))
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
@@ -347,7 +356,7 @@ private struct ResultsView: View {
                                     let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
                                     let hit = bid == tricks
                                     Text("\(hit ? "Hit" : "Miss") · \(ScoreFormat.delta(score))")
-                                        .font(.system(size: 13, weight: .bold))
+                                        .font(.system(size: tagSize, weight: .bold))
                                         .padding(.horizontal, 9)
                                         .padding(.vertical, 4)
                                         .background(hit ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
@@ -391,7 +400,7 @@ private struct ResultsView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
-                    .font(.system(size: 14.5, weight: .semibold))
+                    .font(.system(size: footerSize, weight: .semibold))
                     .foregroundStyle(.secondary)
                 PrimaryActionButton(title: "Confirm Round", isDisabled: !allTricksIn, action: onConfirm)
             }
@@ -427,6 +436,11 @@ private struct EditRoundView: View {
     /// model type allows `nil` — treated defensively as 0 here.
     private var trickTotal: Int { round.entries.reduce(0) { $0 + ($1.tricksTaken ?? 0) } }
 
+    @ScaledMetric(relativeTo: .body) private var nameSize: CGFloat = 17.5
+    @ScaledMetric(relativeTo: .caption) private var tagSize: CGFloat = 13
+    @ScaledMetric(relativeTo: .subheadline) private var footerSize: CGFloat = 14.5
+    @ScaledMetric(relativeTo: .caption) private var fieldLabelSize: CGFloat = 12
+
     private func isDealer(_ participant: Participant) -> Bool {
         game.rulesSnapshot.dealerRotationEnabled && round.dealerPlayerId == participant.playerId
     }
@@ -460,7 +474,7 @@ private struct EditRoundView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
-                    .font(.system(size: 14.5, weight: .semibold))
+                    .font(.system(size: footerSize, weight: .semibold))
                     .foregroundStyle(.secondary)
                 PrimaryActionButton(title: "Save Changes", action: onSave)
             }
@@ -482,14 +496,14 @@ private struct EditRoundView: View {
             HStack {
                 HStack(spacing: 6) {
                     Text(participant.displayNameSnapshot)
-                        .font(.system(size: 17.5, weight: .bold))
+                        .font(.system(size: nameSize, weight: .bold))
                     if isDealer(participant) {
                         DealerTag()
                     }
                 }
                 Spacer()
                 Text("\(hit ? "Hit" : "Miss") · \(ScoreFormat.delta(score))")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: tagSize, weight: .bold))
                     .padding(.horizontal, 9)
                     .padding(.vertical, 4)
                     .background(hit ? Color.green.opacity(0.14) : Color.red.opacity(0.13))
@@ -500,7 +514,7 @@ private struct EditRoundView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Bid")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: fieldLabelSize, weight: .semibold))
                         .foregroundStyle(.secondary)
                     SegmentedStepper(
                         displayValue: bid,
@@ -513,7 +527,7 @@ private struct EditRoundView: View {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Took")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: fieldLabelSize, weight: .semibold))
                         .foregroundStyle(.secondary)
                     SegmentedStepper(
                         displayValue: tricks,

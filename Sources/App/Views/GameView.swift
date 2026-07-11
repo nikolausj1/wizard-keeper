@@ -11,6 +11,10 @@ struct GameView: View {
     @State private var showUndoConfirm = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
+    @ScaledMetric(relativeTo: .body) private var allRoundsLabelSize: CGFloat = 15
+    @ScaledMetric(relativeTo: .subheadline) private var allRoundsCountSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .subheadline) private var dealHelperSize: CGFloat = 14
+
     var body: some View {
         Group {
             if game.status == .completed {
@@ -114,10 +118,10 @@ struct GameView: View {
                     } label: {
                         HStack {
                             Text("All Rounds")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.system(size: allRoundsLabelSize, weight: .semibold))
                             Spacer()
                             Text("\(completedRoundCount) played")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: allRoundsCountSize, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 2)
@@ -131,7 +135,7 @@ struct GameView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 dealHelperText
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: dealHelperSize, weight: .semibold))
                     .foregroundStyle(.secondary)
 
                 PrimaryActionButton(title: "Enter Round \(game.currentRoundNumber)") {
@@ -196,29 +200,37 @@ struct GameView: View {
 
         private var behind: Int { max(leaderTotal - standing.total, 0) }
 
+        @ScaledMetric(relativeTo: .body) private var rankCircleSize: CGFloat = 30
+        @ScaledMetric(relativeTo: .caption) private var rankNumberSize: CGFloat = 14
+        @ScaledMetric(relativeTo: .body) private var nameSize: CGFloat = 18
+        @ScaledMetric(relativeTo: .caption) private var starSize: CGFloat = 10
+        @ScaledMetric(relativeTo: .subheadline) private var subtitleSize: CGFloat = 13.5
+        @ScaledMetric(relativeTo: .caption) private var deltaSize: CGFloat = 13
+        @ScaledMetric(relativeTo: .largeTitle) private var totalSize: CGFloat = 32
+
         var body: some View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
                         .fill(standing.isLeader ? Color.yellow.opacity(0.22) : Color(.systemGray6))
                     Text("\(standing.rank)")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: rankNumberSize, weight: .bold))
                         .foregroundStyle(standing.isLeader ? .yellow : .secondary)
                 }
-                .frame(width: 30, height: 30)
+                .frame(width: rankCircleSize, height: rankCircleSize)
 
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 5) {
                         Text(standing.name)
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: nameSize, weight: .bold))
                         if standing.isLeader {
                             Image(systemName: "star.fill")
-                                .font(.system(size: 10))
+                                .font(.system(size: starSize))
                                 .foregroundStyle(.yellow)
                         }
                     }
                     Text(standing.isLeader ? "Leader" : "\(behind) behind")
-                        .font(.system(size: 13.5, weight: .medium))
+                        .font(.system(size: subtitleSize, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
 
@@ -227,7 +239,7 @@ struct GameView: View {
                 HStack(spacing: 8) {
                     if let delta = standing.delta {
                         Text(ScoreFormat.delta(delta))
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.system(size: deltaSize, weight: .bold))
                             .monospacedDigit()
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
@@ -236,8 +248,10 @@ struct GameView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     Text(ScoreFormat.score(standing.total))
-                        .font(.system(size: 32, weight: .heavy))
+                        .font(.system(size: totalSize, weight: .heavy))
                         .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
             }
             .padding(.vertical, 2)
@@ -252,13 +266,16 @@ struct GameView: View {
     private struct InsightRow: View {
         let insight: GameInsights.Insight
 
+        @ScaledMetric(relativeTo: .body) private var iconWidth: CGFloat = 20
+        @ScaledMetric(relativeTo: .body) private var textSize: CGFloat = 15
+
         var body: some View {
             HStack(spacing: 10) {
                 Image(systemName: insight.icon)
                     .foregroundStyle(.indigo)
-                    .frame(width: 20)
+                    .frame(width: iconWidth)
                 Text(insight.text)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: textSize, weight: .medium))
                     .foregroundStyle(.primary)
             }
             .padding(.vertical, 6)

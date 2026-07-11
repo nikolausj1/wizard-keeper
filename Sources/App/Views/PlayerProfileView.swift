@@ -149,17 +149,20 @@ private struct StatCard: View {
     let label: String
     let value: String
 
+    @ScaledMetric(relativeTo: .largeTitle) private var valueSize: CGFloat = 30
+    @ScaledMetric(relativeTo: .caption) private var labelSize: CGFloat = 13
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(value)
-                .font(.system(size: 30, weight: .heavy))
+                .font(.system(size: valueSize, weight: .heavy))
                 .monospacedDigit()
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
 
             Text(label.uppercased())
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: labelSize, weight: .semibold))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
