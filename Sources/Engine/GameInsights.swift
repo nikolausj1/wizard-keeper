@@ -16,12 +16,24 @@ public enum GameInsights {
         }
     }
 
+    /// The category of an insight — the audio announcer keys clip
+    /// selection off this, so every case maps to a tail-clip family.
+    public enum Kind: String, Equatable {
+        case perfect, hotStreak, coldStreak, bigRound, zeroSpecialist, boldestBidder
+    }
+
     public struct Insight: Equatable {
         /// SF Symbol name for the row icon.
         public let icon: String
         public let text: String
         /// Lower is more interesting; used for ordering and dedupe.
         public let priority: Int
+        /// Structured fields for the audio announcer: what happened, to
+        /// whom, and the headline number (streak length, points, zero
+        /// count — nil when the kind has no number, e.g. boldest bidder).
+        public let kind: Kind
+        public let playerName: String
+        public let value: Int?
     }
 
     /// Minimum completed rounds before any insight is worth showing.
@@ -56,7 +68,8 @@ public enum GameInsights {
                 offer(player.name, Insight(
                     icon: "checkmark.seal.fill",
                     text: "\(player.name) has hit every bid (\(entries.count) for \(entries.count))",
-                    priority: 0
+                    priority: 0,
+                    kind: .perfect, playerName: player.name, value: entries.count
                 ))
             } else {
                 // 2. Hot streak — trailing consecutive hits ≥ 3.
@@ -65,7 +78,8 @@ public enum GameInsights {
                     offer(player.name, Insight(
                         icon: "flame.fill",
                         text: "\(player.name) is on a \(trailingHits)-hit streak",
-                        priority: 1
+                        priority: 1,
+                        kind: .hotStreak, playerName: player.name, value: trailingHits
                     ))
                 }
                 // 3. Cold streak — trailing consecutive misses ≥ 2.
@@ -74,7 +88,8 @@ public enum GameInsights {
                     offer(player.name, Insight(
                         icon: "snowflake",
                         text: "\(player.name) has missed \(trailingMisses) in a row",
-                        priority: 2
+                        priority: 2,
+                        kind: .coldStreak, playerName: player.name, value: trailingMisses
                     ))
                 }
             }
@@ -93,7 +108,8 @@ public enum GameInsights {
                 offer(player.name, Insight(
                     icon: "0.circle.fill",
                     text: "\(player.name) has landed \(zeroHits) zero bids",
-                    priority: 4
+                    priority: 4,
+                    kind: .zeroSpecialist, playerName: player.name, value: zeroHits
                 ))
             }
 
@@ -104,7 +120,8 @@ public enum GameInsights {
             offer(bigRound.name, Insight(
                 icon: "bolt.fill",
                 text: "\(bigRound.name)'s +\(bigRound.delta) in round \(bigRound.round) is the round of the game",
-                priority: 3
+                priority: 3,
+                kind: .bigRound, playerName: bigRound.name, value: bigRound.delta
             ))
         }
 
@@ -115,7 +132,8 @@ public enum GameInsights {
                 offer(sorted[0].name, Insight(
                     icon: "arrow.up.right.circle.fill",
                     text: "\(sorted[0].name) is the boldest bidder (\(sorted[0].total) tricks called)",
-                    priority: 5
+                    priority: 5,
+                    kind: .boldestBidder, playerName: sorted[0].name, value: nil
                 ))
             }
         }

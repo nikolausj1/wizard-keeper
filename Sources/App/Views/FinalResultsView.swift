@@ -66,11 +66,26 @@ struct FinalResultsView: View {
         standings.filter(\.isWinner).map(\.name).joined(separator: " & ")
     }
 
+    /// The first winner in standings order — `announceWinner` only ever
+    /// calls out one name, even when multiple players tied for the win.
+    private var firstWinnerName: String? {
+        standings.first(where: \.isWinner)?.name
+    }
+
+    /// The worst-placed standing's name, unless that player is also a
+    /// winner (e.g. everyone tied) — in which case there's no "last place"
+    /// to call out.
+    private var lastPlaceName: String? {
+        guard let last = standings.last, !last.isWinner else { return nil }
+        return last.name
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 18) {
                     header
+                    hearTheCallButton
                     VStack(spacing: 10) {
                         ForEach(standings) { standing in
                             resultRow(standing)
@@ -171,6 +186,30 @@ struct FinalResultsView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal)
+    }
+
+    /// "Hear the Call": plays the winner announcement (and, on Spicy+
+    /// styles, a last-place roast) via `AnnouncerPlayer`. Hidden entirely
+    /// when there's no winner to announce (shouldn't happen once the game
+    /// is complete, but guards the empty-standings edge case).
+    @ViewBuilder
+    private var hearTheCallButton: some View {
+        if let firstWinnerName {
+            Button {
+                let settings = try? AppSettings.fetchOrCreate(in: modelContext)
+                AnnouncerPlayer.shared.announceWinner(
+                    name: firstWinnerName,
+                    lastPlaceName: lastPlaceName,
+                    voice: settings?.announcerVoiceSelection ?? .charlie,
+                    style: settings?.announcerStyleSelection ?? .classic
+                )
+            } label: {
+                Label("Hear the Call", systemImage: "speaker.wave.2.fill")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .buttonStyle(.bordered)
+            .tint(.indigo)
+        }
     }
 
     private func resultRow(_ standing: Standing) -> some View {

@@ -282,6 +282,8 @@ struct GameView: View {
     private struct InsightRow: View {
         let insight: GameInsights.Insight
 
+        @Environment(\.modelContext) private var modelContext
+
         @ScaledMetric(relativeTo: .body) private var iconWidth: CGFloat = 20
         @ScaledMetric(relativeTo: .body) private var textSize: CGFloat = 15
 
@@ -293,9 +295,29 @@ struct GameView: View {
                 Text(insight.text)
                     .font(.system(size: textSize, weight: .medium))
                     .foregroundStyle(.primary)
+                Spacer(minLength: 8)
+                Button(action: announce) {
+                    Image(systemName: "speaker.wave.2.fill")
+                        .foregroundStyle(.indigo)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
             .padding(.vertical, 6)
             .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+        }
+
+        /// Reads the persisted announcer voice/style and plays the clip
+        /// sequence for this insight. Missing clips (generation may still
+        /// be running) are skipped silently by `AnnouncerPlayer`.
+        private func announce() {
+            guard let settings = try? AppSettings.fetchOrCreate(in: modelContext) else { return }
+            AnnouncerPlayer.shared.announce(
+                insight: insight,
+                voice: settings.announcerVoiceSelection,
+                style: settings.announcerStyleSelection
+            )
         }
     }
 }

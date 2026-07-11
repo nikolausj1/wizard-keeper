@@ -48,6 +48,18 @@ final class AppSettings {
         set { appearanceRaw = newValue.rawValue }
     }
 
+    /// Backing storage for the announcer's selected voice pack — raw
+    /// `AnnouncerVoice.rawValue` ("charlie" / "jessica"). The `AnnouncerVoice`
+    /// enum itself lives in the App layer (`Sources/App/Announcer.swift`),
+    /// not here, so this Models-layer file stays UI-free; App-layer code
+    /// maps this raw string through that enum.
+    var announcerVoiceRaw: String = "charlie"
+
+    /// Backing storage for the announcer's selected commentary intensity —
+    /// raw `AnnouncerStyle.rawValue` (1...5). See `AnnouncerStyle` in the
+    /// App layer for the mapping; styles 4-5 are adults-only.
+    var announcerStyle: Int = 1
+
     init(
         hookRuleEnabled: Bool = false,
         trickTotalCheckEnabled: Bool = true,
@@ -55,7 +67,9 @@ final class AppSettings {
         useFullLength: Bool = true,
         customRoundCount: Int? = nil,
         hapticsEnabled: Bool = true,
-        appearance: Appearance = .system
+        appearance: Appearance = .system,
+        announcerVoiceRaw: String = "charlie",
+        announcerStyle: Int = 1
     ) {
         self.hookRuleEnabled = hookRuleEnabled
         self.trickTotalCheckEnabled = trickTotalCheckEnabled
@@ -64,6 +78,8 @@ final class AppSettings {
         self.customRoundCount = customRoundCount
         self.hapticsEnabled = hapticsEnabled
         self.appearanceRaw = appearance.rawValue
+        self.announcerVoiceRaw = announcerVoiceRaw
+        self.announcerStyle = announcerStyle
     }
 
     /// Fetches the single settings record, creating and inserting one

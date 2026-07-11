@@ -35,6 +35,7 @@ struct SettingsView: View {
 /// an already-fetched (non-optional) `AppSettings`.
 private struct SettingsForm: View {
     @Bindable var settings: AppSettings
+    @Environment(\.modelContext) private var modelContext
 
     /// `customRoundCount` is `nil` whenever `useFullLength == true` (see
     /// the model's doc comment); this binding fills in the spec's default
@@ -94,6 +95,25 @@ private struct SettingsForm: View {
                 }
             } header: {
                 Text("Feel")
+            }
+
+            Section {
+                Picker("Voice", selection: $settings.announcerVoiceSelection) {
+                    ForEach(AnnouncerVoice.allCases) { voice in
+                        Text(voice.displayName).tag(voice)
+                    }
+                }
+                .onChange(of: settings.announcerVoiceSelection) { _, _ in modelContext.saveNow() }
+                Picker("Style", selection: $settings.announcerStyleSelection) {
+                    ForEach(AnnouncerStyle.allCases) { style in
+                        Text(style.displayName).tag(style)
+                    }
+                }
+                .onChange(of: settings.announcerStyleSelection) { _, _ in modelContext.saveNow() }
+            } header: {
+                Text("Announcer")
+            } footer: {
+                Text("Vicious and Unhinged are for adults-only tables. Remove before App Store submission.")
             }
 
             Section {

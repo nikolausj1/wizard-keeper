@@ -36,6 +36,28 @@ struct RootView: View {
         }
         .tint(.indigo)
         .preferredColorScheme(preferredColorScheme)
+        .onAppear(perform: fireAnnouncerTestIfNeeded)
+    }
+
+    /// Verification hook for the announcer feature: `-announcerTest`
+    /// (combinable with any `-uiScreen`) fires a synthetic cold-streak
+    /// insight one second after launch and prints the resolved/missing
+    /// segment counts, so the lead can confirm clip resolution ran from
+    /// `simctl` console logs alone — no tapping required.
+    private func fireAnnouncerTestIfNeeded() {
+        guard ProcessInfo.processInfo.arguments.contains("-announcerTest") else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            let insight = GameInsights.Insight(
+                icon: "snowflake",
+                text: "Announcer test",
+                priority: 0,
+                kind: .coldStreak,
+                playerName: "Justin",
+                value: 3
+            )
+            let segments = AnnouncerPlayer.shared.announce(insight: insight, voice: .charlie, style: .scorched)
+            print("announcer test fired, segments: \(segments)")
+        }
     }
 
     @ViewBuilder
