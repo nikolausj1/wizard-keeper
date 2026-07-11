@@ -218,8 +218,8 @@ private struct BiddingView: View {
         if let dealerSeatIndex, game.participants.indices.contains(dealerSeatIndex) {
             return game.participants[dealerSeatIndex].displayNameSnapshot
         }
-        guard game.rulesSnapshot.dealerRotationEnabled, let dealerId = round.dealerPlayerId else { return nil }
-        return game.participants.first(where: { $0.playerId == dealerId })?.displayNameSnapshot
+        // No positional guess before inference — see game-night feedback.
+        return nil
     }
 
     /// Whether `participant` deals this round: the inferred dealer (last
@@ -231,7 +231,7 @@ private struct BiddingView: View {
             guard let seatIndex = game.participants.firstIndex(where: { $0.playerId == participant.playerId }) else { return false }
             return seatIndex == dealerSeatIndex
         }
-        return game.rulesSnapshot.dealerRotationEnabled && round.dealerPlayerId == participant.playerId
+        return false  // never guess the dealer before round 1's first bid
     }
 
     /// "Deal **N cards** each" with the count as the hero (20pt heavy),
@@ -463,7 +463,7 @@ private struct ResultsView: View {
             guard let seatIndex = game.participants.firstIndex(where: { $0.playerId == participant.playerId }) else { return false }
             return order.last == seatIndex
         }
-        return game.rulesSnapshot.dealerRotationEnabled && round.dealerPlayerId == participant.playerId
+        return false  // never guess the dealer before round 1's first bid
     }
 
     /// The dealer's display name for `tricksSubtitleText`: the inferred
@@ -476,8 +476,8 @@ private struct ResultsView: View {
             guard let dealerSeat = order.last, game.participants.indices.contains(dealerSeat) else { return nil }
             return game.participants[dealerSeat].displayNameSnapshot
         }
-        guard game.rulesSnapshot.dealerRotationEnabled, let dealerId = round.dealerPlayerId else { return nil }
-        return game.participants.first(where: { $0.playerId == dealerId })?.displayNameSnapshot
+        // No positional guess before inference — see game-night feedback.
+        return nil
     }
 
     /// "Tricks must total **N**" with the round's trick count as the hero
@@ -707,7 +707,7 @@ private struct EditRoundView: View {
             guard let seatIndex = game.participants.firstIndex(where: { $0.playerId == participant.playerId }) else { return false }
             return order.last == seatIndex
         }
-        return game.rulesSnapshot.dealerRotationEnabled && round.dealerPlayerId == participant.playerId
+        return false  // never guess the dealer before round 1's first bid
     }
 
     var body: some View {

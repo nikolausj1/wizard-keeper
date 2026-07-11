@@ -63,21 +63,19 @@ struct GameView: View {
         completedRounds.last?.roundNumber
     }
 
-    /// Whose deal it is this round. Prefers the inferred dealer (the last
-    /// seat in `game.bidOrder(forRound:)`, once `game.firstBidderSeat` is
-    /// known) so this matches `RoundEntryView`'s dealer callouts. Falls back
-    /// to the old toggle-driven formula — the same one
-    /// `RoundEntryView.ensureRound` seeds `Round.dealerPlayerId` with —
-    /// since the current round may not be created yet.
+    /// Whose deal it is this round — the inferred dealer (last seat in
+    /// `game.bidOrder(forRound:)`) once `game.firstBidderSeat` is known,
+    /// and nothing before that: no positional guessing (game-night
+    /// feedback — a guessed dealer is worse than none).
     private var dealerName: String? {
         let n = game.currentRoundNumber
         if game.firstBidderSeat != nil {
             guard let dealerSeat = game.bidOrder(forRound: n).last, game.participants.indices.contains(dealerSeat) else { return nil }
             return game.participants[dealerSeat].displayNameSnapshot
         }
-        guard game.rulesSnapshot.dealerRotationEnabled, !game.participants.isEmpty else { return nil }
-        let index = (n - 1) % game.participants.count
-        return game.participants[index].displayNameSnapshot
+        // No guessing (game-night feedback): until round 1's first bid
+        // reveals the real rotation, there is no dealer to show.
+        return nil
     }
 
     /// Up to 3 ranked mid-game trends/outliers, computed via

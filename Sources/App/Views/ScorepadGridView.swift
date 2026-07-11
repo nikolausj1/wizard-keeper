@@ -101,9 +101,9 @@ struct ScorepadGridView: View {
             guard let dealerSeat = game.bidOrder(forRound: n).last, participants.indices.contains(dealerSeat) else { return nil }
             return participants[dealerSeat].displayNameSnapshot
         }
-        guard game.rulesSnapshot.dealerRotationEnabled, !participants.isEmpty else { return nil }
-        let index = (n - 1) % participants.count
-        return participants[index].displayNameSnapshot
+        // No guessing (game-night feedback): until round 1's first bid
+        // reveals the real rotation, there is no dealer to show.
+        return nil
     }
 
     /// One `RoundRow` per round number 1...totalRounds, built by walking
