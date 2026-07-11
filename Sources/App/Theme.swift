@@ -98,7 +98,7 @@ struct ScreenHeader: View {
     var titleSize: CGFloat = 32
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             if let eyebrow {
                 Text(eyebrow)
                     .font(.system(size: 14, weight: .semibold))
@@ -115,8 +115,8 @@ struct ScreenHeader: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 4)
-        .padding(.top, 8)
-        .padding(.bottom, 6)
+        .padding(.top, 2)
+        .padding(.bottom, 2)
     }
 }
 

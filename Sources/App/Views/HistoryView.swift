@@ -51,6 +51,7 @@ struct HistoryView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -83,7 +84,7 @@ private struct HistoryRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(dateText)
                 .font(.system(size: 13.5, weight: .medium))
                 .foregroundStyle(.secondary)
@@ -114,7 +115,9 @@ private struct HistoryRow: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 2)
+        .frame(minHeight: 44)
+        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
     }
 }
 

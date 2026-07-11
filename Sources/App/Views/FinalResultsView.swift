@@ -61,7 +61,7 @@ struct FinalResultsView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 18) {
                     header
                     VStack(spacing: 10) {
                         ForEach(standings) { standing in
@@ -178,7 +178,7 @@ struct FinalResultsView: View {
                 .font(.system(size: 30, weight: .heavy))
                 .monospacedDigit()
         }
-        .padding(12)
+        .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(Color(.secondarySystemGroupedBackground))

@@ -54,6 +54,7 @@ struct HomeView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .navigationTitle("Wizard Keeper")
         .navigationDestination(isPresented: $navigateToNewGame) {

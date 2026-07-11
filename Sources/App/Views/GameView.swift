@@ -82,7 +82,8 @@ struct GameView: View {
 
             if !completedRounds.isEmpty {
                 Section {
-                    ForEach(completedRounds, id: \.roundNumber) { round in
+                    // Newest-first: highest completed round number at top.
+                    ForEach(completedRounds.reversed(), id: \.roundNumber) { round in
                         NavigationLink(value: round.roundNumber) {
                             RoundSummaryRow(game: game, round: round)
                         }
@@ -93,6 +94,7 @@ struct GameView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
@@ -104,7 +106,9 @@ struct GameView: View {
                     navigateToRoundEntry = true
                 }
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
             .background(.bar)
         }
         .navigationTitle("")
@@ -174,7 +178,7 @@ struct GameView: View {
                 }
                 .frame(width: 30, height: 30)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 5) {
                         Text(standing.name)
                             .font(.system(size: 18, weight: .bold))
@@ -191,7 +195,7 @@ struct GameView: View {
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 3) {
+                HStack(spacing: 8) {
                     if let delta = standing.delta {
                         Text(ScoreFormat.delta(delta))
                             .font(.system(size: 13, weight: .bold))
@@ -207,8 +211,9 @@ struct GameView: View {
                         .monospacedDigit()
                 }
             }
-            .padding(.vertical, 8)
-            .frame(minHeight: 68)
+            .padding(.vertical, 2)
+            .frame(minHeight: 56)
+            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
         }
     }
 
@@ -238,7 +243,9 @@ struct GameView: View {
                 deltaText
                     .font(.system(size: 13, weight: .bold, design: .monospaced))
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 2)
+            .frame(minHeight: 44)
+            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
         }
     }
 }

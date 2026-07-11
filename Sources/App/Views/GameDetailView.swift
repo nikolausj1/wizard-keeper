@@ -99,6 +99,7 @@ struct GameDetailView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -159,7 +160,7 @@ private struct RoundBreakdownRow: View {
                 }
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 4)
     }
 
     private func firstName(_ fullName: String) -> String {

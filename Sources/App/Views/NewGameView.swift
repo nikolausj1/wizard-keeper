@@ -113,6 +113,7 @@ struct NewGameView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .navigationTitle("New Game")
         .toolbar {

@@ -55,6 +55,7 @@ struct PlayersView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -96,7 +97,9 @@ private struct PlayerRow: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 2)
+        .frame(minHeight: 44)
+        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
     }
 }
 

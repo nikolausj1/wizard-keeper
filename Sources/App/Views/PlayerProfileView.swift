@@ -100,6 +100,7 @@ struct PlayerProfileView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -126,8 +127,8 @@ struct PlayerProfileView: View {
     }
 
     private var statsGrid: some View {
-        let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
-        return LazyVGrid(columns: columns, spacing: 12) {
+        let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+        return LazyVGrid(columns: columns, spacing: 10) {
             StatCard(label: "Games Played", value: "\(gamesPlayed)")
             StatCard(label: "Wins", value: "\(wins)")
             StatCard(label: "Win %", value: winPctText)
@@ -162,7 +163,7 @@ private struct StatCard: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
+        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))

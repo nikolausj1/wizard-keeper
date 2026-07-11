@@ -240,13 +240,15 @@ private struct BiddingView: View {
                                 }
                             )
                         }
-                        .padding(.vertical, 6)
+                        .padding(.vertical, 2)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                         .listRowBackground(untouched ? Color.indigo.opacity(0.05) : Color(.secondarySystemGroupedBackground))
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -257,7 +259,9 @@ private struct BiddingView: View {
                     .foregroundStyle(.secondary)
                 PrimaryActionButton(title: "Confirm Bids", isDisabled: firstWaitingName != nil, action: onConfirm)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
             .background(.bar)
         }
     }
@@ -338,7 +342,7 @@ private struct ResultsView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            VStack(alignment: .trailing, spacing: 6) {
+                            VStack(alignment: .trailing, spacing: 4) {
                                 if let bid = entry.bid, let tricks = entry.tricksTaken {
                                     let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
                                     let hit = bid == tricks
@@ -372,13 +376,15 @@ private struct ResultsView: View {
                                 )
                             }
                         }
-                        .padding(.vertical, 6)
+                        .padding(.vertical, 2)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                         .listRowBackground(untouched ? Color.indigo.opacity(0.05) : Color(.secondarySystemGroupedBackground))
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -389,7 +395,9 @@ private struct ResultsView: View {
                     .foregroundStyle(.secondary)
                 PrimaryActionButton(title: "Confirm Round", isDisabled: !allTricksIn, action: onConfirm)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
             .background(.bar)
         }
     }
@@ -445,6 +453,7 @@ private struct EditRoundView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .paperBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -455,7 +464,9 @@ private struct EditRoundView: View {
                     .foregroundStyle(.secondary)
                 PrimaryActionButton(title: "Save Changes", action: onSave)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
             .background(.bar)
         }
     }
@@ -467,7 +478,7 @@ private struct EditRoundView: View {
         let hit = bid == tricks
         let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
 
-        return VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 10) {
             HStack {
                 HStack(spacing: 6) {
                     Text(participant.displayNameSnapshot)
@@ -514,7 +525,8 @@ private struct EditRoundView: View {
                 }
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 2)
+        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
         .listRowBackground(Color(.secondarySystemGroupedBackground))
     }
 
