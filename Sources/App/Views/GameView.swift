@@ -34,6 +34,9 @@ struct GameView: View {
                 inProgressBody
             }
         }
+        // The device is the table's shared scoreboard — never let the
+        // screen sleep mid-game (covers the iPad grid branch too).
+        .keepsScreenAwake()
     }
 
     private var completedRoundCount: Int {

@@ -34,6 +34,9 @@ struct RoundEntryView: View {
             ensureRound()
             hapticsEnabled = HapticsGate.isEnabled(in: modelContext)
         }
+        // Enter Tricks sits open for entire hands without a touch — the
+        // table's live dashboard must not sleep mid-hand.
+        .keepsScreenAwake()
         // Navigation matches the table's mental model (game-night feedback):
         // bids and tricks read as two screens, so back from Enter Tricks
         // returns to Place Bids (bids intact — fix a mis-entered bid on the

@@ -637,3 +637,33 @@ enum StandingsCalculator {
         .map(\.standing)
     }
 }
+
+/// Holds the device screen awake while any game-night screen is on top —
+/// the device sits on the table as the shared scoreboard, and the Enter
+/// Tricks screen stays open for whole hands without a touch. Reference
+/// counted so nav pushes (RoundEntryView appearing over GameView, in
+/// either appear/disappear order) can overlap without dropping the wake
+/// lock; the idle timer is restored the moment no counted screen remains.
+enum ScreenWake {
+    private static var activeScreens = 0
+
+    static func acquire() {
+        activeScreens += 1
+        UIApplication.shared.isIdleTimerDisabled = true
+    }
+
+    static func release() {
+        activeScreens = max(0, activeScreens - 1)
+        if activeScreens == 0 {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+    }
+}
+
+extension View {
+    /// Keeps the screen awake while this view is on screen (see `ScreenWake`).
+    func keepsScreenAwake() -> some View {
+        onAppear { ScreenWake.acquire() }
+            .onDisappear { ScreenWake.release() }
+    }
+}
