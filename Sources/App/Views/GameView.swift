@@ -73,12 +73,13 @@ struct GameView: View {
     /// feedback — a guessed dealer is worse than none).
     private var dealerName: String? {
         let n = game.currentRoundNumber
+        // No guessing (game-night feedback): round 1's dealer is whoever
+        // bids LAST, so nothing shows until the whole entry sequence is in.
+        if n == 1 && !game.bidOrderInferenceComplete { return nil }
         if game.firstBidderSeat != nil {
             guard let dealerSeat = game.bidOrder(forRound: n).last, game.participants.indices.contains(dealerSeat) else { return nil }
             return game.participants[dealerSeat].displayNameSnapshot
         }
-        // No guessing (game-night feedback): until round 1's first bid
-        // reveals the real rotation, there is no dealer to show.
         return nil
     }
 

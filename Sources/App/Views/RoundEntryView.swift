@@ -199,6 +199,10 @@ private struct BiddingView: View {
     /// shows the neutral "No bid yet" instead, so exactly one row ever
     /// claims to be on the clock.
     private var firstWaitingSeatIndex: Int? {
+        // Round 1 is where the turn order gets LEARNED (from the entry
+        // sequence), so there's no order to point "Bidding now" at yet —
+        // a wrong hint is worse than none.
+        guard round.roundNumber > 1 else { return nil }
         for seatIndex in game.bidOrder(forRound: round.roundNumber) {
             guard game.participants.indices.contains(seatIndex) else { continue }
             let participant = game.participants[seatIndex]
@@ -213,6 +217,10 @@ private struct BiddingView: View {
     /// since bidding starts left of the dealer. `nil` pre-inference.
     private var dealerSeatIndex: Int? {
         guard game.firstBidderSeat != nil else { return nil }
+        // Round 1's dealer is whoever bids LAST — unknown until every
+        // round-1 bid is in, so no tag before then (a guessed dealer is
+        // worse than none — game-night rule).
+        if round.roundNumber == 1 && !game.bidOrderInferenceComplete { return nil }
         return game.bidOrder(forRound: round.roundNumber).last
     }
 
@@ -297,10 +305,13 @@ private struct BiddingView: View {
             .listRowSeparator(.hidden)
 
             Section {
-                // Rendered in `game.bidOrder(forRound:)` order, not raw
-                // seating — once the first bidder is inferred, that seat is
-                // always the top row, since the scorer works top to bottom.
-                ForEach(game.bidOrder(forRound: round.roundNumber), id: \.self) { seatIndex in
+                // Round 2+ renders in `game.bidOrder(forRound:)` order — the
+                // physical table order inferred from round 1's entry
+                // sequence, rotated one seat per round. Round 1 itself stays
+                // FROZEN in seating order for the whole round: it's the
+                // round being used to learn the order, and rows must never
+                // jump under the scorer's fingers (game-night rule).
+                ForEach(round.roundNumber == 1 ? Array(game.participants.indices) : game.bidOrder(forRound: round.roundNumber), id: \.self) { seatIndex in
                     if game.participants.indices.contains(seatIndex) {
                         let participant = game.participants[seatIndex]
                         if let index = round.entries.firstIndex(where: { $0.playerId == participant.playerId }) {
@@ -401,12 +412,20 @@ private struct BiddingView: View {
         var updated = round.entries
         updated[index].bid = value
         round.entries = updated
-        // Round 1's first bid interaction pins down where bidding actually
-        // starts at this table — see `Game.firstBidderSeat`'s doc comment.
-        // Only round 1 infers, and only once; later rounds/taps never
-        // overwrite it. The saveNow() below persists both mutations together.
-        if round.roundNumber == 1 && game.firstBidderSeat == nil {
-            game.firstBidderSeat = seatIndex
+        // Round 1's bid ENTRY SEQUENCE reveals the whole table's deal
+        // order — the scorer enters bids as players call them, so first
+        // entry = first bidder and last entry = dealer (game-night
+        // feedback: inferring only the first seat wasn't enough; the app's
+        // seating order rarely matches the physical table). Each seat is
+        // appended once; corrections never re-append. `firstBidderSeat`
+        // stays in sync for legacy call sites. saveNow() persists both.
+        if round.roundNumber == 1 {
+            if game.firstBidderSeat == nil {
+                game.firstBidderSeat = seatIndex
+            }
+            if !game.bidOrderSeats.contains(seatIndex) {
+                game.bidOrderSeats.append(seatIndex)
+            }
         }
         modelContext.saveNow()
     }

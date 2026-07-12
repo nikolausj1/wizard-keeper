@@ -87,6 +87,18 @@ final class Game {
     /// `bidOrder(forRound:)`.
     var firstBidderSeat: Int?
 
+    /// Seat indices (into `participants`) in the order their round-1 bids
+    /// were ENTERED — the full physical table order, not just the first
+    /// bidder. The scorer enters bids as players call them, so the entry
+    /// sequence IS the deal rotation: first entry = round 1's first bidder,
+    /// last entry = round 1's dealer. Appended once per seat during round-1
+    /// bidding (corrections never re-append); every later round's row order
+    /// and dealer rotate through this sequence. Empty on games recorded
+    /// before this field existed — `bidOrder(forRound:)` falls back to the
+    /// old single-seat `firstBidderSeat` rotation for those. Additive
+    /// field: defaults to `[]` so existing stores migrate unchanged.
+    var bidOrderSeats: [Int] = []
+
     /// The current lifecycle status of this game.
     var status: GameStatus {
         get { GameStatus(rawValue: statusRaw) ?? .inProgress }
@@ -103,7 +115,8 @@ final class Game {
         rulesSnapshot: RulesSnapshot,
         rounds: [Round] = [],
         winnerPlayerIds: [UUID] = [],
-        firstBidderSeat: Int? = nil
+        firstBidderSeat: Int? = nil,
+        bidOrderSeats: [Int] = []
     ) {
         self.id = id
         self.createdAt = createdAt
@@ -115,6 +128,7 @@ final class Game {
         self.rounds = rounds
         self.winnerPlayerIds = winnerPlayerIds
         self.firstBidderSeat = firstBidderSeat
+        self.bidOrderSeats = bidOrderSeats
     }
 
     /// Rounds sorted by `roundNumber`. SwiftData relationship arrays have
@@ -165,9 +179,34 @@ final class Game {
     /// the dealer, so the dealer bids last).
     func bidOrder(forRound n: Int) -> [Int] {
         let count = participants.count
-        guard let firstBidderSeat, count > 0 else { return Array(participants.indices) }
+        guard count > 0 else { return [] }
+
+        // Full physical order (bidOrderSeats): usable once every seat has
+        // been observed, OR from round 2 on regardless — round 1 can't be
+        // confirmed without every bid, so a shorter list past round 1 only
+        // means players were added mid-game; they're appended at the end.
+        if !bidOrderSeats.isEmpty, bidOrderSeats.count >= count || n > 1 {
+            var base = bidOrderSeats.filter { participants.indices.contains($0) }
+            for seat in participants.indices where !base.contains(seat) {
+                base.append(seat)
+            }
+            let start = (n - 1) % base.count
+            return (0..<base.count).map { base[(start + $0) % base.count] }
+        }
+
+        // Legacy fallback (games recorded before full inference, or round 1
+        // still mid-bidding): rotate seating order from the first bidder.
+        guard let firstBidderSeat else { return Array(participants.indices) }
         let start = (firstBidderSeat + (n - 1)) % count
         return (0..<count).map { (start + $0) % count }
+    }
+
+    /// Whether round 1's entry sequence has revealed the whole table —
+    /// every current seat appears in `bidOrderSeats`. Round-1 dealer
+    /// callouts wait for this (the dealer is whoever bids LAST, so they're
+    /// unknown until the last bid is entered).
+    var bidOrderInferenceComplete: Bool {
+        !participants.isEmpty && bidOrderSeats.count >= participants.count
     }
 
     /// Locates the single in-progress game, if any.
