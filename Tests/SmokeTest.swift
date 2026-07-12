@@ -235,6 +235,152 @@ let joiner = GameInsights.insights(players: [
 ])
 check("insights: joiner skips round news", joiner.contains { $0.kind == .leadChange || $0.kind == .everybodyHit }, false)
 
+// MARK: GameInsights.broadcastInsights (standings-first round broadcast)
+
+// Round 1: no prior round to compare, so slot 1 is a plain leaderTotal.
+let bcR1 = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(1, 1)]),   // +30
+    Line(name: "B", entries: [(0, 1)]),   // −10
+], totalRounds: 20)
+check("broadcast: leaderTotal fires on round 1",
+      bcR1.contains { $0.kind == .leaderTotal && $0.playerName == "A" && $0.score == 30 && $0.text == "A leads with 30" }, true)
+check("broadcast: round 1 garnish is earlyGame",
+      bcR1.contains { $0.kind == .earlyGame && $0.value == 1 }, true)
+check("broadcast: round 1 chase margin",
+      bcR1.contains { $0.kind == .chase && $0.playerName == "B" && $0.score == 40 }, true)
+
+// Lead change: slot 1 carries the new leader's total, and — since the
+// biggest mover this round IS the new leader — slot 3 falls back from
+// mover to the chase/tie rotation instead of duplicating slot 1's player.
+let bcLeadChange = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(1, 1), (0, 1)]),   // 30 → 20
+    Line(name: "B", entries: [(0, 0), (2, 2)]),   // 20 → 60: takes the lead
+], totalRounds: 20)
+check("broadcast: leadChange carries the new leader's total",
+      bcLeadChange.contains { $0.kind == .leadChange && $0.playerName == "B" && $0.score == 60 }, true)
+check("broadcast: mover collision with slot 1 falls back to chase",
+      bcLeadChange.contains { $0.kind == .chase && $0.playerName == "A" && $0.score == 40 }, true)
+
+// Same leader, growing gap.
+let bcLeadGrew = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(1, 1), (1, 1)]),   // 30 → 60
+    Line(name: "B", entries: [(0, 1), (0, 1)]),   // −10 → −20
+], totalRounds: 20)
+check("broadcast: leadGrew score is the new gap",
+      bcLeadGrew.contains { $0.kind == .leadGrew && $0.playerName == "A" && $0.score == 80 }, true)
+
+// Same leader, shrinking gap.
+let bcLeadShrank = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(1, 1), (0, 0)]),   // 30 → 50
+    Line(name: "B", entries: [(0, 1), (1, 1)]),   // −10 → 20
+], totalRounds: 20)
+check("broadcast: leadShrank score is the new gap",
+      bcLeadShrank.contains { $0.kind == .leadShrank && $0.playerName == "A" && $0.score == 30 }, true)
+
+// Static gap, same leader throughout: an even round falls back to
+// leaderTotal, an odd round with ≥3-round tenure fires onTopStreak.
+let staticGapEntriesA: [(bid: Int, tricksTaken: Int)] = [(1, 1), (0, 0), (0, 0)]
+let staticGapEntriesB: [(bid: Int, tricksTaken: Int)] = [(0, 1), (0, 0), (0, 0)]
+let bcStaticEven = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: Array(staticGapEntriesA.prefix(2))),
+    Line(name: "B", entries: Array(staticGapEntriesB.prefix(2))),
+], totalRounds: 20)
+check("broadcast: static gap on an even round is leaderTotal",
+      bcStaticEven.contains { $0.kind == .leaderTotal && $0.playerName == "A" && $0.score == 50 }, true)
+let bcOnTopStreak = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: staticGapEntriesA),
+    Line(name: "B", entries: staticGapEntriesB),
+], totalRounds: 20)
+check("broadcast: static gap with ≥3-round tenure on an odd round is onTopStreak",
+      bcOnTopStreak.contains { $0.kind == .onTopStreak && $0.playerName == "A" && $0.value == 3 && $0.text == "A: 3 straight rounds on top" }, true)
+
+// Static gap, odd round, tenure under 3 rounds → leadStatic (scoreless,
+// but the gap is still spelled out in the text).
+let bcLeadStatic = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(0, 1), (2, 2), (0, 0)]),   // −10 → 30 → 50
+    Line(name: "B", entries: [(1, 1), (0, 1), (0, 0)]),   // 30 → 20 → 40
+], totalRounds: 20)
+check("broadcast: static gap under 3-round tenure on an odd round is leadStatic",
+      bcLeadStatic.contains { $0.kind == .leadStatic && $0.playerName == "A" && $0.score == nil && $0.text.contains("10") }, true)
+
+// Bottom rotation (R % 3 == 0): the bottom player's own round-3 delta.
+let bcBottomDeeper = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(1, 1), (0, 0), (0, 0)]),   // 30 → 50 → 70
+    Line(name: "B", entries: [(0, 0), (0, 0), (0, 1)]),   // 20 → 40 → 30
+], totalRounds: 20)
+check("broadcast: bottomDeeper score is the bottom's new total",
+      bcBottomDeeper.contains { $0.kind == .bottomDeeper && $0.playerName == "B" && $0.score == 30 }, true)
+
+let bcBottomClimb = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(0, 1), (0, 1), (1, 1)]),   // −10 → −20 → 10
+    Line(name: "B", entries: [(0, 0), (1, 1), (0, 0)]),   // 20 → 50 → 70
+], totalRounds: 20)
+check("broadcast: bottomClimb score is the bottom's new total",
+      bcBottomClimb.contains { $0.kind == .bottomClimb && $0.playerName == "A" && $0.score == 10 }, true)
+
+// Tightest-race rotation (R % 3 == 1): an exact tie at round 1.
+let bcTied = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(1, 1)]),   // 30
+    Line(name: "B", entries: [(1, 1)]),   // 30
+], totalRounds: 20)
+check("broadcast: tiedAt carries both names and the shared total",
+      bcTied.contains { $0.kind == .tiedAt && $0.playerName == "A" && $0.playerName2 == "B" && $0.score == 30 }, true)
+
+// Chase margin + lateGame garnish together, round 4 of a 5-round game.
+let bcChaseAndLate = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(0, 0), (0, 0), (0, 0), (0, 0)]),   // 20 → 40 → 60 → 80
+    Line(name: "B", entries: [(1, 1), (1, 1), (1, 1), (1, 1)]),   // 30 → 60 → 90 → 120
+], totalRounds: 5)
+check("broadcast: chase margin is the gap to the leader",
+      bcChaseAndLate.contains { $0.kind == .chase && $0.playerName == "A" && $0.score == 40 }, true)
+check("broadcast: lateGame garnish fires near the end of the game",
+      bcChaseAndLate.contains { $0.kind == .lateGame && $0.value == 1 }, true)
+
+// Mover rotation (R % 3 == 2), clear of any slot 1/2 collision.
+let bcMover = GameInsights.broadcastInsights(players: [
+    Line(name: "A", entries: [(1, 1), (0, 0)]),   // 30 → 50
+    Line(name: "B", entries: [(0, 0), (0, 0)]),   // 20 → 40
+    Line(name: "C", entries: [(0, 1), (2, 2)]),   // −10 → 30 (+40 this round)
+], totalRounds: 20)
+check("broadcast: mover score is the round's biggest gain",
+      bcMover.contains { $0.kind == .mover && $0.playerName == "C" && $0.score == 40 }, true)
+
+// Slot 2 enrichment: nosedive score is the points lost, as a positive number.
+let bcNosedive = GameInsights.broadcastInsights(players: [
+    Line(name: "K", entries: [(1, 1), (4, 0)]),   // 30 → −10 (−40 this round)
+    Line(name: "B", entries: [(0, 0), (0, 1)]),   // 20 → 10
+], totalRounds: 20)
+check("broadcast: nosedive score is points lost as a positive number",
+      bcNosedive.contains { $0.kind == .nosedive && $0.playerName == "K" && $0.score == 40 }, true)
+
+// Slot 2 enrichment: bigRound score is the round's point gain.
+let bcBigRound = GameInsights.broadcastInsights(players: [
+    Line(name: "K", entries: [(0, 1), (4, 4), (1, 1)]),   // −10 → 50 → 80 (+60 round 2)
+    Line(name: "B", entries: [(0, 0), (0, 1), (0, 0)]),   // 20 → 10 → 30
+], totalRounds: 20)
+check("broadcast: bigRound score is the round's point gain",
+      bcBigRound.contains { $0.kind == .bigRound && $0.playerName == "K" && $0.score == 60 }, true)
+
+// Tenure override: on a 4th round with a ≥3-round reign, slot 1 is
+// onTopStreak even though the gap moved (K leads every round; round 4 is
+// R % 4 == 0 and the gap changes round-over-round).
+let bcTenureTop = GameInsights.broadcastInsights(players: [
+    Line(name: "K", entries: [(2, 2), (2, 2), (2, 2), (2, 2)]),   // 40/80/120/160 — leads all 4
+    Line(name: "B", entries: [(0, 0), (0, 1), (0, 0), (0, 1)]),   // 20/10/30/20 — gap keeps moving
+], totalRounds: 20)
+check("broadcast: 4th-round tenure override yields onTopStreak with reign length",
+      bcTenureTop.first?.kind == .onTopStreak && bcTenureTop.first?.value == 4, true)
+
+// Tenure override: bottom slot on an even R%3==0 round (round 6) with a
+// ≥3-round basement stint yields basementSince with the stint's start round.
+let bcBasement = GameInsights.broadcastInsights(players: [
+    Line(name: "K", entries: [(1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1)]),  // +30 each — top
+    Line(name: "M", entries: [(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]),  // +20 each — middle
+    Line(name: "N", entries: [(0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1)]),  // −10 each — bottom all 6
+], totalRounds: 20)
+check("broadcast: even-round basement tenure yields basementSince from round 1",
+      bcBasement.contains { $0.kind == .basementSince && $0.playerName == "N" && $0.value == 1 }, true)
+
 // MARK: Result
 if failures == 0 {
     print("OK — all \(checks) checks passed")

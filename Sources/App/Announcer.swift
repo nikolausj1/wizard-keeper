@@ -134,6 +134,12 @@ final class AnnouncerPlayer: ObservableObject {
         let perfect: [Int]
         let points: [Int]
         let zeros: [Int]
+        /// Score-grammar lead-ins: listener TIER (as string, "1"..."3",
+        /// mapping directly from `AnnouncerStyle.rawValue`) -> kind name ->
+        /// variant count. Optional so an in-flight/older `manifest.json`
+        /// without this key still decodes — lead-in lookups then just find
+        /// a zero count and skip gracefully, same as any other missing clip.
+        let leadins: [String: [String: Int]]?
     }
 
     private let manifest: Manifest?
@@ -225,11 +231,17 @@ final class AnnouncerPlayer: ObservableObject {
 
     /// Plays a single short broadcast covering the table's current trends,
     /// replacing the old one-speaker-button-per-row UX: an optional random
-    /// intro connective, then — for up to the first 3 `insights`, in the
-    /// order given — that insight's `[name, stat?, tail]` segments (same
-    /// resolution logic as `announce`), separated by a random transition
-    /// connective between insights (never after the last), then an
-    /// optional random outro connective.
+    /// intro connective, then — for up to the first 4 `insights`, in the
+    /// order given (`GameTrends.displayed`'s ordered slots: lead story,
+    /// juice, third story, optional earlyGame/lateGame garnish) — that
+    /// insight's segments via `segments(for:style:voice:attachTail:)`,
+    /// separated by a random transition connective between insights (never
+    /// after the last), then an optional random outro connective.
+    ///
+    /// TAIL DEMOTION (Justin's wordiness feedback): at most one flavor tail
+    /// speaks per broadcast. It's attached to slot 2 (the "juice") —
+    /// except when slot 1 is `.leadChange`, in which case slot 1 gets the
+    /// tail and slot 2 gets none. Every other slot never attempts a tail.
     ///
     /// The connective clips (`seg_<style>_intro_<i>`, `_trans_<i>`,
     /// `_outro_<i>`) are a newer addition to `tools/generate_announcer.py`
@@ -246,18 +258,19 @@ final class AnnouncerPlayer: ObservableObject {
         attempted += 1
         if let u = connectiveURL(kind: "intro", style: style, voice: voiceRaw) { urls.append(u) }
 
-        let selected = Array(insights.prefix(3))
+        let selected = Array(insights.prefix(4))
+        let tailIndex: Int? = {
+            guard !selected.isEmpty else { return nil }
+            if selected[0].kind == .leadChange { return 0 }
+            return selected.count > 1 ? 1 : nil
+        }()
+
         for (index, insight) in selected.enumerated() {
-            attempted += 1
-            if let u = nameURL(insight.playerName, voice: voiceRaw) { urls.append(u) }
-
-            if let statBasename = statBasename(kind: insight.kind, value: insight.value) {
-                attempted += 1
-                if let u = resolvedURL(basename: statBasename, voice: voiceRaw) { urls.append(u) }
-            }
-
-            attempted += 1
-            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voiceRaw) { urls.append(u) }
+            let (segs, segAttempted) = segments(
+                for: insight, style: style, voice: voiceRaw, attachTail: index == tailIndex
+            )
+            attempted += segAttempted
+            urls.append(contentsOf: segs)
 
             if index < selected.count - 1 {
                 attempted += 1
@@ -272,16 +285,20 @@ final class AnnouncerPlayer: ObservableObject {
     }
 
     /// Plays a completed-game wrap-up: [intro?] + winner name + winner tail
-    /// + up to 2 of `insights`' `[name, stat?, tail]` segments (the game's
-    /// "story" — perfect records, streaks, round-of-the-game, etc., same
-    /// insights `FinalResultsView`'s "Game Story" section shows) + last
+    /// + winnerBy (winner name again + lead-in + final-margin number,
+    /// only when a `.winnerBy` insight with a positive `score` is present —
+    /// skipped on ties) + up to 2 of `insights`' segments via
+    /// `segments(for:style:voice:attachTail:)` (the game's "story" —
+    /// perfect records, streaks, round-of-the-game, etc., same insights
+    /// `FinalResultsView`'s "Game Story" section shows; `.winnerBy` itself
+    /// is excluded from this pool since it's already spoken above) + last
     /// place (name + tail, Spicy+ only, same gating as `announceWinner`) +
     /// [outro?]. Replaces the bare `announceWinner` call `FinalResultsView`
-    /// used before the Game Story feature: capped at 2 insights (not 3, per
-    /// `announceRoundUpdate`) so the combined sequence stays at or under 12
-    /// segments — 1 intro + 2 winner + up to 6 for two 3-segment insights +
-    /// 2 last-place + 1 outro. Same graceful-skip and return-count behavior
-    /// as every other `announce*` method.
+    /// used before the Game Story feature. Story-beat tails are NOT subject
+    /// to `announceRoundUpdate`'s one-tail-per-broadcast demotion — same
+    /// existing behavior as before (every selected story insight gets its
+    /// own tail attempt). Same graceful-skip and return-count behavior as
+    /// every other `announce*` method.
     @discardableResult
     func announceGameWrap(
         winnerName: String,
@@ -303,18 +320,21 @@ final class AnnouncerPlayer: ObservableObject {
         attempted += 1
         if let u = tailURL(kindName: "winner", style: style, voice: voiceRaw) { urls.append(u) }
 
-        let selected = Array(insights.prefix(2))
+        if let winnerByInsight = insights.first(where: { $0.kind == .winnerBy }),
+           let margin = winnerByInsight.score, margin > 0 {
+            attempted += 1
+            if let u = nameURL(winnerName, voice: voiceRaw) { urls.append(u) }
+            attempted += 1
+            if let u = leadinURL(kindName: "winnerBy", style: style, voice: voiceRaw) { urls.append(u) }
+            attempted += 1
+            if let u = numClipURL(score: margin, voice: voiceRaw) { urls.append(u) }
+        }
+
+        let selected = insights.filter { $0.kind != .winnerBy }.prefix(2)
         for insight in selected {
-            attempted += 1
-            if let u = nameURL(insight.playerName, voice: voiceRaw) { urls.append(u) }
-
-            if let statBasename = statBasename(kind: insight.kind, value: insight.value) {
-                attempted += 1
-                if let u = resolvedURL(basename: statBasename, voice: voiceRaw) { urls.append(u) }
-            }
-
-            attempted += 1
-            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voiceRaw) { urls.append(u) }
+            let (segs, segAttempted) = segments(for: insight, style: style, voice: voiceRaw, attachTail: true)
+            attempted += segAttempted
+            urls.append(contentsOf: segs)
         }
 
         if let lastPlaceName, style.rawValue >= AnnouncerStyle.fun.rawValue {
@@ -471,6 +491,13 @@ final class AnnouncerPlayer: ObservableObject {
             // No stat clip by design — these are framing lines ("X won the
             // last game", "fresh scorepad"), not numeric callouts.
             return nil
+        default:
+            // The score-grammar kinds (leaderTotal, leadGrew, chase,
+            // tiedAt, onTopStreak, earlyGame, ...) never use the old
+            // stat-burst clips — they're resolved by `segments(for:)`
+            // instead. This also future-proofs against any new `Kind`
+            // case the engine adds that isn't explicitly listed above.
+            return nil
         }
     }
 
@@ -571,6 +598,294 @@ final class AnnouncerPlayer: ObservableObject {
     /// On-disk connective variant counts, probed once per (voice, style,
     /// kind) — connectives aren't in the manifest's tail counts.
     private var connectiveCounts: [String: Int] = [:]
+
+    // MARK: - Score-grammar clip resolution (NAME! + lead-in + number)
+
+    /// Picks a no-repeat lead-in variant for (tier, kind) from the
+    /// manifest's `leadins` counts and falls back to variant 0 if the
+    /// chosen file isn't on disk yet, same pattern as `tailURL`. Unlike
+    /// `tailURL`'s merged five-bucket pool, `tier` maps DIRECTLY from
+    /// `AnnouncerStyle.rawValue` (classic=1, fun=2, spicy=3) — lead-ins
+    /// carry facts, not spice, so there's no bucket merging here.
+    private func leadinURL(kindName: String, style: AnnouncerStyle, voice: String) -> URL? {
+        let tier = style.rawValue
+        let count = manifest?.leadins?[String(tier)]?[kindName] ?? 0
+        guard count > 0 else { return nil }
+        let variant = pickVariant(category: "leadin_\(kindName)", count: count, styleRaw: tier)
+        if let url = resolvedURL(basename: "leadin_\(tier)_\(kindName)_\(variant)", voice: voice) {
+            return url
+        }
+        if variant != 0, let url = resolvedURL(basename: "leadin_\(tier)_\(kindName)_0", voice: voice) {
+            return url
+        }
+        return nil
+    }
+
+    /// `num_<n>` / `num_m<n>` — bare terminal numbers (leader totals, gaps,
+    /// point deltas). `score` must be a multiple of 10 (Wizard scores
+    /// always are); clamps into the generated −100...300 range.
+    private func numClipURL(score: Int, voice: String) -> URL? {
+        guard score % 10 == 0 else { return nil }
+        let clamped = max(-100, min(300, score))
+        return resolvedURL(basename: "num_\(numSlug(clamped))", voice: voice)
+    }
+
+    private func numSlug(_ n: Int) -> String {
+        n < 0 ? "m\(-n)" : "\(n)"
+    }
+
+    /// `back_<n>` — "<N> back!", the margin behind the leader (`chase`).
+    /// Clamps into the generated 10...150 range.
+    private func backClipURL(score: Int, voice: String) -> URL? {
+        guard score % 10 == 0 else { return nil }
+        let clamped = max(10, min(150, score))
+        return resolvedURL(basename: "back_\(clamped)", voice: voice)
+    }
+
+    /// `ontop_<n>` — consecutive rounds leading (`onTopStreak`). Clamps
+    /// into 2...10.
+    private func onTopClipURL(value: Int, voice: String) -> URL? {
+        resolvedURL(basename: "ontop_\(max(2, min(10, value)))", voice: voice)
+    }
+
+    /// `basement_<n>` — "since round N" (`basementSince`). Clamps into
+    /// 2...14.
+    private func basementClipURL(value: Int, voice: String) -> URL? {
+        resolvedURL(basename: "basement_\(max(2, min(14, value)))", voice: voice)
+    }
+
+    /// Per-insight segment resolution for the score-speaking grammar (NAME!
+    /// + lead-in ending mid-sentence + number burst) that
+    /// `announceRoundUpdate`/`announceGameWrap` assemble broadcasts from.
+    /// Dispatches on `insight.kind` to the right shape; every kind not
+    /// listed here (the pre-existing streak/table-wide kinds — perfect,
+    /// hotStreak, coldStreak, zeroSpecialist, boldestBidder, leading/
+    /// chasing/trailing, everybodyHit/carnage/tightRace, reigningChamp/
+    /// freshGame) keeps the original name + stat-burst + tail shape via
+    /// `legacySegments`, unchanged. Returns the resolved URLs alongside how
+    /// many clip lookups were attempted so callers can fold both into their
+    /// own running totals, same bookkeeping as before this was extracted.
+    private func segments(
+        for insight: GameInsights.Insight,
+        style: AnnouncerStyle,
+        voice: String,
+        attachTail: Bool
+    ) -> (urls: [URL], attempted: Int) {
+        switch insight.kind {
+        case .leaderTotal, .leadChange, .leadGrew, .leadShrank, .bottomDeeper, .bottomClimb,
+             .bigRound, .nosedive, .mover, .tiedAt, .winnerBy:
+            return leadinNumSegments(insight: insight, style: style, voice: voice, attachTail: attachTail)
+        case .chase:
+            return chaseSegments(insight: insight, style: style, voice: voice, attachTail: attachTail)
+        case .onTopStreak:
+            return onTopSegments(insight: insight, style: style, voice: voice, attachTail: attachTail)
+        case .basementSince:
+            return basementSegments(insight: insight, style: style, voice: voice, attachTail: attachTail)
+        case .leadStatic, .bottomStatic:
+            return completeLineSegments(insight: insight, style: style, voice: voice, attachTail: attachTail)
+        case .earlyGame, .lateGame:
+            return namelessLeadinSegments(insight: insight, style: style, voice: voice)
+        default:
+            return legacySegments(insight: insight, style: style, voice: voice, attachTail: attachTail)
+        }
+    }
+
+    /// leaderTotal, leadChange (lead-in kind name "leadNew" — see the
+    /// contract), leadGrew, leadShrank, bottomDeeper, bottomClimb,
+    /// bigRound, nosedive, mover, tiedAt (BOTH player names), winnerBy:
+    /// name(s) + lead-in + number. Falls back to the pre-existing
+    /// stat-burst-or-tail behavior when `score` is nil or not a clampable
+    /// multiple of 10 (out-of-sync data or generation gap).
+    private func leadinNumSegments(
+        insight: GameInsights.Insight,
+        style: AnnouncerStyle,
+        voice: String,
+        attachTail: Bool
+    ) -> (urls: [URL], attempted: Int) {
+        var urls: [URL] = []
+        var attempted = 0
+
+        attempted += 1
+        if let u = nameURL(insight.playerName, voice: voice) { urls.append(u) }
+
+        if insight.kind == .tiedAt {
+            attempted += 1
+            if let u = nameURL(insight.playerName2, voice: voice) { urls.append(u) }
+        }
+
+        let leadinKind = insight.kind == .leadChange ? "leadNew" : insight.kind.rawValue
+        if let score = insight.score, let numURL = numClipURL(score: score, voice: voice) {
+            attempted += 1
+            if let u = leadinURL(kindName: leadinKind, style: style, voice: voice) { urls.append(u) }
+            attempted += 1
+            urls.append(numURL)
+        } else {
+            attempted += 1
+            if let statBasename = statBasename(kind: insight.kind, value: insight.value),
+               let u = resolvedURL(basename: statBasename, voice: voice) {
+                urls.append(u)
+            } else if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voice) {
+                urls.append(u)
+            }
+        }
+
+        if attachTail {
+            attempted += 1
+            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voice) { urls.append(u) }
+        }
+
+        return (urls, attempted)
+    }
+
+    /// chase: name + lead-in + `back_<n>` (margin behind the leader, from
+    /// `score`). No stat-burst-or-tail fallback is specified for this kind
+    /// — a missing/out-of-range `score` just silently drops the number
+    /// segment, same graceful-skip philosophy as everywhere else.
+    private func chaseSegments(
+        insight: GameInsights.Insight,
+        style: AnnouncerStyle,
+        voice: String,
+        attachTail: Bool
+    ) -> (urls: [URL], attempted: Int) {
+        var urls: [URL] = []
+        var attempted = 0
+
+        attempted += 1
+        if let u = nameURL(insight.playerName, voice: voice) { urls.append(u) }
+
+        attempted += 1
+        if let u = leadinURL(kindName: "chase", style: style, voice: voice) { urls.append(u) }
+
+        attempted += 1
+        if let score = insight.score, let u = backClipURL(score: score, voice: voice) { urls.append(u) }
+
+        if attachTail {
+            attempted += 1
+            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voice) { urls.append(u) }
+        }
+
+        return (urls, attempted)
+    }
+
+    /// onTopStreak: name + `ontop_<n>` (consecutive rounds leading, from
+    /// the pre-existing `value` field, NOT `score` — no lead-in needed,
+    /// `ontop_<n>` is a complete phrase on its own).
+    private func onTopSegments(
+        insight: GameInsights.Insight,
+        style: AnnouncerStyle,
+        voice: String,
+        attachTail: Bool
+    ) -> (urls: [URL], attempted: Int) {
+        var urls: [URL] = []
+        var attempted = 0
+
+        attempted += 1
+        if let u = nameURL(insight.playerName, voice: voice) { urls.append(u) }
+
+        attempted += 1
+        if let value = insight.value, let u = onTopClipURL(value: value, voice: voice) { urls.append(u) }
+
+        if attachTail {
+            attempted += 1
+            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voice) { urls.append(u) }
+        }
+
+        return (urls, attempted)
+    }
+
+    /// basementSince: name + `basement_<n>` (round number, from `value`,
+    /// NOT `score`) — same no-lead-in shape as `onTopSegments`.
+    private func basementSegments(
+        insight: GameInsights.Insight,
+        style: AnnouncerStyle,
+        voice: String,
+        attachTail: Bool
+    ) -> (urls: [URL], attempted: Int) {
+        var urls: [URL] = []
+        var attempted = 0
+
+        attempted += 1
+        if let u = nameURL(insight.playerName, voice: voice) { urls.append(u) }
+
+        attempted += 1
+        if let value = insight.value, let u = basementClipURL(value: value, voice: voice) { urls.append(u) }
+
+        if attachTail {
+            attempted += 1
+            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voice) { urls.append(u) }
+        }
+
+        return (urls, attempted)
+    }
+
+    /// leadStatic, bottomStatic: name + lead-in — the lead-in clip IS the
+    /// complete sentence, no number follows.
+    private func completeLineSegments(
+        insight: GameInsights.Insight,
+        style: AnnouncerStyle,
+        voice: String,
+        attachTail: Bool
+    ) -> (urls: [URL], attempted: Int) {
+        var urls: [URL] = []
+        var attempted = 0
+
+        attempted += 1
+        if let u = nameURL(insight.playerName, voice: voice) { urls.append(u) }
+
+        attempted += 1
+        if let u = leadinURL(kindName: insight.kind.rawValue, style: style, voice: voice) { urls.append(u) }
+
+        if attachTail {
+            attempted += 1
+            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voice) { urls.append(u) }
+        }
+
+        return (urls, attempted)
+    }
+
+    /// earlyGame, lateGame: the lead-in clip ALONE — nameless, no tail ever
+    /// (there's no `attachTail` parameter here on purpose: these are pure
+    /// garnish per the contract, never the broadcast's one tail slot).
+    private func namelessLeadinSegments(
+        insight: GameInsights.Insight,
+        style: AnnouncerStyle,
+        voice: String
+    ) -> (urls: [URL], attempted: Int) {
+        var urls: [URL] = []
+        let attempted = 1
+        if let u = leadinURL(kindName: insight.kind.rawValue, style: style, voice: voice) { urls.append(u) }
+        return (urls, attempted)
+    }
+
+    /// Every pre-score-grammar kind (perfect, hotStreak, coldStreak,
+    /// zeroSpecialist, boldestBidder, leading/chasing/trailing,
+    /// everybodyHit/carnage/tightRace, reigningChamp/freshGame): unchanged
+    /// shape — name + stat burst (if `statBasename` has one for this kind/
+    /// value) + tail (only when `attachTail`).
+    private func legacySegments(
+        insight: GameInsights.Insight,
+        style: AnnouncerStyle,
+        voice: String,
+        attachTail: Bool
+    ) -> (urls: [URL], attempted: Int) {
+        var urls: [URL] = []
+        var attempted = 0
+
+        attempted += 1
+        if let u = nameURL(insight.playerName, voice: voice) { urls.append(u) }
+
+        if let statBasename = statBasename(kind: insight.kind, value: insight.value) {
+            attempted += 1
+            if let u = resolvedURL(basename: statBasename, voice: voice) { urls.append(u) }
+        }
+
+        if attachTail {
+            attempted += 1
+            if let u = tailURL(kindName: insight.kind.rawValue, style: style, voice: voice) { urls.append(u) }
+        }
+
+        return (urls, attempted)
+    }
 
     // MARK: - Name slugging
 

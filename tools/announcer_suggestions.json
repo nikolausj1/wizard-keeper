@@ -1214,5 +1214,389 @@
  "seg_5_outro_2": {
   "text": "Now get back in there and raise hell!",
   "suggestion": "Trim to: 'Get back in there and raise hell!' — drops 'Now.'"
+ },
+ "leadin_1_leaderTotal_0": {
+  "text": "Leads the table with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_leaderTotal_1": {
+  "text": "Out in front with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_leadGrew_0": {
+  "text": "Stretching the lead to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_leadGrew_1": {
+  "text": "Pulling away — the gap is now...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_leadShrank_0": {
+  "text": "Still on top, but the lead is down to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_leadShrank_1": {
+  "text": "The lead is shrinking — just...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_leadNew_0": {
+  "text": "Takes the lead with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_leadNew_1": {
+  "text": "Our new leader — now on top with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_chase_0": {
+  "text": "Second place —",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_chase_1": {
+  "text": "Right behind the leader —",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_bottomDeeper_0": {
+  "text": "Bottom of the table, now at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_bottomDeeper_1": {
+  "text": "Last place, sliding to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_bottomClimb_0": {
+  "text": "Climbing out of the basement — up to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_bottomClimb_1": {
+  "text": "The comeback begins! Up to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_bigRound_0": {
+  "text": "Banks a massive...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_bigRound_1": {
+  "text": "Goes off for...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_nosedive_0": {
+  "text": "Drops...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_nosedive_1": {
+  "text": "Gives back...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_tiedAt_0": {
+  "text": "Tied at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_tiedAt_1": {
+  "text": "Deadlocked at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_mover_0": {
+  "text": "Round's big mover, jumping...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_mover_1": {
+  "text": "Biggest gain of the round — up...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_winnerBy_0": {
+  "text": "Wins it by...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_winnerBy_1": {
+  "text": "Takes the game by...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_leadStatic_0": {
+  "text": "Still on top — steady as she goes!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_leadStatic_1": {
+  "text": "No movement at the top!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_bottomStatic_0": {
+  "text": "Holding steady at the bottom!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_bottomStatic_1": {
+  "text": "Still finding their footing down there!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_earlyGame_0": {
+  "text": "Early days — plenty of game left!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_earlyGame_1": {
+  "text": "It's early, folks — anything can happen!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_lateGame_0": {
+  "text": "It's getting late — every trick counts now!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_1_lateGame_1": {
+  "text": "The finish line is in sight!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leaderTotal_0": {
+  "text": "Sitting pretty on top with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leaderTotal_1": {
+  "text": "Running this table with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leadGrew_0": {
+  "text": "Rubbing it in — the lead is up to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leadGrew_1": {
+  "text": "Making it look easy — the gap is now...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leadShrank_0": {
+  "text": "Feeling the heat! The lead is down to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leadShrank_1": {
+  "text": "Getting nervous up there — the cushion is just...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leadNew_0": {
+  "text": "There's been a coup! On top with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leadNew_1": {
+  "text": "Snatches the lead at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_chase_0": {
+  "text": "Hunting the leader —",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_chase_1": {
+  "text": "Smelling blood —",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_bottomDeeper_0": {
+  "text": "The basement runs deep — down to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_bottomDeeper_1": {
+  "text": "Redecorating the basement at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_bottomClimb_0": {
+  "text": "Signs of life at the bottom! Up to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_bottomClimb_1": {
+  "text": "The basement is stirring — up to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_bigRound_0": {
+  "text": "Shows off with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_bigRound_1": {
+  "text": "Piles on a rude...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_nosedive_0": {
+  "text": "Face-plants — coughing up...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_nosedive_1": {
+  "text": "Generously donates...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_tiedAt_0": {
+  "text": "Locked together at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_tiedAt_1": {
+  "text": "Sharing a trophy shelf at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_mover_0": {
+  "text": "Making a move — up...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_mover_1": {
+  "text": "On the charge, jumping...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_winnerBy_0": {
+  "text": "Wins going away — by...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_winnerBy_1": {
+  "text": "Laps the field by...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leadStatic_0": {
+  "text": "Getting comfortable up there — somebody do something!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_leadStatic_1": {
+  "text": "Still king of this hill!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_bottomStatic_0": {
+  "text": "Still keeping the basement warm!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_bottomStatic_1": {
+  "text": "The basement lease got renewed!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_earlyGame_0": {
+  "text": "An early lead means NOTHING, folks!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_earlyGame_1": {
+  "text": "Save the celebration — it's still early!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_lateGame_0": {
+  "text": "Crunch time, people — the math is getting REAL!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_2_lateGame_1": {
+  "text": "Late game! Time to panic accordingly!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leaderTotal_0": {
+  "text": "Hogging first place with a damn...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leaderTotal_1": {
+  "text": "Lording over this table with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leadGrew_0": {
+  "text": "Piling on! The gap is now a damn...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leadGrew_1": {
+  "text": "Showing NO mercy — the lead is up to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leadShrank_0": {
+  "text": "Sweating BULLETS — the lead is down to a lousy...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leadShrank_1": {
+  "text": "One bad round from disaster — just...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leadNew_0": {
+  "text": "Steals the damn throne with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leadNew_1": {
+  "text": "Kicks the door in and takes the lead with...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_chase_0": {
+  "text": "Coming for the crown —",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_chase_1": {
+  "text": "About to ruin somebody's night —",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_bottomDeeper_0": {
+  "text": "Digging toward the earth's core at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_bottomDeeper_1": {
+  "text": "Dead-ass last at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_bottomClimb_0": {
+  "text": "The dead have RISEN — up to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_bottomClimb_1": {
+  "text": "Clawing out of hell, up to...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_bigRound_0": {
+  "text": "Goes NUCLEAR for...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_bigRound_1": {
+  "text": "Smashes the table for...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_nosedive_0": {
+  "text": "Absolutely EATS it — down...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_nosedive_1": {
+  "text": "Flushes...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_tiedAt_0": {
+  "text": "In a damn stalemate at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_tiedAt_1": {
+  "text": "Neck and neck at...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_mover_0": {
+  "text": "On a heater — up...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_mover_1": {
+  "text": "Storming the standings, up...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_winnerBy_0": {
+  "text": "WRECKS the field by...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_winnerBy_1": {
+  "text": "Wins by a disgusting...",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leadStatic_0": {
+  "text": "STILL on top — living there rent-free!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_leadStatic_1": {
+  "text": "Parked on the damn throne like they own it!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_bottomStatic_0": {
+  "text": "Still dead last — it's a lifestyle now!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_bottomStatic_1": {
+  "text": "The basement has a damn nameplate now!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_earlyGame_0": {
+  "text": "Nobody crown anybody — it's damn EARLY!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_earlyGame_1": {
+  "text": "Early lead? Big deal — PROVE it!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_lateGame_0": {
+  "text": "It's late, and the knives are OUT!",
+  "suggestion": "New for the score grammar (2026-07-11)."
+ },
+ "leadin_3_lateGame_1": {
+  "text": "Panic o'clock, people — the runway is damn short!",
+  "suggestion": "New for the score grammar (2026-07-11)."
  }
 }

@@ -138,6 +138,34 @@ for anchor, tier, buckets, blurb in TIERS:
     parts.append('</div>')
 parts.append('</section>')
 
+# --- 2.5 Score lead-ins (the number grammar) -----------------------------
+LEADINS = ns.get("LEADINS", {})
+if LEADINS:
+    caster, num_slug = ns["caster"], ns["num_slug"]
+    parts.append('<section><h2 id="leadins">2.5 &middot; Score lead-ins</h2>'
+                 '<p class="blurb">The number grammar: <i>&ldquo;KELLY! &rarr; [lead-in] &rarr; One-eighty!&rdquo;</i>. '
+                 'Lead-ins end mid-sentence and a number clip finishes the call.</p>')
+    tier_names = {1: "Classic", 2: "Fun", 3: "Spicy"}
+    for tier, kinds in LEADINS.items():
+        parts.append(f'<div class="tier"><h3>{tier_names.get(tier, tier)}</h3>')
+        for kind, variants in kinds.items():
+            parts.append(f'<h4>{esc(kind)}</h4>')
+            for i, line in enumerate(variants):
+                parts.append(row(f"leadin_{tier}_{kind}_{i}", line))
+        parts.append('</div>')
+    number_groups = [
+        ("Bare numbers — “One-eighty!”", [(f"num_{num_slug(n)}", f"{caster(n)}!") for n in ns["NUM_RANGE"]]),
+        ("Margins — “Ten back!”", [(f"back_{n}", f"{caster(n)} back!") for n in ns["BACK_RANGE"]]),
+        ("Reign — “N straight rounds on top!”", [(f"ontop_{n}", f"{WORDS[n]} straight rounds on top!") for n in ns["ONTOP_RANGE"]]),
+        ("Basement — “In the basement since round N!”", [(f"basement_{n}", f"In the basement since round {WORDS[n].lower()}!") for n in ns["BASEMENT_RANGE"]]),
+    ]
+    for label, items in number_groups:
+        parts.append(f'<details><summary>{esc(label)} <span class="count">{len(items)} clips</span></summary>')
+        for clip_id, text in items:
+            parts.append(row(clip_id, text, with_suggestion=False))
+        parts.append('</details>')
+    parts.append('</section>')
+
 # --- 3. Stat bursts (formulaic — folded, comment boxes only) ------------
 parts.append('<section><h2 id="stats">3 &middot; Stat bursts</h2>'
              '<p class="blurb">Formulaic number clips (no per-line suggestions &mdash; the template is the thing to critique). '

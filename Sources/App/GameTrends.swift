@@ -29,12 +29,16 @@ enum GameTrends {
         return Displayed(insights: trendInsights(game: game, completedRounds: completedRounds), champName: nil)
     }
 
-    /// Up to 3 ranked mid-game trends/outliers, computed via
-    /// `GameInsights.insights` from each participant's completed-round
-    /// (bid, tricksTaken) history in seating order. Non-empty from the
-    /// first completed round on — `.leading` fires from round 1, richer
-    /// insights (streaks, big rounds, etc.) join in once
-    /// `GameInsights.minimumRounds` is reached.
+    /// Up to 3 ranked mid-game trends/outliers, computed from each
+    /// participant's completed-round (bid, tricksTaken) history in seating
+    /// order. Non-empty from the first completed round on. Primarily backed
+    /// by `GameInsights.broadcastInsights` — the "standings-first" slots
+    /// (lead story, juiciest trend, rotating third story, game-phase
+    /// garnish) that feed both this Trends UI and the round-update
+    /// announcer. Falls back to the older `GameInsights.insights` ranking
+    /// when `broadcastInsights` returns nothing (e.g. a mid-game joiner
+    /// leaves participants' entry counts misaligned), so Trends is never
+    /// silently empty mid-game.
     private static func trendInsights(game: Game, completedRounds: [Round]) -> [GameInsights.Insight] {
         let lines = game.participants.map { participant -> GameInsights.PlayerLine in
             let entries = completedRounds.compactMap { round -> (bid: Int, tricksTaken: Int)? in
@@ -44,6 +48,8 @@ enum GameTrends {
             }
             return GameInsights.PlayerLine(name: participant.displayNameSnapshot, entries: entries)
         }
+        let broadcast = GameInsights.broadcastInsights(players: lines, totalRounds: game.totalRounds)
+        if !broadcast.isEmpty { return broadcast }
         return GameInsights.insights(players: lines, maxCount: 3)
     }
 

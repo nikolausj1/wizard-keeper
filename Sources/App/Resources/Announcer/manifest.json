@@ -210,5 +210,77 @@
  "zeros": [
   3,
   10
- ]
+ ],
+ "num": [
+  -100,
+  300
+ ],
+ "back": [
+  10,
+  150
+ ],
+ "ontop": [
+  2,
+  10
+ ],
+ "basement": [
+  2,
+  14
+ ],
+ "leadins": {
+  "1": {
+   "leaderTotal": 2,
+   "leadGrew": 2,
+   "leadShrank": 2,
+   "leadNew": 2,
+   "chase": 2,
+   "bottomDeeper": 2,
+   "bottomClimb": 2,
+   "bigRound": 2,
+   "nosedive": 2,
+   "tiedAt": 2,
+   "mover": 2,
+   "winnerBy": 2,
+   "leadStatic": 2,
+   "bottomStatic": 2,
+   "earlyGame": 2,
+   "lateGame": 2
+  },
+  "2": {
+   "leaderTotal": 2,
+   "leadGrew": 2,
+   "leadShrank": 2,
+   "leadNew": 2,
+   "chase": 2,
+   "bottomDeeper": 2,
+   "bottomClimb": 2,
+   "bigRound": 2,
+   "nosedive": 2,
+   "tiedAt": 2,
+   "mover": 2,
+   "winnerBy": 2,
+   "leadStatic": 2,
+   "bottomStatic": 2,
+   "earlyGame": 2,
+   "lateGame": 2
+  },
+  "3": {
+   "leaderTotal": 2,
+   "leadGrew": 2,
+   "leadShrank": 2,
+   "leadNew": 2,
+   "chase": 2,
+   "bottomDeeper": 2,
+   "bottomClimb": 2,
+   "bigRound": 2,
+   "nosedive": 2,
+   "tiedAt": 2,
+   "mover": 2,
+   "winnerBy": 2,
+   "leadStatic": 2,
+   "bottomStatic": 2,
+   "earlyGame": 2,
+   "lateGame": 2
+  }
+ }
 }

@@ -32,6 +32,21 @@ public enum GameInsights {
         /// Pregame kinds, constructed by the app layer from game history
         /// (the engine only defines them so audio mapping stays kind-keyed).
         case reigningChamp, freshGame
+        /// `broadcastInsights` kinds — the "standings-first" round broadcast.
+        /// Slot 1 (the lead story): `leaderTotal` (round 1, or a static-gap
+        /// even round), `leadGrew`/`leadShrank` (gap changed, same leader),
+        /// `leadStatic` (gap unchanged, no streak), `onTopStreak` (gap
+        /// unchanged, ≥3-round tenure, odd round). `leadChange` (above) is
+        /// reused when the leader flips. Slot 3 (rotating third story):
+        /// `bottomDeeper`/`bottomClimb`/`bottomStatic`/`basementSince`
+        /// (bottom-of-the-table rotation), `tiedAt`/`chase` (tightest-race
+        /// rotation), `mover` (biggest single-round gain rotation). Garnish:
+        /// `earlyGame`/`lateGame`. `winnerBy` is defined here for the audio
+        /// mapping's sake but is only ever constructed by the app layer's
+        /// end-of-game story, never by `broadcastInsights`.
+        case leaderTotal, leadGrew, leadShrank, leadStatic, chase
+        case bottomDeeper, bottomClimb, bottomStatic, tiedAt, mover
+        case onTopStreak, basementSince, earlyGame, lateGame, winnerBy
     }
 
     public struct Insight: Equatable {
@@ -46,6 +61,36 @@ public enum GameInsights {
         public let kind: Kind
         public let playerName: String
         public let value: Int?
+        /// The headline number for `broadcastInsights` kinds — semantics
+        /// vary by kind (a total, a gap, a round delta); nil when the kind
+        /// is explicitly scoreless (e.g. `leadStatic`, `bottomStatic`).
+        /// Kept separate from `value` (the pre-existing generic number
+        /// field, still populated for these kinds too) so `broadcastInsights`
+        /// call sites can follow the PRD's per-kind "score" rules exactly
+        /// without disturbing `value`'s existing semantics/consumers.
+        public let score: Int?
+        /// Second player name — only ever non-empty for `tiedAt`.
+        public let playerName2: String
+
+        public init(
+            icon: String,
+            text: String,
+            priority: Int,
+            kind: Kind,
+            playerName: String,
+            value: Int?,
+            score: Int? = nil,
+            playerName2: String = ""
+        ) {
+            self.icon = icon
+            self.text = text
+            self.priority = priority
+            self.kind = kind
+            self.playerName = playerName
+            self.value = value
+            self.score = score
+            self.playerName2 = playerName2
+        }
     }
 
     /// Minimum completed rounds before any insight is worth showing.
@@ -278,5 +323,328 @@ public enum GameInsights {
 
         return perPlayer.values.sorted { ($0.priority, $0.text) < ($1.priority, $1.text) }
             .prefix(maxCount).map { $0 }
+    }
+
+    // MARK: - Broadcast insights (standings-first round commentary)
+
+    /// Ordered "standings-first" broadcast for the round just played:
+    /// slot 1 is the lead story, slot 2 the juiciest player-level trend,
+    /// slot 3 a third story that rotates by round number, plus an optional
+    /// nameless game-phase garnish. Every slot's `text` carries the actual
+    /// numbers driving it. Requires at least one completed round (returns
+    /// `[]` for round zero — the app's pregame path handles that) and, to
+    /// keep "the round just played" well-defined, requires every player's
+    /// entries to be aligned to the same round count (a mid-game joiner
+    /// with a shorter history returns `[]`, same as `insights()`'s
+    /// round-news section silently skipping rather than lying — the app
+    /// layer falls back to `insights()` in that case).
+    public static func broadcastInsights(players: [PlayerLine], totalRounds: Int) -> [Insight] {
+        let roundCount = players.map { $0.entries.count }.max() ?? 0
+        guard roundCount >= 1, players.count >= 2,
+              players.allSatisfy({ $0.entries.count == roundCount }) else { return [] }
+        let R = roundCount
+
+        let totalsR = totals(players, through: R)
+        guard let bestR = totalsR.max(), let leaderIdxR = totalsR.firstIndex(of: bestR) else { return [] }
+
+        var slots: [Insight] = []
+
+        // MARK: Slot 1 — the lead story
+        let slot1: Insight
+        if R == 1 {
+            slot1 = Insight(
+                icon: "crown.fill",
+                text: "\(players[leaderIdxR].name) leads with \(bestR)",
+                priority: 0, kind: .leaderTotal, playerName: players[leaderIdxR].name, value: bestR, score: bestR
+            )
+        } else {
+            let totalsPrev = totals(players, through: R - 1)
+            let bestPrev = totalsPrev.max() ?? 0
+            let leaderIdxPrev = totalsPrev.firstIndex(of: bestPrev) ?? leaderIdxR
+            if leaderIdxR != leaderIdxPrev {
+                slot1 = Insight(
+                    icon: "arrow.up.to.line",
+                    text: "\(players[leaderIdxR].name) takes the lead with \(bestR)",
+                    priority: 0, kind: .leadChange, playerName: players[leaderIdxR].name, value: bestR, score: bestR
+                )
+            } else {
+                let gapR = leaderGap(totalsR)
+                let gapPrev = leaderGap(totalsPrev)
+                // Tenure override: the gap moves nearly every round (scores
+                // always change by ±10s), so the gap-unchanged branch below
+                // almost never fires and a long reign would never get its
+                // "N straight rounds on top!" call. Every 4th round, a
+                // ≥3-round reign outranks the gap news.
+                let ledStreak = consecutiveRoundsLed(players, leaderIndex: leaderIdxR, through: R)
+                if ledStreak >= 3, R % 4 == 0 {
+                    slot1 = Insight(
+                        icon: "medal.fill",
+                        text: "\(players[leaderIdxR].name): \(ledStreak) straight rounds on top",
+                        priority: 0, kind: .onTopStreak, playerName: players[leaderIdxR].name, value: ledStreak, score: ledStreak
+                    )
+                } else if gapR > gapPrev {
+                    slot1 = Insight(
+                        icon: "chart.line.uptrend.xyaxis",
+                        text: "\(players[leaderIdxR].name)'s lead grows to \(gapR)",
+                        priority: 0, kind: .leadGrew, playerName: players[leaderIdxR].name, value: gapR, score: gapR
+                    )
+                } else if gapR < gapPrev {
+                    slot1 = Insight(
+                        icon: "chart.line.downtrend.xyaxis",
+                        text: "\(players[leaderIdxR].name)'s lead shrinks to \(gapR)",
+                        priority: 0, kind: .leadShrank, playerName: players[leaderIdxR].name, value: gapR, score: gapR
+                    )
+                } else {
+                    let streak = consecutiveRoundsLed(players, leaderIndex: leaderIdxR, through: R)
+                    if streak >= 3, R % 2 == 1 {
+                        slot1 = Insight(
+                            icon: "medal.fill",
+                            text: "\(players[leaderIdxR].name): \(streak) straight rounds on top",
+                            priority: 0, kind: .onTopStreak, playerName: players[leaderIdxR].name, value: streak, score: streak
+                        )
+                    } else if R % 2 == 0 {
+                        slot1 = Insight(
+                            icon: "crown.fill",
+                            text: "\(players[leaderIdxR].name) leads with \(bestR)",
+                            priority: 0, kind: .leaderTotal, playerName: players[leaderIdxR].name, value: bestR, score: bestR
+                        )
+                    } else {
+                        slot1 = Insight(
+                            icon: "minus.circle.fill",
+                            text: "\(players[leaderIdxR].name) holds a \(gapR)-point lead",
+                            priority: 0, kind: .leadStatic, playerName: players[leaderIdxR].name, value: gapR, score: nil
+                        )
+                    }
+                }
+            }
+        }
+        slots.append(slot1)
+
+        // MARK: Slot 2 — the juice: highest-priority player-trend insight
+        // from the existing `insights()` ranking, restricted to the more
+        // "colorful" kinds, preferring a player other than slot 1's.
+        let juiceKinds: Set<Kind> = [
+            .perfect, .hotStreak, .coldStreak, .bigRound, .nosedive,
+            .zeroSpecialist, .boldestBidder, .everybodyHit, .carnage,
+        ]
+        let ranked = insights(players: players, maxCount: players.count + 6, pastTense: false)
+            .sorted { ($0.priority, $0.text) < ($1.priority, $1.text) }
+        let candidates = ranked.filter { juiceKinds.contains($0.kind) }
+        let picked = candidates.first { $0.playerName != slot1.playerName } ?? candidates.first
+        var slot2: Insight?
+        if let picked {
+            switch picked.kind {
+            case .bigRound, .nosedive:
+                // Enrich: score carries the round's point swing (already
+                // computed as `value` — bigRound's gain, nosedive's loss as
+                // a positive number).
+                slot2 = Insight(
+                    icon: picked.icon, text: picked.text, priority: 1, kind: picked.kind,
+                    playerName: picked.playerName, value: picked.value, score: picked.value
+                )
+            default:
+                slot2 = Insight(
+                    icon: picked.icon, text: picked.text, priority: 1, kind: picked.kind,
+                    playerName: picked.playerName, value: picked.value
+                )
+            }
+        }
+        if let slot2 { slots.append(slot2) }
+
+        // MARK: Slot 3 — rotates by round number
+        var slot3: Insight?
+        switch R % 3 {
+        case 0:
+            slot3 = bottomStory(players: players, totalsR: totalsR, roundNumber: R)
+        case 1:
+            slot3 = chaseOrTieStory(players: players, totalsR: totalsR, bestR: bestR)
+        default:
+            if let mv = moverStory(players: players, totalsR: totalsR, roundNumber: R),
+               mv.playerName != slot1.playerName, mv.playerName != (slot2?.playerName ?? "") {
+                slot3 = mv
+            } else {
+                slot3 = chaseOrTieStory(players: players, totalsR: totalsR, bestR: bestR)
+            }
+        }
+        // Guard against a slot 3 that's a full duplicate of slot 1 (same
+        // kind AND same player) — not reachable given the kind sets are
+        // disjoint between slot 1 and slot 3 today, but cheap to guard.
+        if let s3 = slot3, s3.kind == slot1.kind, s3.playerName == slot1.playerName {
+            slot3 = nil
+        }
+        if let slot3 { slots.append(slot3) }
+
+        // MARK: Garnish — nameless game-phase flavor, appended last
+        if R <= 2 {
+            slots.append(Insight(
+                icon: "sparkles",
+                text: "Early days — round \(R) of \(totalRounds)",
+                priority: 3, kind: .earlyGame, playerName: "", value: R
+            ))
+        } else if totalRounds - R <= 2 {
+            let remaining = totalRounds - R
+            slots.append(Insight(
+                icon: "flag.checkered",
+                text: "Final stretch — \(remaining) round\(remaining == 1 ? "" : "s") to go",
+                priority: 3, kind: .lateGame, playerName: "", value: remaining
+            ))
+        }
+
+        return slots
+    }
+
+    /// Each player's cumulative total through round `r` (1-indexed,
+    /// inclusive), computed from their completed-round entries in order.
+    private static func totals(_ players: [PlayerLine], through r: Int) -> [Int] {
+        guard r > 0 else { return players.map { _ in 0 } }
+        return players.map { player in
+            player.entries.prefix(r).reduce(0) { $0 + WizardEngine.roundScore(bid: $1.bid, tricksTaken: $1.tricksTaken) }
+        }
+    }
+
+    /// Leader's total minus the best total among everyone else (0 when the
+    /// lead is shared).
+    private static func leaderGap(_ totals: [Int]) -> Int {
+        guard let best = totals.max(), let leaderIdx = totals.firstIndex(of: best) else { return 0 }
+        let bestOther = totals.enumerated().filter { $0.offset != leaderIdx }.map { $0.element }.max() ?? best
+        return best - bestOther
+    }
+
+    /// How many consecutive rounds ending at `r` `leaderIndex` has held
+    /// sole/tie-broken first place.
+    private static func consecutiveRoundsLed(_ players: [PlayerLine], leaderIndex: Int, through r: Int) -> Int {
+        var count = 0
+        var round = r
+        while round >= 1 {
+            let t = totals(players, through: round)
+            guard let best = t.max(), t.firstIndex(of: best) == leaderIndex else { break }
+            count += 1
+            round -= 1
+        }
+        return count
+    }
+
+    /// How many consecutive rounds ending at `r` `bottomIndex` has held
+    /// sole/tie-broken last place.
+    private static func consecutiveRoundsAtBottom(_ players: [PlayerLine], bottomIndex: Int, through r: Int) -> Int {
+        var count = 0
+        var round = r
+        while round >= 1 {
+            let t = totals(players, through: round)
+            guard let worst = t.min(), t.lastIndex(of: worst) == bottomIndex else { break }
+            count += 1
+            round -= 1
+        }
+        return count
+    }
+
+    /// Slot 3, R % 3 == 0: the bottom-of-the-table story. Compares the
+    /// current bottom player's own total this round vs their own total
+    /// after the previous round (i.e. how their round just went), then
+    /// falls back to a bottom-stint story when that delta is exactly zero.
+    private static func bottomStory(players: [PlayerLine], totalsR: [Int], roundNumber: Int) -> Insight {
+        let worstR = totalsR.min() ?? 0
+        let bottomIdx = totalsR.lastIndex(of: worstR) ?? 0
+        let prevTotal = totals(players, through: roundNumber - 1)[bottomIdx]
+        let delta = worstR - prevTotal
+        // Tenure override: a bottom total is never literally unchanged
+        // round-over-round (scores move in ±10s), so without this the
+        // basement-tenure arc would never be heard. On every other bottom
+        // visit, a ≥3-round stint outranks the up/down news.
+        let stint = consecutiveRoundsAtBottom(players, bottomIndex: bottomIdx, through: roundNumber)
+        if stint >= 3, roundNumber % 2 == 0 {
+            return Insight(
+                icon: "hourglass",
+                text: "\(players[bottomIdx].name) has been in last since round \(roundNumber - stint + 1)",
+                priority: 2, kind: .basementSince, playerName: players[bottomIdx].name, value: roundNumber - stint + 1
+            )
+        }
+        if delta < 0 {
+            return Insight(
+                icon: "arrow.down.to.line",
+                text: "\(players[bottomIdx].name) sinks to \(worstR) in last",
+                priority: 2, kind: .bottomDeeper, playerName: players[bottomIdx].name, value: worstR, score: worstR
+            )
+        } else if delta > 0 {
+            return Insight(
+                icon: "arrow.up.forward",
+                text: "\(players[bottomIdx].name) claws back to \(worstR)",
+                priority: 2, kind: .bottomClimb, playerName: players[bottomIdx].name, value: worstR, score: worstR
+            )
+        } else {
+            let streak = consecutiveRoundsAtBottom(players, bottomIndex: bottomIdx, through: roundNumber)
+            if streak >= 3 {
+                let startRound = roundNumber - streak + 1
+                return Insight(
+                    icon: "hourglass",
+                    text: "\(players[bottomIdx].name) has been in last since round \(startRound)",
+                    priority: 2, kind: .basementSince, playerName: players[bottomIdx].name, value: startRound
+                )
+            } else {
+                return Insight(
+                    icon: "tortoise.fill",
+                    text: "\(players[bottomIdx].name) is stuck at \(worstR)",
+                    priority: 2, kind: .bottomStatic, playerName: players[bottomIdx].name, value: worstR
+                )
+            }
+        }
+    }
+
+    /// Slot 3, R % 3 == 1 (and the R % 3 == 2 mover fallback): finds the
+    /// smallest gap between adjacent ranks anywhere in the standings. A
+    /// zero gap fires `tiedAt` for that pair (better-seated player first);
+    /// otherwise falls back to the classic "2nd place chasing the leader"
+    /// story (guaranteed to have a strictly positive gap, since any zero
+    /// gap anywhere would already have been caught above).
+    private static func chaseOrTieStory(players: [PlayerLine], totalsR: [Int], bestR: Int) -> Insight {
+        let ranked = totalsR.enumerated().sorted { $0.element > $1.element }
+        var smallestGap = Int.max
+        var tiePair: (Int, Int)?
+        for i in 0..<(ranked.count - 1) {
+            let gap = ranked[i].element - ranked[i + 1].element
+            if gap < smallestGap {
+                smallestGap = gap
+                tiePair = (ranked[i].offset, ranked[i + 1].offset)
+            }
+        }
+        if smallestGap == 0, let (a, b) = tiePair {
+            let (firstSeat, secondSeat) = a < b ? (a, b) : (b, a)
+            return Insight(
+                icon: "equal.square.fill",
+                text: "\(players[firstSeat].name) & \(players[secondSeat].name) tied at \(totalsR[firstSeat])",
+                priority: 2, kind: .tiedAt, playerName: players[firstSeat].name,
+                value: totalsR[firstSeat], score: totalsR[firstSeat], playerName2: players[secondSeat].name
+            )
+        } else {
+            let secondIdx = ranked.count >= 2 ? ranked[1].offset : ranked[0].offset
+            let gap = bestR - totalsR[secondIdx]
+            return Insight(
+                icon: "figure.run",
+                text: "\(players[secondIdx].name) is \(gap) back in 2nd",
+                priority: 2, kind: .chase, playerName: players[secondIdx].name, value: gap, score: gap
+            )
+        }
+    }
+
+    /// Slot 3, R % 3 == 2: the player with the biggest strictly-positive
+    /// round delta this round (earliest seat wins ties). Nil if nobody
+    /// gained ground this round.
+    private static func moverStory(players: [PlayerLine], totalsR: [Int], roundNumber: Int) -> Insight? {
+        let totalsPrev = totals(players, through: roundNumber - 1)
+        var bestDelta = 0
+        var moverIdx: Int?
+        for i in 0..<players.count {
+            let delta = totalsR[i] - totalsPrev[i]
+            if delta > bestDelta {
+                bestDelta = delta
+                moverIdx = i
+            }
+        }
+        guard let moverIdx else { return nil }
+        return Insight(
+            icon: "arrow.up.right.square.fill",
+            text: "\(players[moverIdx].name) jumps \(bestDelta) this round",
+            priority: 2, kind: .mover, playerName: players[moverIdx].name, value: bestDelta, score: bestDelta
+        )
     }
 }

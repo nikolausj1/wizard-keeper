@@ -206,6 +206,106 @@ def tts(voice_id, text, path):
     with open(path, "wb") as f:
         f.write(data)
 
+# --- Score-grammar clips (2026-07-11): the announcer says the numbers ---
+# Grammar: NAME! + [lead-in ending mid-sentence] + [number burst].
+# e.g. "KELLY!" + "Stretching the lead to..." + "One-eighty!"
+# Numbers are sports-caster style ("one-eighty", never "one hundred eighty").
+# Wizard scores/gaps/deltas are always multiples of 10.
+
+def caster(n):
+    """Sports-caster spelling of a (multiple-of-10) score: 90 -> 'Ninety',
+    180 -> 'One-eighty', 200 -> 'Two hundred', -30 -> 'Minus thirty'."""
+    if n < 0:
+        return "Minus " + caster(-n).lower()
+    if n == 0:
+        return "Zero"
+    tens = {10: "Ten", 20: "Twenty", 30: "Thirty", 40: "Forty", 50: "Fifty",
+            60: "Sixty", 70: "Seventy", 80: "Eighty", 90: "Ninety"}
+    if n < 100:
+        return tens[n]
+    hundreds = {100: "One", 200: "Two", 300: "Three"}
+    if n % 100 == 0:
+        return f"{hundreds[n]} hundred"
+    return f"{hundreds[n - n % 100]}-{tens[n % 100].lower()}"
+
+# num_<n> / num_m<n>: bare terminal numbers — totals, gaps, deltas.
+NUM_RANGE = list(range(-100, 0, 10)) + list(range(0, 310, 10))
+# back_<n>: "<N> back!" — margins behind the leader, complete phrase.
+BACK_RANGE = list(range(10, 160, 10))
+# ontop_<n>: consecutive rounds leading. basement_<n>: "since round N".
+ONTOP_RANGE = list(range(2, 11))
+BASEMENT_RANGE = list(range(2, 15))
+
+# Lead-ins keyed by LISTENER TIER (1 Classic, 2 Fun, 3 Spicy) — unlike
+# TAILS' five generation buckets, because these carry facts, not spice;
+# the tail garnish supplies the extra heat. Kinds ending "..." hand off
+# to a number burst; (chase pairs with back_<n>, all others with num).
+# Complete-sentence kinds (leadStatic, bottomStatic, earlyGame, lateGame)
+# take no number. Number semantics per kind:
+#   leaderTotal/leadNew -> leader's total; leadGrew/leadShrank -> the gap;
+#   chase -> margin behind; bottomDeeper/bottomClimb -> bottom's total;
+#   bigRound/mover -> points gained; nosedive -> points lost (positive);
+#   tiedAt -> the shared total; winnerBy -> final margin.
+LEADINS = {
+ 1: {  # Classic — warm sports-caster
+  "leaderTotal": ["Leads the table with...", "Out in front with..."],
+  "leadGrew": ["Stretching the lead to...", "Pulling away — the gap is now..."],
+  "leadShrank": ["Still on top, but the lead is down to...", "The lead is shrinking — just..."],
+  "leadNew": ["Takes the lead with...", "Our new leader — now on top with..."],
+  "chase": ["Second place —", "Right behind the leader —"],
+  "bottomDeeper": ["Bottom of the table, now at...", "Last place, sliding to..."],
+  "bottomClimb": ["Climbing out of the basement — up to...", "The comeback begins! Up to..."],
+  "bigRound": ["Banks a massive...", "Goes off for..."],
+  "nosedive": ["Drops...", "Gives back..."],
+  "tiedAt": ["Tied at...", "Deadlocked at..."],
+  "mover": ["Round's big mover, jumping...", "Biggest gain of the round — up..."],
+  "winnerBy": ["Wins it by...", "Takes the game by..."],
+  "leadStatic": ["Still on top — steady as she goes!", "No movement at the top!"],
+  "bottomStatic": ["Holding steady at the bottom!", "Still finding their footing down there!"],
+  "earlyGame": ["Early days — plenty of game left!", "It's early, folks — anything can happen!"],
+  "lateGame": ["It's getting late — every trick counts now!", "The finish line is in sight!"],
+ },
+ 2: {  # Fun — roasts the scoreboard
+  "leaderTotal": ["Sitting pretty on top with...", "Running this table with..."],
+  "leadGrew": ["Rubbing it in — the lead is up to...", "Making it look easy — the gap is now..."],
+  "leadShrank": ["Feeling the heat! The lead is down to...", "Getting nervous up there — the cushion is just..."],
+  "leadNew": ["There's been a coup! On top with...", "Snatches the lead at..."],
+  "chase": ["Hunting the leader —", "Smelling blood —"],
+  "bottomDeeper": ["The basement runs deep — down to...", "Redecorating the basement at..."],
+  "bottomClimb": ["Signs of life at the bottom! Up to...", "The basement is stirring — up to..."],
+  "bigRound": ["Shows off with...", "Piles on a rude..."],
+  "nosedive": ["Face-plants — coughing up...", "Generously donates..."],
+  "tiedAt": ["Locked together at...", "Sharing a trophy shelf at..."],
+  "mover": ["Making a move — up...", "On the charge, jumping..."],
+  "winnerBy": ["Wins going away — by...", "Laps the field by..."],
+  "leadStatic": ["Getting comfortable up there — somebody do something!", "Still king of this hill!"],
+  "bottomStatic": ["Still keeping the basement warm!", "The basement lease got renewed!"],
+  "earlyGame": ["An early lead means NOTHING, folks!", "Save the celebration — it's still early!"],
+  "lateGame": ["Crunch time, people — the math is getting REAL!", "Late game! Time to panic accordingly!"],
+ },
+ 3: {  # Spicy — adults only
+  "leaderTotal": ["Hogging first place with a damn...", "Lording over this table with..."],
+  "leadGrew": ["Piling on! The gap is now a damn...", "Showing NO mercy — the lead is up to..."],
+  "leadShrank": ["Sweating BULLETS — the lead is down to a lousy...", "One bad round from disaster — just..."],
+  "leadNew": ["Steals the damn throne with...", "Kicks the door in and takes the lead with..."],
+  "chase": ["Coming for the crown —", "About to ruin somebody's night —"],
+  "bottomDeeper": ["Digging toward the earth's core at...", "Dead-ass last at..."],
+  "bottomClimb": ["The dead have RISEN — up to...", "Clawing out of hell, up to..."],
+  "bigRound": ["Goes NUCLEAR for...", "Smashes the table for..."],
+  "nosedive": ["Absolutely EATS it — down...", "Flushes..."],
+  "tiedAt": ["In a damn stalemate at...", "Neck and neck at..."],
+  "mover": ["On a heater — up...", "Storming the standings, up..."],
+  "winnerBy": ["WRECKS the field by...", "Wins by a disgusting..."],
+  "leadStatic": ["STILL on top — living there rent-free!", "Parked on the damn throne like they own it!"],
+  "bottomStatic": ["Still dead last — it's a lifestyle now!", "The basement has a damn nameplate now!"],
+  "earlyGame": ["Nobody crown anybody — it's damn EARLY!", "Early lead? Big deal — PROVE it!"],
+  "lateGame": ["It's late, and the knives are OUT!", "Panic o'clock, people — the runway is damn short!"],
+ },
+}
+
+def num_slug(n):
+    return f"m{-n}" if n < 0 else str(n)
+
 def jobs_for_voice():
     jobs = []  # (filename, spoken text) — generation order = priority order
     for slug, spoken in FAMILY:
@@ -226,6 +326,18 @@ def jobs_for_voice():
         for group, variants in groups.items():
             for i, line in enumerate(variants):
                 jobs.append((f"seg_{style}_{group}_{i}.mp3", line))
+    for n in NUM_RANGE:
+        jobs.append((f"num_{num_slug(n)}.mp3", f"{caster(n)}!"))
+    for n in BACK_RANGE:
+        jobs.append((f"back_{n}.mp3", f"{caster(n)} back!"))
+    for n in ONTOP_RANGE:
+        jobs.append((f"ontop_{n}.mp3", f"{WORDS[n]} straight rounds on top!"))
+    for n in BASEMENT_RANGE:
+        jobs.append((f"basement_{n}.mp3", f"In the basement since round {WORDS[n].lower()}!"))
+    for tier, kinds in LEADINS.items():
+        for kind, variants in kinds.items():
+            for i, line in enumerate(variants):
+                jobs.append((f"leadin_{tier}_{kind}_{i}.mp3", line))
     for slug, spoken in COMMON:
         jobs.append((f"name_{slug}.mp3", f"{spoken}!"))
     return jobs
@@ -234,7 +346,10 @@ def main():
     manifest = {"voices": list(VOICES), "styles": {str(s): {k: len(v) for k, v in kinds.items()} for s, kinds in TAILS.items()},
                 "names": [s for s, _ in FAMILY + COMMON],
                 "aliases": {"nicky": "nikki", "may": "mae", "cammy": "cami", "cammie": "cami", "nanna": "nana", "jeffrey": "jeffery"},
-                "inarow": [2, 20], "perfect": [3, 20], "points": [40, 220], "zeros": [3, 10]}
+                "inarow": [2, 20], "perfect": [3, 20], "points": [40, 220], "zeros": [3, 10],
+                "num": [NUM_RANGE[0], NUM_RANGE[-1]], "back": [BACK_RANGE[0], BACK_RANGE[-1]],
+                "ontop": [ONTOP_RANGE[0], ONTOP_RANGE[-1]], "basement": [BASEMENT_RANGE[0], BASEMENT_RANGE[-1]],
+                "leadins": {str(t): {k: len(v) for k, v in kinds.items()} for t, kinds in LEADINS.items()}}
     os.makedirs(OUT_ROOT, exist_ok=True)
     with open(os.path.join(OUT_ROOT, "manifest.json"), "w") as f:
         json.dump(manifest, f, indent=1)
