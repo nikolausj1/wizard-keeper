@@ -430,7 +430,12 @@ public enum GameInsights {
         let ranked = insights(players: players, maxCount: players.count + 6, pastTense: false)
             .sorted { ($0.priority, $0.text) < ($1.priority, $1.text) }
         let candidates = ranked.filter { juiceKinds.contains($0.kind) }
-        let picked = candidates.first { $0.playerName != slot1.playerName } ?? candidates.first
+        // No player is mentioned twice in one broadcast (game-night
+        // feedback): the juice must belong to someone other than slot 1's
+        // player — nameless table-wide kinds (everybodyHit/carnage) always
+        // qualify. If the only juice is about the leader, the slot is
+        // dropped rather than repeating the name.
+        let picked = candidates.first { $0.playerName != slot1.playerName || $0.playerName.isEmpty }
         var slot2: Insight?
         if let picked {
             switch picked.kind {
@@ -451,27 +456,27 @@ public enum GameInsights {
         }
         if let slot2 { slots.append(slot2) }
 
-        // MARK: Slot 3 — rotates by round number
-        var slot3: Insight?
+        // MARK: Slot 3 — rotates by round number.
+        // Same no-repeat rule: slot 3 must not mention anyone slots 1–2
+        // already did (tiedAt checks BOTH its names). The round's preferred
+        // story goes first, the other two rotate in as fallbacks; if every
+        // option would repeat a name, the slot is dropped — a shorter
+        // broadcast beats a repetitive one.
+        let usedNames = Set([slot1.playerName, slot2?.playerName ?? ""]).subtracting([""])
+        func mentionsUsedPlayer(_ insight: Insight) -> Bool {
+            usedNames.contains(insight.playerName)
+                || (!insight.playerName2.isEmpty && usedNames.contains(insight.playerName2))
+        }
+        let slot3Options: [Insight?]
+        let bottom = { bottomStory(players: players, totalsR: totalsR, roundNumber: R) }
+        let race = { chaseOrTieStory(players: players, totalsR: totalsR, bestR: bestR) }
+        let mv = { moverStory(players: players, totalsR: totalsR, roundNumber: R) }
         switch R % 3 {
-        case 0:
-            slot3 = bottomStory(players: players, totalsR: totalsR, roundNumber: R)
-        case 1:
-            slot3 = chaseOrTieStory(players: players, totalsR: totalsR, bestR: bestR)
-        default:
-            if let mv = moverStory(players: players, totalsR: totalsR, roundNumber: R),
-               mv.playerName != slot1.playerName, mv.playerName != (slot2?.playerName ?? "") {
-                slot3 = mv
-            } else {
-                slot3 = chaseOrTieStory(players: players, totalsR: totalsR, bestR: bestR)
-            }
+        case 0: slot3Options = [bottom(), race(), mv()]
+        case 1: slot3Options = [race(), bottom(), mv()]
+        default: slot3Options = [mv(), race(), bottom()]
         }
-        // Guard against a slot 3 that's a full duplicate of slot 1 (same
-        // kind AND same player) — not reachable given the kind sets are
-        // disjoint between slot 1 and slot 3 today, but cheap to guard.
-        if let s3 = slot3, s3.kind == slot1.kind, s3.playerName == slot1.playerName {
-            slot3 = nil
-        }
+        let slot3 = slot3Options.compactMap { $0 }.first { !mentionsUsedPlayer($0) }
         if let slot3 { slots.append(slot3) }
 
         // MARK: Garnish — nameless game-phase flavor, appended last

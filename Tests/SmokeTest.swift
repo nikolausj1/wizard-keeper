@@ -320,6 +320,7 @@ check("broadcast: bottomClimb score is the bottom's new total",
 
 // Tightest-race rotation (R % 3 == 1): an exact tie at round 1.
 let bcTied = GameInsights.broadcastInsights(players: [
+    Line(name: "C", entries: [(2, 2)]),   // 40 — leads, so the tie below is collision-free
     Line(name: "A", entries: [(1, 1)]),   // 30
     Line(name: "B", entries: [(1, 1)]),   // 30
 ], totalRounds: 20)
@@ -327,12 +328,15 @@ check("broadcast: tiedAt carries both names and the shared total",
       bcTied.contains { $0.kind == .tiedAt && $0.playerName == "A" && $0.playerName2 == "B" && $0.score == 30 }, true)
 
 // Chase margin + lateGame garnish together, round 4 of a 5-round game.
+// B is 2nd with no streak of their own (hit-miss-hit-hit), so the juice
+// goes to C's cold streak and the chase call survives the no-repeat rule.
 let bcChaseAndLate = GameInsights.broadcastInsights(players: [
-    Line(name: "A", entries: [(0, 0), (0, 0), (0, 0), (0, 0)]),   // 20 → 40 → 60 → 80
-    Line(name: "B", entries: [(1, 1), (1, 1), (1, 1), (1, 1)]),   // 30 → 60 → 90 → 120
+    Line(name: "A", entries: [(2, 2), (2, 2), (2, 2), (2, 2)]),   // 40 → 80 → 120 → 160 — leads
+    Line(name: "B", entries: [(1, 1), (1, 0), (1, 1), (1, 1)]),   // 30 → 20 → 50 → 80 — 2nd, quiet
+    Line(name: "C", entries: [(0, 1), (0, 1), (0, 1), (0, 1)]),   // −10 each — cold streak
 ], totalRounds: 5)
 check("broadcast: chase margin is the gap to the leader",
-      bcChaseAndLate.contains { $0.kind == .chase && $0.playerName == "A" && $0.score == 40 }, true)
+      bcChaseAndLate.contains { $0.kind == .chase && $0.playerName == "B" && $0.score == 80 }, true)
 check("broadcast: lateGame garnish fires near the end of the game",
       bcChaseAndLate.contains { $0.kind == .lateGame && $0.value == 1 }, true)
 
@@ -355,6 +359,7 @@ check("broadcast: nosedive score is points lost as a positive number",
 
 // Slot 2 enrichment: bigRound score is the round's point gain.
 let bcBigRound = GameInsights.broadcastInsights(players: [
+    Line(name: "L", entries: [(2, 2), (2, 2), (2, 2)]),   // 40 → 80 → 120 — leads, keeps K juice-eligible
     Line(name: "K", entries: [(0, 1), (4, 4), (1, 1)]),   // −10 → 50 → 80 (+60 round 2)
     Line(name: "B", entries: [(0, 0), (0, 1), (0, 0)]),   // 20 → 10 → 30
 ], totalRounds: 20)
@@ -380,6 +385,38 @@ let bcBasement = GameInsights.broadcastInsights(players: [
 ], totalRounds: 20)
 check("broadcast: even-round basement tenure yields basementSince from round 1",
       bcBasement.contains { $0.kind == .basementSince && $0.playerName == "N" && $0.value == 1 }, true)
+
+// No player mentioned twice: 2nd place (J) is also the juice (perfect), so
+// the R%3==1 race slot would repeat J — it must fall back to the bottom
+// story (N), and every named mention across the slots must be unique.
+let bcNoRepeat = GameInsights.broadcastInsights(players: [
+    Line(name: "K", entries: [(2, 2), (2, 2), (2, 2), (2, 2)]),   // 40/80/120/160 — leads
+    Line(name: "J", entries: [(1, 1), (1, 1), (1, 1), (1, 1)]),   // 30/60/90/120 — 2nd, perfect
+    Line(name: "N", entries: [(0, 1), (0, 1), (0, 1), (0, 1)]),   // −10 each — bottom
+], totalRounds: 20)
+var bcMentions: [String] = []
+for s in bcNoRepeat {
+    if !s.playerName.isEmpty { bcMentions.append(s.playerName) }
+    if !s.playerName2.isEmpty { bcMentions.append(s.playerName2) }
+}
+check("broadcast: no player mentioned twice across slots",
+      Set(bcMentions).count == bcMentions.count, true)
+check("broadcast: collided race slot falls back to the bottom story",
+      bcNoRepeat.contains { $0.playerName == "N" }, true)
+
+// Juice dropped rather than repeating slot 1's player: with 2 players the
+// leader (K) owns the only juicy trend (perfect), so slot 2 is omitted and
+// slot 3's chase covers the other player.
+let bcJuiceDrop = GameInsights.broadcastInsights(players: [
+    Line(name: "K", entries: [(1, 1), (1, 1)]),   // 30/60 — leads, perfect
+    Line(name: "B", entries: [(0, 1), (0, 0)]),   // −10/10 — mixed, nothing juicy
+], totalRounds: 20)
+check("broadcast: juice omitted when it would repeat the leader",
+      bcJuiceDrop.contains { $0.kind == .perfect }, false)
+var bcJDMentions: [String] = []
+for s in bcJuiceDrop where !s.playerName.isEmpty { bcJDMentions.append(s.playerName) }
+check("broadcast: juice-drop case still mentions each player at most once",
+      Set(bcJDMentions).count == bcJDMentions.count, true)
 
 // MARK: Result
 if failures == 0 {
