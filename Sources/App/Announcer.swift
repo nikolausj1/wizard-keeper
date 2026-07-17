@@ -67,13 +67,13 @@ extension AppSettings {
 
     var announcerStyleSelection: AnnouncerStyle {
         get {
-            // Migration from the original five-tier storage: 1 Classic,
-            // 2 Spicy / 3 Scorched → Fun, 4 Vicious / 5 Unhinged → Spicy.
-            switch announcerStyle {
-            case 1: return .classic
-            case 2, 3: return .fun
-            default: return announcerStyle >= 4 ? .spicy : .classic
-            }
+            // Stored raw = AnnouncerStyle.rawValue (1 Classic, 2 Fun,
+            // 3 Spicy). Only 4 Vicious / 5 Unhinged remain from the
+            // original five-tier storage → Spicy. The old "3 Scorched →
+            // Fun" migration is gone: it collided with the new Spicy
+            // rawValue 3, snapping every Spicy pick back to Fun (the
+            // "can't choose anything but Fun" bug).
+            AnnouncerStyle(rawValue: announcerStyle) ?? (announcerStyle >= 4 ? .spicy : .classic)
         }
         set { announcerStyle = newValue.rawValue }
     }

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 /// App root: a single `NavigationStack` rooted at `HomeView`, tinted with
 /// the one accent color app-wide — felt green, per the "Warm Table" design
@@ -45,6 +46,11 @@ struct RootView: View {
     // theme once RootView itself re-evaluates its body.
     @ObservedObject private var themeManager = ThemeManager.shared
 
+    // Only read by `fireRecapDumpIfNeeded` below (the `-recapDump`
+    // sim-verify hook); every other screen in this file reaches its data
+    // through `DemoGameHost`/etc.'s own `@Environment(\.modelContext)`.
+    @Environment(\.modelContext) private var modelContext
+
     private var preferredColorScheme: ColorScheme? {
         switch settingsRecords.first?.appearance ?? .system {
         case .system: return nil
@@ -68,6 +74,7 @@ struct RootView: View {
         .toolbarColorScheme(themeManager.theme.palette.navBarScheme, for: .navigationBar)
         .preferredColorScheme(preferredColorScheme)
         .onAppear(perform: fireAnnouncerTestIfNeeded)
+        .onAppear(perform: fireRecapDumpIfNeeded)
         .onAppear(perform: loadPersistedTheme)
         .onChange(of: settingsRecords.first?.appTheme) { _, _ in loadPersistedTheme() }
     }
@@ -128,6 +135,27 @@ struct RootView: View {
             ]
             let segments = AnnouncerPlayer.shared.announceRoundUpdate(insights: insights, voice: .charlie, style: .fun)
             print("announcer test fired, segments: \(segments)")
+        }
+    }
+
+    /// Sim-verify hook for the recap-card chart: `-recapDump` (pair with
+    /// `-demoFinal`, which seeds and completes the 15-round demo game)
+    /// renders that game's recap card via `RecapCardRenderer
+    /// .renderRecapImage` one second after launch and writes it as a PNG
+    /// to the app container's Documents/recap-dump.png — files are the
+    /// channel here, so nothing is printed. Lets the "Score Over Time"
+    /// chart be inspected from a `simctl`-launched build without tapping
+    /// through to Final Results.
+    private func fireRecapDumpIfNeeded() {
+        guard ProcessInfo.processInfo.arguments.contains("-recapDump") else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            guard
+                let game = try? modelContext.fetch(FetchDescriptor<Game>()).first,
+                let image = RecapCardRenderer.renderRecapImage(for: game),
+                let pngData = image.pngData(),
+                let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            else { return }
+            try? pngData.write(to: documentsURL.appendingPathComponent("recap-dump.png"))
         }
     }
 
