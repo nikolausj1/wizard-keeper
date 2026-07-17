@@ -7,15 +7,16 @@ import SwiftData
 /// ElevenLabs voice IDs and generated clip naming convention
 /// (`name_<slug>.mp3`, `inarow_<n>.mp3`, `tail_<style>_<kind>_<i>.mp3`, ...).
 enum AnnouncerVoice: String, CaseIterable, Identifiable {
+    // Jessica retired 2026-07-12 (Justin: drop the female voice); her clip
+    // pack was removed from the bundle. Stored "jessica" settings fall back
+    // to Charlie via the `?? .charlie` in `announcerVoiceSelection`.
     case charlie
-    case jessica
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
         case .charlie: return "Charlie"
-        case .jessica: return "Jessica"
         }
     }
 }
@@ -624,10 +625,17 @@ final class AnnouncerPlayer: ObservableObject {
     /// `num_<n>` / `num_m<n>` — bare terminal numbers (leader totals, gaps,
     /// point deltas). `score` must be a multiple of 10 (Wizard scores
     /// always are); clamps into the generated −100...300 range.
-    private func numClipURL(score: Int, voice: String) -> URL? {
+    private func numClipURL(score: Int, voice: String, emphasized: Bool = false) -> URL? {
         guard score % 10 == 0 else { return nil }
         let clamped = max(-100, min(300, score))
-        return resolvedURL(basename: "num_\(numSlug(clamped))", voice: voice)
+        // Shouted `numx_` set only for big moments (a mix, per Justin —
+        // natural delivery is the default); fall back across sets so a
+        // missing clip never silences the number.
+        let prefixes = emphasized ? ["numx_", "num_"] : ["num_", "numx_"]
+        for prefix in prefixes {
+            if let u = resolvedURL(basename: "\(prefix)\(numSlug(clamped))", voice: voice) { return u }
+        }
+        return nil
     }
 
     private func numSlug(_ n: Int) -> String {
@@ -639,7 +647,12 @@ final class AnnouncerPlayer: ObservableObject {
     private func backClipURL(score: Int, voice: String) -> URL? {
         guard score % 10 == 0 else { return nil }
         let clamped = max(10, min(150, score))
-        return resolvedURL(basename: "back_\(clamped)", voice: voice)
+        // Chase margins always use the natural read — the hunt is tension,
+        // not a celebration (`backx_` stays reserved for future use).
+        for prefix in ["back_", "backx_"] {
+            if let u = resolvedURL(basename: "\(prefix)\(clamped)", voice: voice) { return u }
+        }
+        return nil
     }
 
     /// `ontop_<n>` — consecutive rounds leading (`onTopStreak`). Clamps
@@ -714,9 +727,21 @@ final class AnnouncerPlayer: ObservableObject {
         }
 
         let leadinKind = insight.kind == .leadChange ? "leadNew" : insight.kind.rawValue
-        if let score = insight.score, let numURL = numClipURL(score: score, voice: voice) {
+        // The shouted variant is seasoning, not the meal: only the genuine
+        // fist-pump moments get the yell.
+        let emphasized = [.leadChange, .bigRound, .winnerBy].contains(insight.kind)
+        if let score = insight.score, let numURL = numClipURL(score: score, voice: voice, emphasized: emphasized) {
             attempted += 1
-            if let u = leadinURL(kindName: leadinKind, style: style, voice: voice) { urls.append(u) }
+            if let u = leadinURL(kindName: leadinKind, style: style, voice: voice) {
+                urls.append(u)
+                // The engineered DRAMATIC PAUSE: lead-in tails are trimmed
+                // of ragged silence at generation time, so this fixed
+                // 400ms beat is the entire gap before the shouted number
+                // ("Stretching the lead to" … beat … "ONE-EIGHTY!").
+                // Only inserted when the lead-in actually resolved — the
+                // number should never play after dead air alone.
+                if let pause = resolvedURL(basename: "silence_400", voice: voice) { urls.append(pause) }
+            }
             attempted += 1
             urls.append(numURL)
         } else {
@@ -754,10 +779,21 @@ final class AnnouncerPlayer: ObservableObject {
         if let u = nameURL(insight.playerName, voice: voice) { urls.append(u) }
 
         attempted += 1
-        if let u = leadinURL(kindName: "chase", style: style, voice: voice) { urls.append(u) }
+        var chaseLeadinResolved = false
+        if let u = leadinURL(kindName: "chase", style: style, voice: voice) {
+            urls.append(u)
+            chaseLeadinResolved = true
+        }
 
         attempted += 1
-        if let score = insight.score, let u = backClipURL(score: score, voice: voice) { urls.append(u) }
+        if let score = insight.score, let u = backClipURL(score: score, voice: voice) {
+            // Same engineered dramatic pause as `leadinNumSegments` —
+            // "Second place" … beat … "THIRTY BACK!".
+            if chaseLeadinResolved, let pause = resolvedURL(basename: "silence_400", voice: voice) {
+                urls.append(pause)
+            }
+            urls.append(u)
+        }
 
         if attachTail {
             attempted += 1

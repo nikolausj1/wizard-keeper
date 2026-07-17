@@ -43,7 +43,7 @@ missing_audio = []
 
 def audio_exists(clip_id):
     ok = True
-    for voice in ("charlie", "jessica"):
+    for voice in ("charlie",):
         p = os.path.join(ROOT, "Sources", "App", "Resources", "Announcer", voice, clip_id + ".mp3")
         if not os.path.exists(p):
             missing_audio.append(f"{voice}/{clip_id}")
@@ -95,8 +95,7 @@ def row(clip_id, text, with_suggestion=True, note=""):
     note_html = f'<span class="note">{esc(note)}</span>' if note else ""
     return f'''<div class="line" id="{clip_id}">
   <div class="line-head">
-    <button class="play" data-clip="{clip_id}" data-voice="charlie" title="Play — Charlie">&#9654; C</button>
-    <button class="play" data-clip="{clip_id}" data-voice="jessica" title="Play — Jessica">&#9654; J</button>
+    <button class="play" data-clip="{clip_id}" data-voice="charlie" title="Play — Charlie">&#9654;</button>
     <span class="text">&ldquo;{esc(text)}&rdquo;</span>{note_html}
     <span class="clipid">{clip_id}</span>
   </div>
@@ -250,7 +249,7 @@ page = f"""<!DOCTYPE html>
 </header>
 <main>
 <div class="howto">
-  <b>How to use:</b> tap <b>&#9654; C</b> / <b>&#9654; J</b> to hear each line in Charlie / Jessica.
+  <b>How to use:</b> tap <b>&#9654;</b> to hear each line (Charlie — Jessica retired).
   Leave notes in any box &mdash; they auto-save in this browser. When done, hit
   <b>Copy feedback for Claude</b> and paste the result into chat; I&rsquo;ll revise the lines and re-record.
   Shorthand welcome: <code>cut</code>, <code>keep</code>, <code>too wordy</code>, or a full rewrite.

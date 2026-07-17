@@ -140,13 +140,8 @@ private struct SettingsForm: View {
             }
 
             Section {
-                Picker("Voice", selection: $settings.announcerVoiceSelection) {
-                    ForEach(AnnouncerVoice.allCases) { voice in
-                        Text(voice.displayName).tag(voice)
-                    }
-                }
-                .onChange(of: settings.announcerVoiceSelection) { _, _ in modelContext.saveNow() }
-                .listRowBackground(Color.cardSurface)
+                // Voice picker removed 2026-07-12: Jessica retired (single
+                // voice = no choice to offer). Charlie is the announcer.
                 Picker("Style", selection: $settings.announcerStyleSelection) {
                     ForEach(AnnouncerStyle.allCases) { style in
                         Text(style.displayName).tag(style)

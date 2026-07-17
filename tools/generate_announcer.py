@@ -23,7 +23,9 @@ if not API_KEY:
     sys.exit("ELEVENLABS_API_KEY not set — source ~/.secrets/api-keys.env")
 
 OUT_ROOT = os.path.join(os.path.dirname(__file__), "..", "Sources", "App", "Resources", "Announcer")
-VOICES = {"charlie": "IKne3meq5aSn9XLyUdCD", "jessica": "cgSgspJ2msm6clMCkdW9"}
+# Jessica ("cgSgspJ2msm6clMCkdW9") retired 2026-07-12 per Justin — single
+# male voice pack. Keep the ID here if she ever gets a comeback tour.
+VOICES = {"charlie": "IKne3meq5aSn9XLyUdCD"}
 MODEL = "eleven_multilingual_v2"
 
 # --- Names ------------------------------------------------------------
@@ -326,10 +328,17 @@ def jobs_for_voice():
         for group, variants in groups.items():
             for i, line in enumerate(variants):
                 jobs.append((f"seg_{style}_{group}_{i}.mp3", line))
+    # Numbers land after the lead-in's dramatic pause. Default delivery is
+    # NATURAL ("One-eighty!"); the all-caps `numx_`/`backx_` variants are a
+    # SHOUTED emphasis set the announcer reserves for big moments (lead
+    # change, monster round, winning margin) — Justin wants a mix, not a
+    # constant yell.
     for n in NUM_RANGE:
         jobs.append((f"num_{num_slug(n)}.mp3", f"{caster(n)}!"))
+        jobs.append((f"numx_{num_slug(n)}.mp3", f"{caster(n).upper()}!"))
     for n in BACK_RANGE:
         jobs.append((f"back_{n}.mp3", f"{caster(n)} back!"))
+        jobs.append((f"backx_{n}.mp3", f"{caster(n).upper()} BACK!"))
     for n in ONTOP_RANGE:
         jobs.append((f"ontop_{n}.mp3", f"{WORDS[n]} straight rounds on top!"))
     for n in BASEMENT_RANGE:
