@@ -39,10 +39,17 @@ enum DemoData {
     }
 
     static func seedFinal(in context: ModelContext) {
-        seed(throughRound: 15, completeGame: true, in: context)
+        // No explicit `throughRound`: seeds every round of the compiled-in
+        // variant's schedule (Wizard 15 @ 4p; Oh Hell's up-and-down table
+        // is longer — 25 @ 4p), so the completed game always reflects a
+        // genuine full game under whichever app this runs in.
+        seed(completeGame: true, in: context)
     }
 
-    private static func seed(throughRound lastRound: Int, completeGame: Bool, in context: ModelContext) {
+    /// `lastRound` defaults to the compiled-in variant's full schedule
+    /// length for the seated table (Wizard 15 @ 4p, Oh Hell 25 @ 4p) —
+    /// pass an explicit value to stop partway (`seedMidGame`'s round 7).
+    private static func seed(throughRound lastRound: Int? = nil, completeGame: Bool, in context: ModelContext) {
         let players = demoPlayerNames.enumerated().map { index, name in
             Player(name: name, colorId: index)
         }
@@ -51,10 +58,16 @@ enum DemoData {
         let participants = players.map {
             Participant(playerId: $0.id, displayNameSnapshot: $0.name, colorIdSnapshot: $0.colorId)
         }
-        guard let totalRounds = WizardEngine.totalRounds(playerCount: participants.count) else {
+        // Schedule-driven, not `WizardEngine.totalRounds`, so this seeds
+        // correctly under either compiled-in variant — Oh Hell's up-AND-
+        // down table diverges from Wizard's round-number-equals-card-count
+        // schedule past the midpoint.
+        let schedule = AppGame.config.schedule(participants.count, true)
+        guard !schedule.isEmpty else {
             assertionFailure("demo player count must be 3–6")
             return
         }
+        let totalRounds = schedule.count
         let rulesSnapshot = RulesSnapshot(
             hookRuleEnabled: false,
             trickTotalCheckEnabled: true,
@@ -63,10 +76,12 @@ enum DemoData {
         let game = Game(participants: participants, totalRounds: totalRounds, rulesSnapshot: rulesSnapshot)
         context.insert(game)
 
-        for roundNumber in 1...lastRound {
-            let spec = roundSpec(for: roundNumber, playerCount: participants.count)
-            let range = WizardEngine.validRange(roundNumber: roundNumber)
-            assert(spec.tricks.reduce(0, +) == roundNumber, "demo round \(roundNumber) tricks must sum to \(roundNumber)")
+        let effectiveLastRound = lastRound ?? totalRounds
+        for roundNumber in 1...effectiveLastRound {
+            let cards = schedule[roundNumber - 1]
+            let spec = roundSpec(for: roundNumber, cards: cards, playerCount: participants.count)
+            let range = WizardEngine.validRange(roundNumber: cards)
+            assert(spec.tricks.reduce(0, +) == cards, "demo round \(roundNumber) tricks must sum to \(cards)")
             assert(spec.bids.allSatisfy { range.contains($0) }, "demo round \(roundNumber) has an out-of-range bid")
             assert(spec.tricks.allSatisfy { range.contains($0) }, "demo round \(roundNumber) has an out-of-range trick count")
 
@@ -81,9 +96,12 @@ enum DemoData {
             game.rounds.append(round)
         }
 
-        // The mockup-matching totals only hold at exactly round 7 — rounds
-        // 8+ keep scoring, so this check must not run for -demoFinal.
-        if lastRound == 7 {
+        // The mockup-matching totals are Wizard-scoring-specific (computed
+        // from the same bid/tricks data via 20+10×bid / miss penalties) and
+        // only hold at exactly round 7 under Wizard rules — skip for Oh
+        // Hell (different scoring formula, different totals from identical
+        // entries) and for -demoFinal (rounds 8+ keep scoring).
+        if AppGame.config.id == "wizard" && effectiveLastRound == 7 {
             let totals = participants.map { game.runningTotal(for: $0.playerId) }
             assert(totals[0] == 150, "Justin demo total mismatch: \(totals[0])")
             assert(totals[1] == 180, "Kelly demo total mismatch: \(totals[1])")
@@ -96,18 +114,22 @@ enum DemoData {
         }
     }
 
-    /// Rounds 1–7 use the hand-authored specs above. Rounds 8+ (only
-    /// reached by `-demoFinal`) rotate a single hitter through the seats so
-    /// every round's tricks still legally sum to its round number.
-    private static func roundSpec(for roundNumber: Int, playerCount: Int) -> RoundSpec {
+    /// Rounds 1–7 use the hand-authored specs above (their tricks already
+    /// sum to `cards`, since Oh Hell's up-slope matches Wizard's round-
+    /// number-equals-card-count schedule through round 13). Rounds 8+
+    /// (only reached by `-demoFinal`) rotate a single hitter through the
+    /// seats so every round's tricks legally sum to `cards` — the actual
+    /// count dealt this round, not the round number (they diverge on Oh
+    /// Hell's down-slope).
+    private static func roundSpec(for roundNumber: Int, cards: Int, playerCount: Int) -> RoundSpec {
         if roundNumber <= midGameRoundSpecs.count {
             return midGameRoundSpecs[roundNumber - 1]
         }
         var bids = [Int](repeating: 0, count: playerCount)
         var tricks = [Int](repeating: 0, count: playerCount)
         let hitter = (roundNumber - 1) % playerCount
-        bids[hitter] = roundNumber
-        tricks[hitter] = roundNumber
+        bids[hitter] = cards
+        tricks[hitter] = cards
         return RoundSpec(bids: bids, tricks: tricks)
     }
 
@@ -124,7 +146,9 @@ enum DemoData {
         let participants = players.map {
             Participant(playerId: $0.id, displayNameSnapshot: $0.name, colorIdSnapshot: $0.colorId)
         }
-        guard let totalRounds = WizardEngine.totalRounds(playerCount: participants.count) else {
+        // Schedule-driven, not `WizardEngine.totalRounds` — see `seed(...)`.
+        let schedule = AppGame.config.schedule(participants.count, true)
+        guard !schedule.isEmpty else {
             assertionFailure("demo player count must be 3–6")
             return
         }
@@ -133,7 +157,7 @@ enum DemoData {
             trickTotalCheckEnabled: true,
             dealerRotationEnabled: false
         )
-        let game = Game(participants: participants, totalRounds: totalRounds, rulesSnapshot: rulesSnapshot)
+        let game = Game(participants: participants, totalRounds: schedule.count, rulesSnapshot: rulesSnapshot)
         context.insert(game)
     }
 
@@ -216,20 +240,26 @@ enum DemoData {
         context.insert(game)
 
         for roundNumber in 1...roundCount {
+            // `roundCount` is only 3, so `cards` equals `roundNumber` under
+            // both variants' schedules (both start 1, 2, 3, ...) — using
+            // `game.cards(forRound:)` here anyway keeps this in step with
+            // `Round.isValidEntry`'s card-count invariant rather than
+            // round number.
+            let cards = game.cards(forRound: roundNumber)
             var bids = [Int](repeating: 0, count: participants.count)
             var tricks = [Int](repeating: 0, count: participants.count)
-            bids[hitterIndex] = roundNumber
-            tricks[hitterIndex] = roundNumber
+            bids[hitterIndex] = cards
+            tricks[hitterIndex] = cards
 
             // Fold a deliberate miss into round 2 for Kelly when she isn't
             // this game's hitter: she bids 1 but the hitter still takes
-            // every trick, so tricks still legally sum to the round number.
+            // every trick, so tricks still legally sum to the cards dealt.
             if foldInKellyMiss, roundNumber == 2, hitterIndex != kellySeatIndex {
                 bids[kellySeatIndex] = 1
             }
 
-            let range = WizardEngine.validRange(roundNumber: roundNumber)
-            assert(tricks.reduce(0, +) == roundNumber, "demo history round \(roundNumber) tricks must sum to \(roundNumber)")
+            let range = WizardEngine.validRange(roundNumber: cards)
+            assert(tricks.reduce(0, +) == cards, "demo history round \(roundNumber) tricks must sum to \(cards)")
             assert(bids.allSatisfy { range.contains($0) }, "demo history round \(roundNumber) has an out-of-range bid")
             assert(tricks.allSatisfy { range.contains($0) }, "demo history round \(roundNumber) has an out-of-range trick count")
 

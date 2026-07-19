@@ -232,7 +232,8 @@ struct ScorepadGridView: View {
 
     private var subtitleText: String {
         let n = game.currentRoundNumber
-        return "Round \(n) of \(game.totalRounds) · deal \(n) card\(n == 1 ? "" : "s") each"
+        let cards = game.cards(forRound: n)
+        return "Round \(n) of \(game.totalRounds) · deal \(cards) card\(cards == 1 ? "" : "s") each"
     }
 
     /// "Deal **N cards** to each player" — bold only on the card-count
@@ -240,7 +241,7 @@ struct ScorepadGridView: View {
     /// identical helper for the iPhone footer). When dealer rotation is
     /// on, appends " · <Name> deals".
     private var dealHelperText: Text {
-        let n = game.currentRoundNumber
+        let n = game.cards(forRound: game.currentRoundNumber)
         var text = Text("Deal ")
             + Text("\(n) card\(n == 1 ? "" : "s")").fontWeight(.bold)
             + Text(" to each player")

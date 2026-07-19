@@ -98,7 +98,7 @@ struct RecapCardView: View {
 
     private var header: some View {
         VStack(spacing: 6) {
-            Text("WIZARD KEEPER")
+            Text(AppGame.config.displayName.uppercased())
                 .font(.system(size: 11, weight: .bold))
                 .tracking(2)
                 .foregroundStyle(Color.feltGreen)
@@ -208,7 +208,7 @@ struct RecapCardView: View {
     }
 
     private var footer: some View {
-        Text("Scored with Wizard Keeper")
+        Text("Scored with \(AppGame.config.displayName)")
             .font(.system(size: 9, weight: .medium))
             .foregroundStyle(.secondary)
     }

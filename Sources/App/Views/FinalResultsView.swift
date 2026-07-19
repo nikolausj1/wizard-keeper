@@ -200,7 +200,7 @@ struct FinalResultsView: View {
                 .foregroundStyle(Color.brassGold)
                 .scaleEffect(didAppear ? 1 : 0.4)
                 .opacity(didAppear ? 1 : 0)
-            Text(winnerNames.isEmpty ? "Game Complete" : "\(winnerNames) Wins!")
+            Text(winnerNames.isEmpty ? "Game Complete" : "\(winnerNames) \(winnerNames.contains(" & ") ? "Win" : "Wins")!")
                 .font(.title.weight(.bold))
                 .multilineTextAlignment(.center)
                 // Sits on the page background — theme ink, not `.primary`,
@@ -311,12 +311,12 @@ struct FinalResultsView: View {
         // `game.totalRounds` can exceed the legal max for this roster if a
         // player joined mid-game (the cap only ever grows to accommodate a
         // bigger table, `totalRounds` itself isn't retroactively trimmed) —
-        // clamp to whatever `WizardEngine` allows for the carried-over
-        // participant count before seeding the rematch.
-        let clampedRounds = min(
-            game.totalRounds,
-            WizardEngine.totalRounds(playerCount: game.participants.count) ?? game.totalRounds
-        )
+        // clamp to whatever the compiled-in variant's schedule allows for
+        // the carried-over participant count (under the freshly-fetched
+        // rules) before seeding the rematch.
+        let schedule = AppGame.config.schedule(game.participants.count, freshRules.upAndDownSchedule)
+        let maxRounds = schedule.isEmpty ? game.totalRounds : schedule.count
+        let clampedRounds = min(game.totalRounds, maxRounds)
         let newGame = Game(
             participants: game.participants,
             totalRounds: clampedRounds,

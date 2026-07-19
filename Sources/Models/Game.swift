@@ -33,6 +33,35 @@ struct RulesSnapshot: Codable {
     var hookRuleEnabled: Bool
     var trickTotalCheckEnabled: Bool
     var dealerRotationEnabled: Bool
+
+    /// Oh Hell house option: a missed bid still scores 1 point per trick
+    /// taken (true) vs. zero on any miss (false). Ignored by Wizard's
+    /// scoring. Decoded with a default so rules snapshots stored before
+    /// this field existed keep loading.
+    var missScoresTricks: Bool = true
+
+    /// Oh Hell house option: up-AND-down schedule (1...max...1, true) vs.
+    /// up-only (false). Snapshotted so a Settings change never reshapes an
+    /// in-progress game's remaining rounds. Ignored by Wizard.
+    var upAndDownSchedule: Bool = true
+
+    init(hookRuleEnabled: Bool, trickTotalCheckEnabled: Bool, dealerRotationEnabled: Bool,
+         missScoresTricks: Bool = true, upAndDownSchedule: Bool = true) {
+        self.hookRuleEnabled = hookRuleEnabled
+        self.trickTotalCheckEnabled = trickTotalCheckEnabled
+        self.dealerRotationEnabled = dealerRotationEnabled
+        self.missScoresTricks = missScoresTricks
+        self.upAndDownSchedule = upAndDownSchedule
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        hookRuleEnabled = try c.decode(Bool.self, forKey: .hookRuleEnabled)
+        trickTotalCheckEnabled = try c.decode(Bool.self, forKey: .trickTotalCheckEnabled)
+        dealerRotationEnabled = try c.decode(Bool.self, forKey: .dealerRotationEnabled)
+        missScoresTricks = try c.decodeIfPresent(Bool.self, forKey: .missScoresTricks) ?? true
+        upAndDownSchedule = try c.decodeIfPresent(Bool.self, forKey: .upAndDownSchedule) ?? true
+    }
 }
 
 /// A single played (or in-progress) game of Wizard.
@@ -129,6 +158,19 @@ final class Game {
         self.winnerPlayerIds = winnerPlayerIds
         self.firstBidderSeat = firstBidderSeat
         self.bidOrderSeats = bidOrderSeats
+    }
+
+    /// Cards dealt in round `n` (1-based) under the compiled-in variant's
+    /// schedule. In Wizard this equals the round number; in Oh Hell the
+    /// schedule goes up AND down (1...max...1), so round number and card
+    /// count diverge on the down-slope — every "Deal N cards" display and
+    /// bid/trick cap must use THIS, never `roundNumber` directly. Falls
+    /// back to `n` if the schedule is shorter than the game (legacy games,
+    /// mid-game player changes).
+    func cards(forRound n: Int) -> Int {
+        let schedule = AppGame.config.schedule(participants.count, rulesSnapshot.upAndDownSchedule)
+        guard n >= 1, n <= schedule.count else { return n }
+        return schedule[n - 1]
     }
 
     /// Rounds sorted by `roundNumber`. SwiftData relationship arrays have

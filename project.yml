@@ -16,6 +16,8 @@ targets:
       - path: Sources
         excludes:
           - "App/Resources/Announcer/**"
+          - "ConfigOhHell/**"
+          - "App/InfoOhHell.plist"
       # Folder reference (blue folder), not an enumerated group: Xcode
       # copies whatever is in Sources/App/Resources/Announcer at build
       # time, preserving the charlie/jessica subdirectories. This means
@@ -33,6 +35,40 @@ targets:
       path: Sources/App/Info.plist
       properties:
         CFBundleDisplayName: Wizard Keeper
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  OhHellKeeper:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+        excludes:
+          - "App/Resources/Announcer/**"
+          - "ConfigWizard/**"
+          - "App/Info.plist"
+      # Same shared clip folder as WizardKeeper — one corpus, one
+      # generation script; a voice revision lands in BOTH apps.
+      - path: Sources/App/Resources/Announcer
+        type: folder
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.levelup.ohhellkeeper
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "0.1.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIconOhHell
+    info:
+      path: Sources/App/InfoOhHell.plist
+      properties:
+        CFBundleDisplayName: Oh Hell Keeper
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:

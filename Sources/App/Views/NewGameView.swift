@@ -17,12 +17,22 @@ struct NewGameView: View {
     @State private var createdGame: Game?
     @State private var navigateToGame = false
 
+    /// House option for Oh Hell's deal schedule (up-AND-down vs. up-only),
+    /// seeded from `AppSettings` in `applyDefaultsFromSettings()`. Wizard's
+    /// `schedule(_:_:)` ignores this param entirely, so it's a no-op there.
+    @State private var upAndDownSchedule = true
+
     private var selectedPlayers: [Player] {
         selectedPlayerIDs.compactMap { id in players.first { $0.id == id } }
     }
 
+    /// Full round count for the seated table, via the compiled-in variant's
+    /// `schedule(playerCount:upAndDown:)` — Wizard's 1...60÷players, or Oh
+    /// Hell's 1...max...1 up-and-down table. `nil` outside the legal player
+    /// range (schedule returns an empty array there).
     private var fullRoundCount: Int? {
-        WizardEngine.totalRounds(playerCount: selectedPlayerIDs.count)
+        let schedule = AppGame.config.schedule(selectedPlayerIDs.count, upAndDownSchedule)
+        return schedule.isEmpty ? nil : schedule.count
     }
 
     private var effectiveRoundCount: Int? {
@@ -183,6 +193,7 @@ struct NewGameView: View {
     /// `.task` runs once when this freshly pushed view first appears.
     private func applyDefaultsFromSettings() {
         guard let settings = try? AppSettings.fetchOrCreate(in: modelContext) else { return }
+        upAndDownSchedule = settings.upAndDownSchedule
         if !settings.useFullLength {
             quickGame = true
             quickRoundCount = settings.customRoundCount ?? 10

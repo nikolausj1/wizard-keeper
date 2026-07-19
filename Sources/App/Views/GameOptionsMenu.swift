@@ -34,11 +34,13 @@ struct GameOptionsMenu: View {
         max(completedRoundCount, game.currentRoundNumber)
     }
 
-    /// Upper bound: `WizardEngine`'s cap for the game's *current* seating,
-    /// which can be higher than `game.totalRounds` if a player has since
-    /// joined.
+    /// Upper bound: the compiled-in variant's schedule length for the
+    /// game's *current* seating (via `AppGame.config.schedule`, honoring
+    /// this game's frozen `upAndDownSchedule` rule), which can be higher
+    /// than `game.totalRounds` if a player has since joined.
     private var maxRoundCount: Int {
-        WizardEngine.totalRounds(playerCount: game.participants.count) ?? game.totalRounds
+        let schedule = AppGame.config.schedule(game.participants.count, game.rulesSnapshot.upAndDownSchedule)
+        return schedule.isEmpty ? game.totalRounds : schedule.count
     }
 
     /// Nothing to adjust once the floor has caught up to the ceiling (e.g.

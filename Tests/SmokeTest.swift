@@ -418,6 +418,27 @@ for s in bcJuiceDrop where !s.playerName.isEmpty { bcJDMentions.append(s.playerN
 check("broadcast: juice-drop case still mentions each player at most once",
       Set(bcJDMentions).count == bcJDMentions.count, true)
 
+// MARK: GameVariant — Oh Hell scoring (locked with Justin 2026-07-18)
+check("ohHell: bid 2 took 2 → 12", GameVariant.ohHellRoundScore(bid: 2, tricksTaken: 2, missScoresTricks: true), 12)
+check("ohHell: bid 0 took 0 → 10", GameVariant.ohHellRoundScore(bid: 0, tricksTaken: 0, missScoresTricks: true), 10)
+check("ohHell: bid 3 took 1, miss scores tricks → 1", GameVariant.ohHellRoundScore(bid: 3, tricksTaken: 1, missScoresTricks: true), 1)
+check("ohHell: bid 3 took 1, zero-on-miss → 0", GameVariant.ohHellRoundScore(bid: 3, tricksTaken: 1, missScoresTricks: false), 0)
+check("ohHell: bid 1 took 4, miss scores tricks → 4", GameVariant.ohHellRoundScore(bid: 1, tricksTaken: 4, missScoresTricks: true), 4)
+check("ohHell: bid 10 took 10 → 20", GameVariant.ohHellRoundScore(bid: 10, tricksTaken: 10, missScoresTricks: true), 20)
+
+// MARK: GameVariant — schedules
+check("ohHell schedule 4p: 25 rounds up-and-down", GameVariant.ohHell.schedule(4, true).count, 25)
+check("ohHell schedule 4p: peaks at 13", GameVariant.ohHell.schedule(4, true).max() ?? 0, 13)
+check("ohHell schedule 4p: starts and ends at 1",
+      [GameVariant.ohHell.schedule(4, true).first ?? 0, GameVariant.ohHell.schedule(4, true).last ?? 0], [1, 1])
+check("ohHell schedule 4p: round 14 deals 12 (down-slope)", GameVariant.ohHell.schedule(4, true)[13], 12)
+check("ohHell schedule 6p: peaks at 8, 15 rounds",
+      [GameVariant.ohHell.schedule(6, true).max() ?? 0, GameVariant.ohHell.schedule(6, true).count], [8, 15])
+check("wizard schedule 4p: 1...15 identity", GameVariant.wizard.schedule(4, true), Array(1...15))
+check("ohHell schedule 4p up-only: 13 rounds", GameVariant.ohHell.schedule(4, false).count, 13)
+check("wizard variant scoring matches engine",
+      GameVariant.wizard.roundScore(2, 2, false), WizardEngine.roundScore(bid: 2, tricksTaken: 2))
+
 // MARK: Result
 if failures == 0 {
     print("OK — all \(checks) checks passed")

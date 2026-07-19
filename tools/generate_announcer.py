@@ -48,7 +48,7 @@ COMMON = [(n, n.capitalize()) for n in [
     "kelly", "grandma", "grandpa", "mom", "dad",
 ]]
 
-WORDS = {2:"Two",3:"Three",4:"Four",5:"Five",6:"Six",7:"Seven",8:"Eight",9:"Nine",10:"Ten",
+WORDS = {1:"One",2:"Two",3:"Three",4:"Four",5:"Five",6:"Six",7:"Seven",8:"Eight",9:"Nine",10:"Ten",
          11:"Eleven",12:"Twelve",13:"Thirteen",14:"Fourteen",15:"Fifteen",
          16:"Sixteen",17:"Seventeen",18:"Eighteen",19:"Nineteen",20:"Twenty"}
 POINTS = {40:"Forty",50:"Fifty",60:"Sixty",70:"Seventy",80:"Eighty",90:"Ninety",100:"One hundred",
@@ -238,6 +238,45 @@ BACK_RANGE = list(range(10, 160, 10))
 ONTOP_RANGE = list(range(2, 11))
 BASEMENT_RANGE = list(range(2, 15))
 
+# --- Integer clip family (2026-07-19): Oh Hell scores move in 1s, not --
+# 10s, so the tens-only `caster()` family above can't cover them. Same
+# grammar (NAME! + lead-in + number burst / "<N> back!"), just a
+# ones-granularity number library alongside the existing tens one, in the
+# SAME shared clip folder (both apps bundle it; `GameVariant.
+# announcerUsesTensClips` picks which family Announcer.swift reads from).
+INT_TENS = {20: "Twenty", 30: "Thirty", 40: "Forty", 50: "Fifty", 60: "Sixty",
+            70: "Seventy", 80: "Eighty", 90: "Ninety"}
+
+def caster_int(n):
+    """Natural word spelling of an integer score (0...160), NOT tens-only:
+    0 'Zero'; 1-20 word names ('Seven', 'Thirteen'); 21-99 hyphenated
+    ('Twenty-three', 'Ninety-nine'); 100 'One hundred'; 101-109
+    'One-oh-<d>' ('One-oh-five'); 110-160 caster reads built by recursing
+    on the last two digits ('One-ten', 'One-eleven', 'One-twenty-three')."""
+    if n == 0:
+        return "Zero"
+    if n <= 20:
+        return WORDS[n]
+    if n < 100:
+        tens_digit = (n // 10) * 10
+        remainder = n % 10
+        if remainder == 0:
+            return INT_TENS[tens_digit]
+        return f"{INT_TENS[tens_digit]}-{WORDS[remainder].lower()}"
+    if n == 100:
+        return "One hundred"
+    if n <= 109:
+        return f"One-oh-{WORDS[n - 100].lower()}"
+    if n <= 160:
+        return f"One-{caster_int(n - 100).lower()}"
+    raise ValueError(f"caster_int out of range: {n}")
+
+# num1_<n>: bare terminal integer numbers, natural delivery (no shouted
+# emphasis set — Justin wants natural as the default for these).
+INT_RANGE = list(range(0, 161))
+# back1_<n>: "<N> back!" — integer margins behind the leader.
+BACK1_RANGE = list(range(1, 41))
+
 # Lead-ins keyed by LISTENER TIER (1 Classic, 2 Fun, 3 Spicy) — unlike
 # TAILS' five generation buckets, because these carry facts, not spice;
 # the tail garnish supplies the extra heat. Kinds ending "..." hand off
@@ -339,6 +378,12 @@ def jobs_for_voice():
     for n in BACK_RANGE:
         jobs.append((f"back_{n}.mp3", f"{caster(n)} back!"))
         jobs.append((f"backx_{n}.mp3", f"{caster(n).upper()} BACK!"))
+    # Integer family (Oh Hell, ones granularity) — natural delivery only,
+    # no shouted variant.
+    for n in INT_RANGE:
+        jobs.append((f"num1_{n}.mp3", f"{caster_int(n)}!"))
+    for n in BACK1_RANGE:
+        jobs.append((f"back1_{n}.mp3", f"{caster_int(n)} back!"))
     for n in ONTOP_RANGE:
         jobs.append((f"ontop_{n}.mp3", f"{WORDS[n]} straight rounds on top!"))
     for n in BASEMENT_RANGE:
@@ -357,6 +402,7 @@ def main():
                 "aliases": {"nicky": "nikki", "may": "mae", "cammy": "cami", "cammie": "cami", "nanna": "nana", "jeffrey": "jeffery"},
                 "inarow": [2, 20], "perfect": [3, 20], "points": [40, 220], "zeros": [3, 10],
                 "num": [NUM_RANGE[0], NUM_RANGE[-1]], "back": [BACK_RANGE[0], BACK_RANGE[-1]],
+                "num1": [INT_RANGE[0], INT_RANGE[-1]], "back1": [BACK1_RANGE[0], BACK1_RANGE[-1]],
                 "ontop": [ONTOP_RANGE[0], ONTOP_RANGE[-1]], "basement": [BASEMENT_RANGE[0], BASEMENT_RANGE[-1]],
                 "leadins": {str(t): {k: len(v) for k, v in kinds.items()} for t, kinds in LEADINS.items()}}
     os.makedirs(OUT_ROOT, exist_ok=True)

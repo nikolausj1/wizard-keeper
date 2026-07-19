@@ -19,7 +19,7 @@ struct HomeView: View {
             // ScreenHeader's espresso ink tracks the theme. Same pattern
             // as every other screen.
             Section {
-                ScreenHeader(eyebrow: nil, title: "Wizard Keeper")
+                ScreenHeader(eyebrow: nil, title: AppGame.config.displayName)
             }
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
@@ -39,7 +39,7 @@ struct HomeView: View {
                 }
             } else {
                 Section {
-                    Text("Ready to keep score for your next Wizard game?")
+                    Text("Ready to keep score for your next \(AppGame.config.displayName.replacingOccurrences(of: " Keeper", with: "")) game?")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 4)

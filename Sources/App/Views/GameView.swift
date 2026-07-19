@@ -245,7 +245,7 @@ struct GameView: View {
     /// secondary/semibold styling. When a dealer is known (inferred or
     /// toggle-driven), appends " · <Name> deals".
     private var dealHelperText: Text {
-        let n = game.currentRoundNumber
+        let n = game.cards(forRound: game.currentRoundNumber)
         var text = Text("Deal ")
             + Text("\(n) card\(n == 1 ? "" : "s")")
             .font(.system(size: dealHelperCountSize, weight: .heavy))

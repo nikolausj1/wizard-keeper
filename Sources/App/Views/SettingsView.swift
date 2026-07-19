@@ -79,6 +79,17 @@ private struct SettingsForm: View {
                     .listRowBackground(Color.cardSurface)
                 Toggle("Trick total check", isOn: $settings.trickTotalCheckEnabled)
                     .listRowBackground(Color.cardSurface)
+                // Oh Hell-only house rules — Wizard Keeper never shows
+                // these two rows, since `AppGame.config.id` is compiled in
+                // per target and never "ohHell" there.
+                if AppGame.config.id == "ohHell" {
+                    Toggle("Up-and-down deal", isOn: $settings.upAndDownSchedule)
+                        .onChange(of: settings.upAndDownSchedule) { _, _ in modelContext.saveNow() }
+                        .listRowBackground(Color.cardSurface)
+                    Toggle("Points on a miss", isOn: $settings.missScoresTricks)
+                        .onChange(of: settings.missScoresTricks) { _, _ in modelContext.saveNow() }
+                        .listRowBackground(Color.cardSurface)
+                }
             } header: {
                 Text("House Rules")
                     .foregroundStyle(Color.paperSecondary)
@@ -88,6 +99,12 @@ private struct SettingsForm: View {
                         .foregroundStyle(Color.paperSecondary)
                     Text("Warn when tricks entered don't match the cards dealt.")
                         .foregroundStyle(Color.paperSecondary)
+                    if AppGame.config.id == "ohHell" {
+                        Text("1 up to the max, then back down to 1.")
+                            .foregroundStyle(Color.paperSecondary)
+                        Text("A missed bid still scores 1 point per trick taken.")
+                            .foregroundStyle(Color.paperSecondary)
+                    }
                     Text("Rule changes apply to new games — games in progress keep the rules they started with.")
                         .foregroundStyle(Color.paperSecondary)
                 }
@@ -108,7 +125,9 @@ private struct SettingsForm: View {
                 Text("Game Length")
                     .foregroundStyle(Color.paperSecondary)
             } footer: {
-                Text("Full length deals 60 \u{00F7} players cards per game.")
+                Text(AppGame.config.id == "ohHell"
+     ? "Full length deals 1 card up to 52 \u{00F7} players, then back down to 1."
+     : "Full length deals 60 \u{00F7} players cards per game.")
                     .foregroundStyle(Color.paperSecondary)
             }
 

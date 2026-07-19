@@ -62,7 +62,7 @@ struct RoundEntryView: View {
             Button("Fix Bids", role: .cancel) {}
         } message: {
             if let round {
-                Text("House rule: total bids can't equal \(round.roundNumber). Someone has to be wrong.")
+                Text("House rule: total bids can't equal \(game.cards(forRound: round.roundNumber)). Someone has to be wrong.")
             }
         }
     }
@@ -123,7 +123,7 @@ struct RoundEntryView: View {
             let bids = round.entries.compactMap(\.bid)
             let allIn = bids.count == round.entries.count
             let total = bids.reduce(0, +)
-            if allIn && total == round.roundNumber {
+            if allIn && total == game.cards(forRound: round.roundNumber) {
                 showHookAlert = true
                 return
             }
@@ -175,7 +175,11 @@ private struct BiddingView: View {
     @ObservedObject private var themeManager = ThemeManager.shared
     let onConfirm: () -> Void
 
-    private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
+    /// Cards dealt THIS round — never `round.roundNumber` directly (the two
+    /// diverge on Oh Hell's down-slope schedule).
+    private var cards: Int { game.cards(forRound: round.roundNumber) }
+
+    private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: cards) }
 
     /// PRD C1: "Bids so far" is the SUM of entered bids — the informational
     /// signal for an over/under-booked round (never a warning, by rule).
@@ -253,7 +257,7 @@ private struct BiddingView: View {
     /// heavier treatment. Appends " · <dealer name> deals" once a dealer is
     /// known (inferred or toggle-driven).
     private var dealSubtitleText: Text {
-        let n = round.roundNumber
+        let n = cards
         var text = Text("Deal ")
             .font(.system(size: dealSubtitleBaseSize, weight: .semibold))
             .foregroundStyle(.secondary)
@@ -404,7 +408,7 @@ private struct BiddingView: View {
         Text("Bids: ")
             + heroNumber(bidTotal)
             + Text(" of ")
-            + heroNumber(round.roundNumber)
+            + heroNumber(cards)
             + Text(" tricks")
     }
 
@@ -442,7 +446,11 @@ private struct ResultsView: View {
     @ObservedObject private var themeManager = ThemeManager.shared
     let onConfirm: () -> Void
 
-    private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
+    /// Cards dealt THIS round — never `round.roundNumber` directly (the two
+    /// diverge on Oh Hell's down-slope schedule).
+    private var cards: Int { game.cards(forRound: round.roundNumber) }
+
+    private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: cards) }
 
     /// PRD C2: "Tricks entered: k of X" — k is the SUM of tricks taken and X
     /// the number of tricks that exist this round (= the round number).
@@ -465,7 +473,7 @@ private struct ResultsView: View {
             return ("Waiting on \(missing) player\(missing == 1 ? "" : "s")", true)
         }
         guard game.rulesSnapshot.trickTotalCheckEnabled else { return ("Confirm Round", false) }
-        let diff = trickTotal - round.roundNumber
+        let diff = trickTotal - cards
         if diff < 0 { return ("Enter \(-diff) More Trick\(-diff == 1 ? "" : "s")", true) }
         if diff > 0 { return ("\(diff) Too Many", true) }
         return ("Confirm Round", false)
@@ -524,7 +532,7 @@ private struct ResultsView: View {
     /// single compact line + nav-bar title; `BiddingView`'s equivalent
     /// header was never touched, so the two screens had drifted apart.
     private var tricksSubtitleText: Text {
-        let n = round.roundNumber
+        let n = cards
         var text = Text("Tricks must total ")
             .font(.system(size: tricksSubtitleBaseSize, weight: .semibold))
             .foregroundStyle(.secondary)
@@ -554,7 +562,7 @@ private struct ResultsView: View {
         let hasResult = entry.bid != nil && entry.tricksTaken != nil
         let bid = entry.bid ?? 0
         let tricks = entry.tricksTaken ?? 0
-        let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
+        let score = AppGame.config.roundScore(bid, tricks, game.rulesSnapshot.missScoresTricks)
         let hit = bid == tricks
         Text(ScoreFormat.delta(score))
             .font(.system(size: outcomeDeltaSize, weight: .bold))
@@ -681,7 +689,7 @@ private struct ResultsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
-                (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
+                (Text("Tricks entered: ") + Text("\(trickTotal) of \(cards)").fontWeight(.bold))
                     .font(.system(size: footerSize, weight: .semibold))
                     .foregroundStyle(Color.paperSecondary)
                 PrimaryActionButton(title: confirmState.label, isDisabled: confirmState.disabled, action: onConfirm)
@@ -715,7 +723,11 @@ private struct EditRoundView: View {
     @ObservedObject private var themeManager = ThemeManager.shared
     let onSave: () -> Void
 
-    private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: round.roundNumber) }
+    /// Cards dealt THIS round — never `round.roundNumber` directly (the two
+    /// diverge on Oh Hell's down-slope schedule).
+    private var cards: Int { game.cards(forRound: round.roundNumber) }
+
+    private var range: ClosedRange<Int> { WizardEngine.validRange(roundNumber: cards) }
 
     /// A complete round's entries always have non-nil bid/tricks, but the
     /// model type allows `nil` — treated defensively as 0 here.
@@ -733,7 +745,7 @@ private struct EditRoundView: View {
             return ("Waiting on \(missing) player\(missing == 1 ? "" : "s")", true)
         }
         guard game.rulesSnapshot.trickTotalCheckEnabled else { return ("Save Changes", false) }
-        let diff = trickTotal - round.roundNumber
+        let diff = trickTotal - cards
         if diff < 0 { return ("Enter \(-diff) More Trick\(-diff == 1 ? "" : "s")", true) }
         if diff > 0 { return ("\(diff) Too Many", true) }
         return ("Save Changes", false)
@@ -763,7 +775,7 @@ private struct EditRoundView: View {
                 ScreenHeader(
                     eyebrow: "Round \(round.roundNumber) of \(game.totalRounds)",
                     title: "Edit Round",
-                    subtitle: "Bids and tricks · deal \(round.roundNumber) card\(round.roundNumber == 1 ? "" : "s")"
+                    subtitle: "Bids and tricks · deal \(cards) card\(cards == 1 ? "" : "s")"
                 )
             }
             .listRowInsets(EdgeInsets())
@@ -793,7 +805,7 @@ private struct EditRoundView: View {
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
-                (Text("Tricks entered: ") + Text("\(trickTotal) of \(round.roundNumber)").fontWeight(.bold))
+                (Text("Tricks entered: ") + Text("\(trickTotal) of \(cards)").fontWeight(.bold))
                     .font(.system(size: footerSize, weight: .semibold))
                     .foregroundStyle(Color.paperSecondary)
                 PrimaryActionButton(title: saveState.label, isDisabled: saveState.disabled, action: onSave)
@@ -817,7 +829,7 @@ private struct EditRoundView: View {
         let bid = entry.bid ?? 0
         let tricks = entry.tricksTaken ?? 0
         let hit = bid == tricks
-        let score = WizardEngine.roundScore(bid: bid, tricksTaken: tricks)
+        let score = AppGame.config.roundScore(bid, tricks, game.rulesSnapshot.missScoresTricks)
 
         return VStack(alignment: .leading, spacing: 10) {
             // Dealer tag above the name (not inline beside it), matching

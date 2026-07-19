@@ -48,9 +48,13 @@ enum GameTrends {
             }
             return GameInsights.PlayerLine(name: participant.displayNameSnapshot, entries: entries)
         }
-        let broadcast = GameInsights.broadcastInsights(players: lines, totalRounds: game.totalRounds)
+        let broadcast = GameInsights.broadcastInsights(
+            players: lines,
+            totalRounds: game.totalRounds,
+            bigRoundThreshold: AppGame.config.bigRoundThreshold
+        )
         if !broadcast.isEmpty { return broadcast }
-        return GameInsights.insights(players: lines, maxCount: 3)
+        return GameInsights.insights(players: lines, maxCount: 3, bigRoundThreshold: AppGame.config.bigRoundThreshold)
     }
 
     /// Trends before round 1's first entry: not engine-derived (there's no

@@ -622,37 +622,56 @@ final class AnnouncerPlayer: ObservableObject {
         return nil
     }
 
-    /// `num_<n>` / `num_m<n>` — bare terminal numbers (leader totals, gaps,
-    /// point deltas). `score` must be a multiple of 10 (Wizard scores
-    /// always are); clamps into the generated −100...300 range.
+    /// `num_<n>` / `num_m<n>` (tens family, Wizard) or `num1_<n>` (integer
+    /// family, Oh Hell) — bare terminal numbers (leader totals, gaps, point
+    /// deltas). Family is picked by `AppGame.config.announcerUsesTensClips`:
+    /// tens mode requires `score` be a multiple of 10 (Wizard scores always
+    /// are) and clamps into the generated −100...300 range, alternating
+    /// between the natural `num_` and shouted `numx_` sets per
+    /// `emphasized`; integer mode has no shouted set (natural only —
+    /// `emphasized` is ignored, a wrong number is worse than no emphasis)
+    /// and clamps into 0...160 (Oh Hell never goes negative). Either way a
+    /// clip that isn't on disk yet just resolves to nil and gets skipped
+    /// upstream, same as any other missing clip.
     private func numClipURL(score: Int, voice: String, emphasized: Bool = false) -> URL? {
-        guard score % 10 == 0 else { return nil }
-        let clamped = max(-100, min(300, score))
-        // Shouted `numx_` set only for big moments (a mix, per Justin —
-        // natural delivery is the default); fall back across sets so a
-        // missing clip never silences the number.
-        let prefixes = emphasized ? ["numx_", "num_"] : ["num_", "numx_"]
-        for prefix in prefixes {
-            if let u = resolvedURL(basename: "\(prefix)\(numSlug(clamped))", voice: voice) { return u }
+        if AppGame.config.announcerUsesTensClips {
+            guard score % 10 == 0 else { return nil }
+            let clamped = max(-100, min(300, score))
+            // Shouted `numx_` set only for big moments (a mix, per Justin —
+            // natural delivery is the default); fall back across sets so a
+            // missing clip never silences the number.
+            let prefixes = emphasized ? ["numx_", "num_"] : ["num_", "numx_"]
+            for prefix in prefixes {
+                if let u = resolvedURL(basename: "\(prefix)\(numSlug(clamped))", voice: voice) { return u }
+            }
+            return nil
         }
-        return nil
+        let clamped = max(0, min(160, score))
+        return resolvedURL(basename: "num1_\(clamped)", voice: voice)
     }
 
     private func numSlug(_ n: Int) -> String {
         n < 0 ? "m\(-n)" : "\(n)"
     }
 
-    /// `back_<n>` — "<N> back!", the margin behind the leader (`chase`).
-    /// Clamps into the generated 10...150 range.
+    /// `back_<n>` (tens family, Wizard) or `back1_<n>` (integer family, Oh
+    /// Hell) — "<N> back!", the margin behind the leader (`chase`). Tens
+    /// mode clamps into the generated 10...150 range; integer mode clamps
+    /// into 1...40.
     private func backClipURL(score: Int, voice: String) -> URL? {
-        guard score % 10 == 0 else { return nil }
-        let clamped = max(10, min(150, score))
-        // Chase margins always use the natural read — the hunt is tension,
-        // not a celebration (`backx_` stays reserved for future use).
-        for prefix in ["back_", "backx_"] {
-            if let u = resolvedURL(basename: "\(prefix)\(clamped)", voice: voice) { return u }
+        if AppGame.config.announcerUsesTensClips {
+            guard score % 10 == 0 else { return nil }
+            let clamped = max(10, min(150, score))
+            // Chase margins always use the natural read — the hunt is
+            // tension, not a celebration (`backx_` stays reserved for
+            // future use).
+            for prefix in ["back_", "backx_"] {
+                if let u = resolvedURL(basename: "\(prefix)\(clamped)", voice: voice) { return u }
+            }
+            return nil
         }
-        return nil
+        let clamped = max(1, min(40, score))
+        return resolvedURL(basename: "back1_\(clamped)", voice: voice)
     }
 
     /// `ontop_<n>` — consecutive rounds leading (`onTopStreak`). Clamps

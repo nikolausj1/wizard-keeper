@@ -28,8 +28,9 @@ final class AppSettings {
     var dealerRotationEnabled: Bool
 
     /// When `true`, new games use the full round count for the seated
-    /// player count, via `WizardEngine.totalRounds(playerCount:)`. When
-    /// `false`, `customRoundCount` supplies the round count instead.
+    /// player count, via the compiled-in variant's
+    /// `AppGame.config.schedule(playerCount:upAndDown:)`. When `false`,
+    /// `customRoundCount` supplies the round count instead.
     var useFullLength: Bool
 
     /// The round count to use for new games when `useFullLength == false`.
@@ -69,6 +70,18 @@ final class AppSettings {
     /// unchanged.
     var appTheme: Int = 1
 
+    /// Default for the Oh Hell house option: a missed bid still scores 1
+    /// point per trick taken (true) vs. zero on any miss (false). Ignored
+    /// by Wizard's scoring. Additive field: defaults to true so existing
+    /// stores migrate unchanged.
+    var missScoresTricks: Bool = true
+
+    /// Default for the Oh Hell house option: up-AND-down deal schedule
+    /// (1...max...1, true) vs. up-only like Wizard (false). Ignored by
+    /// Wizard. Additive field: defaults to true so existing stores
+    /// migrate unchanged.
+    var upAndDownSchedule: Bool = true
+
     init(
         hookRuleEnabled: Bool = false,
         trickTotalCheckEnabled: Bool = true,
@@ -79,7 +92,9 @@ final class AppSettings {
         appearance: Appearance = .system,
         announcerVoiceRaw: String = "charlie",
         announcerStyle: Int = 1,
-        appTheme: Int = 1
+        appTheme: Int = 1,
+        missScoresTricks: Bool = true,
+        upAndDownSchedule: Bool = true
     ) {
         self.hookRuleEnabled = hookRuleEnabled
         self.trickTotalCheckEnabled = trickTotalCheckEnabled
@@ -91,6 +106,8 @@ final class AppSettings {
         self.announcerVoiceRaw = announcerVoiceRaw
         self.announcerStyle = announcerStyle
         self.appTheme = appTheme
+        self.missScoresTricks = missScoresTricks
+        self.upAndDownSchedule = upAndDownSchedule
     }
 
     /// Fetches the single settings record, creating and inserting one
@@ -105,7 +122,11 @@ final class AppSettings {
         if let existing = try context.fetch(descriptor).first {
             return existing
         }
-        let settings = AppSettings()
+        // New settings records only: seed the "hook" default from the
+        // compiled-in variant (Wizard plays it off, Oh Hell's "screw the
+        // dealer" plays it on). A store that already has a settings record
+        // keeps whatever value it holds, even across an app-target switch.
+        let settings = AppSettings(hookRuleEnabled: AppGame.config.hookDefaultOn)
         context.insert(settings)
         return settings
     }
@@ -116,7 +137,9 @@ final class AppSettings {
         RulesSnapshot(
             hookRuleEnabled: hookRuleEnabled,
             trickTotalCheckEnabled: trickTotalCheckEnabled,
-            dealerRotationEnabled: dealerRotationEnabled
+            dealerRotationEnabled: dealerRotationEnabled,
+            missScoresTricks: missScoresTricks,
+            upAndDownSchedule: upAndDownSchedule
         )
     }
 }

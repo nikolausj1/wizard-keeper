@@ -73,15 +73,22 @@ final class Round {
         guard phase == .complete else { return nil }
         guard let entry = entries.first(where: { $0.playerId == playerId }) else { return nil }
         guard let bid = entry.bid, let tricksTaken = entry.tricksTaken else { return nil }
-        return WizardEngine.roundScore(bid: bid, tricksTaken: tricksTaken)
+        // Scoring routes through the compiled-in game variant (Wizard math
+        // in Wizard Keeper, Oh Hell math in Oh Hell Keeper). The miss rule
+        // comes from the game's rules snapshot so a Settings change never
+        // rewrites an in-progress game.
+        let missScoresTricks = game?.rulesSnapshot.missScoresTricks ?? AppGame.config.missScoresTricksDefault
+        return AppGame.config.roundScore(bid, tricksTaken, missScoresTricks)
     }
 
     /// Validates a proposed bid and/or trick count against the legal range
-    /// for this round number, as defined by
+    /// for this round's CARD COUNT (not its round number — the two diverge
+    /// on Oh Hell's down-slope), as defined by
     /// `WizardEngine.validRange(roundNumber:)`. A `nil` value is treated
     /// as not-yet-entered and does not fail validation.
     func isValidEntry(bid: Int?, tricksTaken: Int?) -> Bool {
-        let range = WizardEngine.validRange(roundNumber: roundNumber)
+        let cards = game?.cards(forRound: roundNumber) ?? roundNumber
+        let range = WizardEngine.validRange(roundNumber: cards)
         if let bid, !range.contains(bid) { return false }
         if let tricksTaken, !range.contains(tricksTaken) { return false }
         return true

@@ -163,6 +163,28 @@ if LEADINS:
         for clip_id, text in items:
             parts.append(row(clip_id, text, with_suggestion=False))
         parts.append('</details>')
+
+    # Integer clip family (Oh Hell, ones granularity) — generated alongside
+    # the tens family above via the same script, but rolled out separately.
+    # Only emit rows for clips actually on disk so a partial
+    # generate_announcer.py run doesn't flood the missing-audio report with
+    # hundreds of "not generated yet" entries; re-run this page builder
+    # after generation finishes to pick up the rest.
+    caster_int = ns["caster_int"]
+
+    def clip_on_disk(clip_id):
+        return os.path.exists(os.path.join(ROOT, "Sources", "App", "Resources", "Announcer", "charlie", clip_id + ".mp3"))
+
+    int_number_groups = [
+        ("Integer numbers — “One-twenty-three!” (Oh Hell)", [(f"num1_{n}", f"{caster_int(n)}!") for n in ns["INT_RANGE"]]),
+        ("Integer margins — “Ten back!” (Oh Hell)", [(f"back1_{n}", f"{caster_int(n)} back!") for n in ns["BACK1_RANGE"]]),
+    ]
+    for label, items in int_number_groups:
+        existing = [(clip_id, text) for clip_id, text in items if clip_on_disk(clip_id)]
+        parts.append(f'<details><summary>{esc(label)} <span class="count">{len(existing)} clips</span></summary>')
+        for clip_id, text in existing:
+            parts.append(row(clip_id, text, with_suggestion=False))
+        parts.append('</details>')
     parts.append('</section>')
 
 # --- 3. Stat bursts (formulaic — folded, comment boxes only) ------------

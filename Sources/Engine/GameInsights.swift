@@ -104,7 +104,7 @@ public enum GameInsights {
     /// `pastTense: true` phrases every line for a finished game ("hit
     /// every bid", "finished last with…") — used by the Game Story on the
     /// final screen and the shared recap card.
-    public static func insights(players: [PlayerLine], maxCount: Int = 3, pastTense: Bool = false) -> [Insight] {
+    public static func insights(players: [PlayerLine], maxCount: Int = 3, pastTense: Bool = false, bigRoundThreshold: Int = 40) -> [Insight] {
         guard let roundCount = players.map({ $0.entries.count }).max(),
               roundCount >= 1 else { return [] }
 
@@ -160,10 +160,11 @@ public enum GameInsights {
                 }
             }
 
-            // 4. Big round — largest single-round gain of the game, if ≥ 40.
+            // 4. Big round — largest single-round gain of the game, if it
+            // clears the variant's threshold (Wizard 40, Oh Hell 12).
             for (index, entry) in entries.enumerated() {
                 let delta = WizardEngine.roundScore(bid: entry.bid, tricksTaken: entry.tricksTaken)
-                if delta >= 40, delta > (bigRound?.delta ?? 0) {
+                if delta >= bigRoundThreshold, delta > (bigRound?.delta ?? 0) {
                     bigRound = (player.name, delta, index + 1)
                 }
             }
@@ -338,7 +339,7 @@ public enum GameInsights {
     /// with a shorter history returns `[]`, same as `insights()`'s
     /// round-news section silently skipping rather than lying — the app
     /// layer falls back to `insights()` in that case).
-    public static func broadcastInsights(players: [PlayerLine], totalRounds: Int) -> [Insight] {
+    public static func broadcastInsights(players: [PlayerLine], totalRounds: Int, bigRoundThreshold: Int = 40) -> [Insight] {
         let roundCount = players.map { $0.entries.count }.max() ?? 0
         guard roundCount >= 1, players.count >= 2,
               players.allSatisfy({ $0.entries.count == roundCount }) else { return [] }
@@ -427,7 +428,7 @@ public enum GameInsights {
             .perfect, .hotStreak, .coldStreak, .bigRound, .nosedive,
             .zeroSpecialist, .boldestBidder, .everybodyHit, .carnage,
         ]
-        let ranked = insights(players: players, maxCount: players.count + 6, pastTense: false)
+        let ranked = insights(players: players, maxCount: players.count + 6, pastTense: false, bigRoundThreshold: bigRoundThreshold)
             .sorted { ($0.priority, $0.text) < ($1.priority, $1.text) }
         let candidates = ranked.filter { juiceKinds.contains($0.kind) }
         // No player is mentioned twice in one broadcast (game-night
