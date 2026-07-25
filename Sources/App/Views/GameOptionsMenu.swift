@@ -39,7 +39,7 @@ struct GameOptionsMenu: View {
     /// this game's frozen `upAndDownSchedule` rule), which can be higher
     /// than `game.totalRounds` if a player has since joined.
     private var maxRoundCount: Int {
-        let schedule = AppGame.config.schedule(game.participants.count, game.rulesSnapshot.upAndDownSchedule)
+        let schedule = AppGame.config.schedule(game.participants.count, game.rulesSnapshot.upAndDownSchedule ?? true)
         return schedule.isEmpty ? game.totalRounds : schedule.count
     }
 

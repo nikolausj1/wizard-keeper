@@ -562,7 +562,7 @@ private struct ResultsView: View {
         let hasResult = entry.bid != nil && entry.tricksTaken != nil
         let bid = entry.bid ?? 0
         let tricks = entry.tricksTaken ?? 0
-        let score = AppGame.config.roundScore(bid, tricks, game.rulesSnapshot.missScoresTricks)
+        let score = AppGame.config.roundScore(bid, tricks, game.rulesSnapshot.missScoresTricks ?? AppGame.config.missScoresTricksDefault)
         let hit = bid == tricks
         Text(ScoreFormat.delta(score))
             .font(.system(size: outcomeDeltaSize, weight: .bold))
@@ -829,7 +829,7 @@ private struct EditRoundView: View {
         let bid = entry.bid ?? 0
         let tricks = entry.tricksTaken ?? 0
         let hit = bid == tricks
-        let score = AppGame.config.roundScore(bid, tricks, game.rulesSnapshot.missScoresTricks)
+        let score = AppGame.config.roundScore(bid, tricks, game.rulesSnapshot.missScoresTricks ?? AppGame.config.missScoresTricksDefault)
 
         return VStack(alignment: .leading, spacing: 10) {
             // Dealer tag above the name (not inline beside it), matching

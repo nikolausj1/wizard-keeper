@@ -319,7 +319,7 @@ struct FinalResultsView: View {
         // clamp to whatever the compiled-in variant's schedule allows for
         // the carried-over participant count (under the freshly-fetched
         // rules) before seeding the rematch.
-        let schedule = AppGame.config.schedule(game.participants.count, freshRules.upAndDownSchedule)
+        let schedule = AppGame.config.schedule(game.participants.count, freshRules.upAndDownSchedule ?? true)
         let maxRounds = schedule.isEmpty ? game.totalRounds : schedule.count
         let clampedRounds = min(game.totalRounds, maxRounds)
         let newGame = Game(

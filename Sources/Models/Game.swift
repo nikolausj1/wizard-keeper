@@ -36,14 +36,26 @@ struct RulesSnapshot: Codable {
 
     /// Oh Hell house option: a missed bid still scores 1 point per trick
     /// taken (true) vs. zero on any miss (false). Ignored by Wizard's
-    /// scoring. Decoded with a default so rules snapshots stored before
-    /// this field existed keep loading.
-    var missScoresTricks: Bool = true
+    /// scoring.
+    ///
+    /// OPTIONAL BY MIGRATION NECESSITY (2026-07-25 launch-crash fix, do
+    /// not "clean up" back to Bool): SwiftData flattens this Codable
+    /// struct into composite attributes on the Game entity, and a
+    /// composite field's Swift-side default does NOT reach the CoreData
+    /// schema — a non-optional Bool here made lightweight migration fail
+    /// with "missing attribute values on mandatory destination attribute"
+    /// on every store written before 2026-07-18, crashing the app at
+    /// launch (Justin's iPhone). `nil` means "snapshotted before this
+    /// rule existed"; readers resolve it per game variant at the call
+    /// site.
+    var missScoresTricks: Bool?
 
     /// Oh Hell house option: up-AND-down schedule (1...max...1, true) vs.
     /// up-only (false). Snapshotted so a Settings change never reshapes an
-    /// in-progress game's remaining rounds. Ignored by Wizard.
-    var upAndDownSchedule: Bool = true
+    /// in-progress game's remaining rounds. Ignored by Wizard. Same
+    /// optional-by-migration-necessity contract as `missScoresTricks`;
+    /// `nil` resolves to true (the pre-existing default).
+    var upAndDownSchedule: Bool?
 
     init(hookRuleEnabled: Bool, trickTotalCheckEnabled: Bool, dealerRotationEnabled: Bool,
          missScoresTricks: Bool = true, upAndDownSchedule: Bool = true) {
@@ -59,8 +71,8 @@ struct RulesSnapshot: Codable {
         hookRuleEnabled = try c.decode(Bool.self, forKey: .hookRuleEnabled)
         trickTotalCheckEnabled = try c.decode(Bool.self, forKey: .trickTotalCheckEnabled)
         dealerRotationEnabled = try c.decode(Bool.self, forKey: .dealerRotationEnabled)
-        missScoresTricks = try c.decodeIfPresent(Bool.self, forKey: .missScoresTricks) ?? true
-        upAndDownSchedule = try c.decodeIfPresent(Bool.self, forKey: .upAndDownSchedule) ?? true
+        missScoresTricks = try c.decodeIfPresent(Bool.self, forKey: .missScoresTricks)
+        upAndDownSchedule = try c.decodeIfPresent(Bool.self, forKey: .upAndDownSchedule)
     }
 }
 
@@ -168,7 +180,7 @@ final class Game {
     /// back to `n` if the schedule is shorter than the game (legacy games,
     /// mid-game player changes).
     func cards(forRound n: Int) -> Int {
-        let schedule = AppGame.config.schedule(participants.count, rulesSnapshot.upAndDownSchedule)
+        let schedule = AppGame.config.schedule(participants.count, rulesSnapshot.upAndDownSchedule ?? true)
         guard n >= 1, n <= schedule.count else { return n }
         return schedule[n - 1]
     }
