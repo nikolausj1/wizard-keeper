@@ -21,16 +21,17 @@ enum AnnouncerVoice: String, CaseIterable, Identifiable {
     }
 }
 
-/// Announcer commentary intensity. Styles 4 (Vicious) and 5 (Unhinged) use
-/// mild-to-real profanity — see `tools/generate_announcer.py`'s header
-/// comment — and are adults-only; strip them before any App Store
-/// submission.
-/// Three listener-facing tiers over five generated clip buckets — the
-/// original five tones were too close together at the table, so each tier
-/// draws from a MERGED pool of its underlying buckets (doubling variety):
-/// Classic = bucket 1, Fun = buckets 2+3 (roasts the scoreboard), Spicy =
-/// buckets 4+5 (adults-only: expletives — strip before any App Store
-/// submission, never on the kids' iPads).
+/// Announcer commentary intensity. Spicy uses mild-to-real profanity and is
+/// adults-only — see `AppGame.config.allowsSpicyTier` and the corpus split
+/// below for how it's kept out of the two clean, all-ages targets.
+/// Three listener-facing tiers, each now a purpose-written bucket of its
+/// own (the corpus is being regenerated as three tiers instead of five —
+/// the old five-tone corpus needed merging two buckets per tier to get
+/// enough variety; that merging is retired along with the five-bucket
+/// layout): Classic = bucket 1, Fun = bucket 2, Spicy = bucket 3
+/// (adults-only: expletives — ships only in the TrashTalkKeeper target's
+/// `AnnouncerSpicy/` clip pack, never in WizardKeeper's or OhHellKeeper's
+/// bundle, and never selectable there — see `allowsSpicyTier`).
 enum AnnouncerStyle: Int, CaseIterable, Identifiable {
     case classic = 1
     case fun = 2
@@ -46,13 +47,14 @@ enum AnnouncerStyle: Int, CaseIterable, Identifiable {
         }
     }
 
-    /// The on-disk clip-style buckets this tier draws from (file naming
-    /// still uses the original five: tail_<bucket>_<kind>_<i>).
+    /// The on-disk clip-style bucket this tier draws from
+    /// (tail_<bucket>_<kind>_<i>). One bucket per tier now — no more
+    /// merging two buckets into one tier's pool.
     var buckets: [Int] {
         switch self {
         case .classic: return [1]
-        case .fun: return [2, 3]
-        case .spicy: return [4, 5]
+        case .fun: return [2]
+        case .spicy: return [3]
         }
     }
 }
@@ -73,8 +75,20 @@ extension AppSettings {
             // original five-tier storage → Spicy. The old "3 Scorched →
             // Fun" migration is gone: it collided with the new Spicy
             // rawValue 3, snapping every Spicy pick back to Fun (the
-            // "can't choose anything but Fun" bug).
-            AnnouncerStyle(rawValue: announcerStyle) ?? (announcerStyle >= 4 ? .spicy : .classic)
+            // "can't choose anything but Fun" bug). Do NOT touch this
+            // 1/2/3 raw mapping again — see the bug above.
+            let decoded = AnnouncerStyle(rawValue: announcerStyle) ?? (announcerStyle >= 4 ? .spicy : .classic)
+            // Clean targets (WizardKeeper, OhHellKeeper) hide Spicy from
+            // Settings and never bundle its clips — see
+            // `AppGame.config.allowsSpicyTier`. A store that already has
+            // 3 saved (e.g. carried over from a device that once ran
+            // TrashTalkKeeper, or a future re-toggle) reads back as Fun on
+            // a clean target instead. The stored raw value is left alone
+            // here — only the getter's return value downgrades — so
+            // switching back to a spicy-capable target later doesn't need
+            // the user to reselect Spicy.
+            if decoded == .spicy, !AppGame.config.allowsSpicyTier { return .fun }
+            return decoded
         }
         set { announcerStyle = newValue.rawValue }
     }
@@ -124,6 +138,21 @@ final class AnnouncerPlayer: ObservableObject {
     /// Whether a clip sequence is currently queued/playing. Drives the
     /// Trends section's Announce/Stop toggle button in `GameView`.
     @Published private(set) var isPlaying = false
+
+    /// The last broadcast that actually started playing, in play order —
+    /// each clip's basename (filename minus ".mp3", the same key
+    /// `captions.json` uses) paired with its resolved bundle URL. `ShareCall`
+    /// turns this into the exported MP4. Only replaced when a NEW broadcast
+    /// starts (see `play(urls:attempted:)`); deliberately NOT cleared by
+    /// `stop()`, so the "Share the Call" button stays live after a broadcast
+    /// finishes or is stopped.
+    private(set) var lastBroadcast: [(basename: String, url: URL)] = []
+
+    /// Mirrors whether `lastBroadcast` holds anything shareable. Published so
+    /// the "Share the Call" button can appear/disappear live alongside
+    /// `isPlaying`; the tuple array itself can't be `@Published` cleanly, so
+    /// this Bool is its observable shadow.
+    @Published private(set) var hasShareableBroadcast = false
 
     private struct Manifest: Decodable {
         let voices: [String]
@@ -230,76 +259,146 @@ final class AnnouncerPlayer: ObservableObject {
         return play(urls: urls, attempted: attempted)
     }
 
-    /// Plays a single short broadcast covering the table's current trends,
-    /// replacing the old one-speaker-button-per-row UX: an optional random
-    /// intro connective, then — for up to the first 4 `insights`, in the
-    /// order given (`GameTrends.displayed`'s ordered slots: lead story,
-    /// juice, third story, optional earlyGame/lateGame garnish) — that
-    /// insight's segments via `segments(for:style:voice:attachTail:)`,
-    /// separated by a random transition connective between insights (never
-    /// after the last), then an optional random outro connective.
+    /// Plays the "Score Rundown" broadcast: a round stamp, then every
+    /// player's name and total in standings order (best to worst), then
+    /// exactly one punchline. Replaces the old insight-driven broadcast
+    /// (up to 4 stories stitched together with random intro/transition/
+    /// outro connective clips) — game-night feedback was that the
+    /// connectives made every broadcast feel padded, and that what the
+    /// table actually wanted to hear was just "where does everyone stand",
+    /// read out loud, fast.
     ///
-    /// TAIL DEMOTION (Justin's wordiness feedback): at most one flavor tail
-    /// speaks per broadcast. It's attached to slot 2 (the "juice") —
-    /// except when slot 1 is `.leadChange`, in which case slot 1 gets the
-    /// tail and slot 2 gets none. Every other slot never attempts a tail.
+    /// `standings` must already be sorted best to worst — callers reuse
+    /// `StandingsCalculator` (`Theme.swift`) rather than this method
+    /// re-deriving totals itself, so the broadcast and the on-screen
+    /// standings list never disagree. `insights` is still the ranked list
+    /// `GameTrends` computes; only its FIRST qualifying entry is spoken
+    /// here, as the punchline.
     ///
-    /// The connective clips (`seg_<style>_intro_<i>`, `_trans_<i>`,
-    /// `_outro_<i>`) are a newer addition to `tools/generate_announcer.py`
-    /// and may not exist yet for some/all styles — missing ones are
-    /// skipped silently, same as any other clip. Same return-count
-    /// behavior as `announce`/`announceWinner`.
+    /// Assembly:
+    /// 1. Round stamp: `round_<roundNumber>`.
+    /// 2. The leader (`standings[0]`): name + lead-in + a 400ms beat +
+    ///    their total, shouted. The lead-in is "leadNew" (and the number
+    ///    gets the shouted `numx_` treatment via `emphasized`) when
+    ///    `insights` has a `.leadChange` insight for THIS player — they
+    ///    just took over the top spot this round — otherwise it's the
+    ///    flatter "leaderTotal" lead-in, read naturally.
+    /// 3. Everyone else, in standings order: name + a 200ms beat + their
+    ///    total, read naturally (never shouted — only the leader's number
+    ///    is a big moment). Two equal totals back to back need to be SAID,
+    ///    not just implied, so a tie against the PREVIOUS player swaps the
+    ///    bare beat for the "tiedAt" lead-in on the second of the pair.
+    /// 4. The punchline: exactly one tail clip, preferring the highest-
+    ///    ranked "juice" insight (perfect/streaks/big swings/table-wide
+    ///    extremes), falling back to a `.leadChange` insight, falling back
+    ///    to nothing. A named punchline speaks the player's name first;
+    ///    the nameless table-wide kinds (everybodyHit, carnage) are the
+    ///    tail alone.
+    ///
+    /// `round_<n>`/`silence_200` are newer additions to
+    /// `tools/generate_announcer.py` and may not be generated yet — missing
+    /// clips are skipped silently, same graceful-skip philosophy as every
+    /// other clip. Same return-count behavior as `announce`/`announceWinner`.
     @discardableResult
-    func announceRoundUpdate(insights: [GameInsights.Insight], voice: AnnouncerVoice, style: AnnouncerStyle) -> Int {
+    func announceRoundUpdate(
+        roundNumber: Int,
+        standings: [(name: String, total: Int)],
+        insights: [GameInsights.Insight],
+        voice: AnnouncerVoice,
+        style: AnnouncerStyle
+    ) -> Int {
         beginAssembly()
         let voiceRaw = voice.rawValue
         var urls: [URL] = []
         var attempted = 0
 
         attempted += 1
-        if let u = connectiveURL(kind: "intro", style: style, voice: voiceRaw) { urls.append(u) }
+        if let u = resolvedURL(basename: "round_\(roundNumber)", voice: voiceRaw) { urls.append(u) }
 
-        let selected = Array(insights.prefix(4))
-        let tailIndex: Int? = {
-            guard !selected.isEmpty else { return nil }
-            if selected[0].kind == .leadChange { return 0 }
-            return selected.count > 1 ? 1 : nil
-        }()
+        guard let leader = standings.first else { return play(urls: urls, attempted: attempted) }
 
-        for (index, insight) in selected.enumerated() {
-            let (segs, segAttempted) = segments(
-                for: insight, style: style, voice: voiceRaw, attachTail: index == tailIndex
-            )
-            attempted += segAttempted
-            urls.append(contentsOf: segs)
+        // Did the leader just take over the top spot THIS round? Drives
+        // both the lead-in kind and whether the number gets shouted.
+        let leaderJustTookLead = insights.contains { $0.kind == .leadChange && $0.playerName == leader.name }
 
-            if index < selected.count - 1 {
-                attempted += 1
-                if let u = connectiveURL(kind: "trans", style: style, voice: voiceRaw) { urls.append(u) }
-            }
+        attempted += 1
+        if let u = nameURL(leader.name, voice: voiceRaw) { urls.append(u) }
+
+        attempted += 1
+        var leaderLeadinResolved = false
+        if let u = leadinURL(kindName: leaderJustTookLead ? "leadNew" : "leaderTotal", style: style, voice: voiceRaw) {
+            urls.append(u)
+            leaderLeadinResolved = true
+        }
+        // Same engineered dramatic pause as the score-grammar segments
+        // below (see `leadinNumSegments`): only inserted once the lead-in
+        // actually resolved, and deliberately not counted in `attempted`
+        // — it's pacing, not a content segment.
+        if leaderLeadinResolved, let pause = resolvedURL(basename: "silence_400", voice: voiceRaw) {
+            urls.append(pause)
         }
 
         attempted += 1
-        if let u = connectiveURL(kind: "outro", style: style, voice: voiceRaw) { urls.append(u) }
+        if let u = numClipURL(score: leader.total, voice: voiceRaw, emphasized: leaderJustTookLead) {
+            urls.append(u)
+        }
+
+        var previousTotal = leader.total
+        for player in standings.dropFirst() {
+            attempted += 1
+            if let u = nameURL(player.name, voice: voiceRaw) { urls.append(u) }
+
+            // One "beat" slot per player: the bare 200ms pause, unless
+            // they're tied with whoever was just read, in which case the
+            // tie needs to be spoken.
+            attempted += 1
+            if player.total == previousTotal {
+                if let u = leadinURL(kindName: "tiedAt", style: style, voice: voiceRaw) { urls.append(u) }
+            } else if let u = resolvedURL(basename: "silence_200", voice: voiceRaw) {
+                urls.append(u)
+            }
+
+            attempted += 1
+            if let u = numClipURL(score: player.total, voice: voiceRaw) { urls.append(u) }
+
+            previousTotal = player.total
+        }
+
+        let juiceKinds: Set<GameInsights.Kind> = [
+            .perfect, .hotStreak, .coldStreak, .bigRound, .nosedive,
+            .zeroSpecialist, .boldestBidder, .everybodyHit, .carnage,
+        ]
+        let punchline = insights.first { juiceKinds.contains($0.kind) }
+            ?? insights.first { $0.kind == .leadChange }
+        if let punchline {
+            if !punchline.playerName.isEmpty {
+                attempted += 1
+                if let u = nameURL(punchline.playerName, voice: voiceRaw) { urls.append(u) }
+            }
+            attempted += 1
+            if let u = tailURL(kindName: punchline.kind.rawValue, style: style, voice: voiceRaw) { urls.append(u) }
+        }
 
         return play(urls: urls, attempted: attempted)
     }
 
-    /// Plays a completed-game wrap-up: [intro?] + winner name + winner tail
-    /// + winnerBy (winner name again + lead-in + final-margin number,
-    /// only when a `.winnerBy` insight with a positive `score` is present —
+    /// Plays a completed-game wrap-up: winner name + winner tail +
+    /// winnerBy (winner name again + lead-in + final-margin number, only
+    /// when a `.winnerBy` insight with a positive `score` is present —
     /// skipped on ties) + up to 2 of `insights`' segments via
     /// `segments(for:style:voice:attachTail:)` (the game's "story" —
     /// perfect records, streaks, round-of-the-game, etc., same insights
     /// `FinalResultsView`'s "Game Story" section shows; `.winnerBy` itself
     /// is excluded from this pool since it's already spoken above) + last
-    /// place (name + tail, Spicy+ only, same gating as `announceWinner`) +
-    /// [outro?]. Replaces the bare `announceWinner` call `FinalResultsView`
-    /// used before the Game Story feature. Story-beat tails are NOT subject
-    /// to `announceRoundUpdate`'s one-tail-per-broadcast demotion — same
+    /// place (name + tail, Spicy+ only, same gating as `announceWinner`).
+    /// Replaces the bare `announceWinner` call `FinalResultsView` used
+    /// before the Game Story feature. Story-beat tails are NOT subject to
+    /// `announceRoundUpdate`'s one-punchline-per-broadcast rule — same
     /// existing behavior as before (every selected story insight gets its
-    /// own tail attempt). Same graceful-skip and return-count behavior as
-    /// every other `announce*` method.
+    /// own tail attempt). No intro/outro connectives (removed along with
+    /// the rest of that machinery — see `announceRoundUpdate`). Same
+    /// graceful-skip and return-count behavior as every other `announce*`
+    /// method.
     @discardableResult
     func announceGameWrap(
         winnerName: String,
@@ -312,9 +411,6 @@ final class AnnouncerPlayer: ObservableObject {
         let voiceRaw = voice.rawValue
         var urls: [URL] = []
         var attempted = 0
-
-        attempted += 1
-        if let u = connectiveURL(kind: "intro", style: style, voice: voiceRaw) { urls.append(u) }
 
         attempted += 1
         if let u = nameURL(winnerName, voice: voiceRaw) { urls.append(u) }
@@ -344,9 +440,6 @@ final class AnnouncerPlayer: ObservableObject {
             attempted += 1
             if let u = tailURL(kindName: "lastPlace", style: style, voice: voiceRaw) { urls.append(u) }
         }
-
-        attempted += 1
-        if let u = connectiveURL(kind: "outro", style: style, voice: voiceRaw) { urls.append(u) }
 
         return play(urls: urls, attempted: attempted)
     }
@@ -380,8 +473,9 @@ final class AnnouncerPlayer: ObservableObject {
     }
 
     /// Plays a short sample of the given voice/style for the Settings
-    /// "Preview Voice" button: [seg intro] + [tail winner], same
-    /// resolution/skip logic and shape as `announcePregame`. Callers
+    /// "Preview Voice" button: the "winner" tail clip alone. Simplified
+    /// down from [seg intro] + [tail winner] now that the connective
+    /// machinery is gone — see `announceRoundUpdate`. Callers
     /// (`SettingsView`) handle the stop-if-playing toggle themselves via
     /// `isPlaying`/`stop()` — this method just plays.
     @discardableResult
@@ -389,12 +483,8 @@ final class AnnouncerPlayer: ObservableObject {
         beginAssembly()
         let voiceRaw = voice.rawValue
         var urls: [URL] = []
-        var attempted = 0
+        let attempted = 1
 
-        attempted += 1
-        if let u = connectiveURL(kind: "intro", style: style, voice: voiceRaw) { urls.append(u) }
-
-        attempted += 1
         if let u = tailURL(kindName: "winner", style: style, voice: voiceRaw) { urls.append(u) }
 
         return play(urls: urls, attempted: attempted)
@@ -413,11 +503,17 @@ final class AnnouncerPlayer: ObservableObject {
     /// Toggle helper for call sites (the Trends section's Announce/Stop
     /// button): stops playback if a broadcast is already in progress,
     /// otherwise starts one via `announceRoundUpdate`.
-    func toggleRoundUpdate(insights: [GameInsights.Insight], voice: AnnouncerVoice, style: AnnouncerStyle) {
+    func toggleRoundUpdate(
+        roundNumber: Int,
+        standings: [(name: String, total: Int)],
+        insights: [GameInsights.Insight],
+        voice: AnnouncerVoice,
+        style: AnnouncerStyle
+    ) {
         if isPlaying {
             stop()
         } else {
-            announceRoundUpdate(insights: insights, voice: voice, style: style)
+            announceRoundUpdate(roundNumber: roundNumber, standings: standings, insights: insights, voice: voice, style: style)
         }
     }
 
@@ -540,9 +636,11 @@ final class AnnouncerPlayer: ObservableObject {
     /// on disk yet (generation may still be in progress). Returns `nil`
     /// only if nothing is resolvable.
     private func tailURL(kindName: String, style: AnnouncerStyle, voice: String) -> URL? {
-        // Merged pool across the tier's clip buckets: flat index space over
-        // every (bucket, variant) pair, so Fun draws from both the old
-        // Spicy and Scorched corpora, etc. — twice the variety per tier.
+        // Flat index space over every (bucket, variant) pair in the tier's
+        // pool. Each tier now maps to exactly one purpose-written bucket
+        // (see `AnnouncerStyle.buckets`) rather than the retired five-
+        // bucket layout's two-bucket merge, but the pool shape is kept
+        // general so a tier could still span more than one bucket later.
         var pool: [(bucket: Int, variant: Int)] = []
         for bucket in style.buckets {
             let count = manifest?.styles[String(bucket)]?[kindName] ?? 0
@@ -561,44 +659,6 @@ final class AnnouncerPlayer: ObservableObject {
         }
         return nil
     }
-
-    /// Random connective clip lookup for `announceRoundUpdate` —
-    /// `seg_<style>_<kind>_<i>` for `kind` in `"intro"`, `"trans"`,
-    /// `"outro"`. These files are a newer, still-in-progress addition to
-    /// `tools/generate_announcer.py` (see its header comment) and may not
-    /// exist for every style, or at all, yet. Unlike `tailURL` there's no
-    /// manifest-backed variant count to consult, so this just tries a
-    /// shuffled 0..<3 index order and returns the first that resolves —
-    /// `nil`, silently, if none do.
-    private func connectiveURL(kind: String, style: AnnouncerStyle, voice: String) -> URL? {
-        // Merged pool across the tier's buckets, mirroring tailURL. Counts
-        // are probed per (voice, bucket, kind) since connectives aren't in
-        // the manifest.
-        var pool: [(bucket: Int, variant: Int)] = []
-        for bucket in style.buckets {
-            let cacheKey = "\(voice)_\(bucket)_\(kind)"
-            let count: Int
-            if let cached = connectiveCounts[cacheKey] {
-                count = cached
-            } else {
-                var probed = 0
-                while probed < 8, resolvedURL(basename: "seg_\(bucket)_\(kind)_\(probed)", voice: voice) != nil {
-                    probed += 1
-                }
-                connectiveCounts[cacheKey] = probed
-                count = probed
-            }
-            for v in 0..<count { pool.append((bucket, v)) }
-        }
-        guard !pool.isEmpty else { return nil }
-        let flat = pickVariant(category: "seg_\(kind)", count: pool.count, styleRaw: style.rawValue)
-        let pick = pool[flat]
-        return resolvedURL(basename: "seg_\(pick.bucket)_\(kind)_\(pick.variant)", voice: voice)
-    }
-
-    /// On-disk connective variant counts, probed once per (voice, style,
-    /// kind) — connectives aren't in the manifest's tail counts.
-    private var connectiveCounts: [String: Int] = [:]
 
     // MARK: - Score-grammar clip resolution (NAME! + lead-in + number)
 
@@ -961,12 +1021,25 @@ final class AnnouncerPlayer: ObservableObject {
     /// since Xcode's handling of nested folder references vs. flattened
     /// groups can differ: `Announcer/<voice>/<basename>.mp3` as a true
     /// subdirectory, and `Announcer` as the subdirectory with `<voice>/`
-    /// baked into the resource name.
+    /// baked into the resource name. Then, if neither hit, retries both
+    /// layouts again under `AnnouncerSpicy` — spicy-bucket clips
+    /// (tail_3_*, leadin_3_*) ship in that separate folder, which only the
+    /// 18+ TrashTalkKeeper target bundles (see project.yml and
+    /// `GameVariant.allowsSpicyTier`). In WizardKeeper/OhHellKeeper the
+    /// folder simply isn't in the bundle, so these two lookups just miss
+    /// like any other absent clip — no special-casing needed at the call
+    /// site.
     private func resolvedURL(basename: String, voice: String) -> URL? {
         if let url = Bundle.main.url(forResource: basename, withExtension: "mp3", subdirectory: "Announcer/\(voice)") {
             return url
         }
         if let url = Bundle.main.url(forResource: "\(voice)/\(basename)", withExtension: "mp3", subdirectory: "Announcer") {
+            return url
+        }
+        if let url = Bundle.main.url(forResource: basename, withExtension: "mp3", subdirectory: "AnnouncerSpicy/\(voice)") {
+            return url
+        }
+        if let url = Bundle.main.url(forResource: "\(voice)/\(basename)", withExtension: "mp3", subdirectory: "AnnouncerSpicy") {
             return url
         }
         return nil
@@ -1042,6 +1115,16 @@ final class AnnouncerPlayer: ObservableObject {
                 self?.stop()
             }
         }
+
+        // Record this as the shareable broadcast — only reached once
+        // `urls` is non-empty (the guard above returned otherwise), so a
+        // no-op announcement never overwrites a previously shareable one.
+        // Basenames come straight off the resolved URLs so `ShareCall` and
+        // `captions.json` agree on the key.
+        lastBroadcast = urls.map { url in
+            (basename: (url.lastPathComponent as NSString).deletingPathExtension, url: url)
+        }
+        hasShareableBroadcast = true
 
         isPlaying = true
         player.play()

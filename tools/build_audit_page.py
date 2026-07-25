@@ -29,7 +29,7 @@ with open(GEN) as f:
     exec(compile(f.read(), GEN, "exec"), ns)
 FAMILY, COMMON = ns["FAMILY"], ns["COMMON"]
 WORDS, POINTS = ns["WORDS"], ns["POINTS"]
-CONNECTIVES, TAILS = ns["CONNECTIVES"], ns["TAILS"]
+TAILS = ns["TAILS"]
 
 suggestions = {}
 if os.path.exists(SUGGESTIONS):
@@ -45,16 +45,17 @@ def audio_exists(clip_id):
     ok = True
     for voice in ("charlie",):
         p = os.path.join(ROOT, "Sources", "App", "Resources", "Announcer", voice, clip_id + ".mp3")
-        if not os.path.exists(p):
+        ps = os.path.join(ROOT, "Sources", "App", "Resources", "AnnouncerSpicy", voice, clip_id + ".mp3")
+        if not (os.path.exists(p) or os.path.exists(ps)):
             missing_audio.append(f"{voice}/{clip_id}")
             ok = False
     return ok
 
 
 TIERS = [  # (anchor, tier label, buckets, blurb)
-    ("classic", "Classic", [1], "Warm sports-caster. Family-safe, zero edge."),
-    ("fun", "Fun", [2, 3], "The announcer has opinions — roasts the scoreboard, never the person."),
-    ("spicy", "Spicy", [4, 5], "Adults-only. Expletives allowed. Never ships to the kids' iPads."),
+    ("classic", "Classic", [1], "The Pro. Warm veteran sportscaster, family-safe."),
+    ("fun", "Fun", [2], "The Wise Guy. Dry roast of the scoreboard, strictly clean (9+)."),
+    ("spicy", "Spicy", [3], "The Roast Comic. 18+ Trash Talk app only; one expletive max per line."),
 ]
 
 KIND_LABELS = {
@@ -105,21 +106,6 @@ def row(clip_id, text, with_suggestion=True, note=""):
 
 
 parts = []
-
-# --- 1. Connectives -----------------------------------------------------
-parts.append('<section><h2 id="connectives">1 &middot; Broadcast glue (intros / transitions / outros)</h2>'
-             '<p class="blurb">These stitch the whole broadcast together: <b>intro &rarr; insight &rarr; transition &rarr; insight &rarr; outro</b>. '
-             'They pay the biggest wordiness tax because they wrap around already-long calls.</p>')
-for anchor, tier, buckets, blurb in TIERS:
-    parts.append(f'<div class="tier"><h3>{tier} <span class="tierblurb">{esc(blurb)}</span></h3>')
-    for group in ("intro", "trans", "outro"):
-        parts.append(f'<h4>{GROUP_LABELS[group]}</h4>')
-        for b in buckets:
-            bucket_note = f"bucket {b}" if len(buckets) > 1 else ""
-            for i, line in enumerate(CONNECTIVES[b][group]):
-                parts.append(row(f"seg_{b}_{group}_{i}", line, note=bucket_note))
-    parts.append('</div>')
-parts.append('</section>')
 
 # --- 2. Flavor tails ----------------------------------------------------
 parts.append('<section><h2 id="tails">2 &middot; Flavor tails</h2>'
@@ -173,7 +159,8 @@ if LEADINS:
     caster_int = ns["caster_int"]
 
     def clip_on_disk(clip_id):
-        return os.path.exists(os.path.join(ROOT, "Sources", "App", "Resources", "Announcer", "charlie", clip_id + ".mp3"))
+        return (os.path.exists(os.path.join(ROOT, "Sources", "App", "Resources", "Announcer", "charlie", clip_id + ".mp3"))
+                or os.path.exists(os.path.join(ROOT, "Sources", "App", "Resources", "AnnouncerSpicy", "charlie", clip_id + ".mp3")))
 
     int_number_groups = [
         ("Integer numbers — “One-twenty-three!” (Oh Hell)", [(f"num1_{n}", f"{caster_int(n)}!") for n in ns["INT_RANGE"]]),
@@ -283,12 +270,15 @@ page = f"""<!DOCTYPE html>
 </main>
 <script>
 const AUDIO_BASE = "../Sources/App/Resources/Announcer/";
+const AUDIO_BASE_SPICY = "../Sources/App/Resources/AnnouncerSpicy/";
+function isSpicyClip(clip) {{ return /^(tail|leadin)_3_/.test(clip); }}
 let current = null, currentBtn = null;
 document.querySelectorAll(".play").forEach(btn => {{
   btn.addEventListener("click", () => {{
     if (currentBtn === btn && current && !current.paused) {{ current.pause(); reset(); return; }}
     if (current) {{ current.pause(); reset(); }}
-    current = new Audio(AUDIO_BASE + btn.dataset.voice + "/" + btn.dataset.clip + ".mp3");
+    const base = isSpicyClip(btn.dataset.clip) ? AUDIO_BASE_SPICY : AUDIO_BASE;
+    current = new Audio(base + btn.dataset.voice + "/" + btn.dataset.clip + ".mp3");
     currentBtn = btn;
     btn.classList.add("playing"); btn.innerHTML = "&#9632;" + btn.textContent.slice(1);
     current.onended = reset;

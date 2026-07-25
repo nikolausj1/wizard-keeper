@@ -162,7 +162,10 @@ private struct SettingsForm: View {
                 // Voice picker removed 2026-07-12: Jessica retired (single
                 // voice = no choice to offer). Charlie is the announcer.
                 Picker("Style", selection: $settings.announcerStyleSelection) {
-                    ForEach(AnnouncerStyle.allCases) { style in
+                    // Spicy is hidden on clean, all-ages targets — they
+                    // don't bundle its clips either (see
+                    // `GameVariant.allowsSpicyTier`, `AppGame.config`).
+                    ForEach(AnnouncerStyle.allCases.filter { $0 != .spicy || AppGame.config.allowsSpicyTier }) { style in
                         Text(style.displayName).tag(style)
                     }
                 }
@@ -179,11 +182,16 @@ private struct SettingsForm: View {
                 Text("Announcer")
                     .foregroundStyle(Color.paperSecondary)
             } footer: {
-                // Spicy (buckets 4-5) uses mild-to-real profanity — strip it
-                // before any App Store submission (see `AnnouncerStyle`'s
-                // doc comment in Announcer.swift).
-                Text("Spicy is for adult tables.")
-                    .foregroundStyle(Color.paperSecondary)
+                // Spicy uses mild-to-real profanity — it's bundled and
+                // selectable only in the TrashTalkKeeper target (see
+                // `AnnouncerStyle`'s doc comment in Announcer.swift and
+                // `GameVariant.allowsSpicyTier`). Clean targets don't even
+                // show the option above, so the footer says nothing about
+                // it there.
+                if AppGame.config.allowsSpicyTier {
+                    Text("Spicy is for adult tables.")
+                        .foregroundStyle(Color.paperSecondary)
+                }
             }
 
             Section {

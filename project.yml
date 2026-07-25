@@ -17,7 +17,10 @@ targets:
         excludes:
           - "App/Resources/Announcer/**"
           - "ConfigOhHell/**"
+          - "ConfigTrashTalk/**"
+          - "App/Resources/AnnouncerSpicy/**"
           - "App/InfoOhHell.plist"
+          - "App/InfoTrashTalk.plist"
       # Folder reference (blue folder), not an enumerated group: Xcode
       # copies whatever is in Sources/App/Resources/Announcer at build
       # time, preserving the charlie/jessica subdirectories. This means
@@ -25,6 +28,10 @@ targets:
       # the bundle without ever needing `xcodegen generate` re-run.
       - path: Sources/App/Resources/Announcer
         type: folder
+      # WizardKeeper is a clean, all-ages target: no folder reference to
+      # AnnouncerSpicy here (only TrashTalkKeeper adds one), and the
+      # excludes above keep the enumerated Sources path from ever pulling
+      # spicy clips or ConfigTrashTalk in either.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.levelup.wizardkeeper
@@ -53,11 +60,17 @@ targets:
         excludes:
           - "App/Resources/Announcer/**"
           - "ConfigWizard/**"
+          - "ConfigTrashTalk/**"
+          - "App/Resources/AnnouncerSpicy/**"
           - "App/Info.plist"
+          - "App/InfoTrashTalk.plist"
       # Same shared clip folder as WizardKeeper — one corpus, one
       # generation script; a voice revision lands in BOTH apps.
       - path: Sources/App/Resources/Announcer
         type: folder
+      # OhHellKeeper is a clean, all-ages target — same reasoning as
+      # WizardKeeper: no AnnouncerSpicy folder reference, and the excludes
+      # above keep it out of the enumerated Sources path too.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.levelup.ohhellkeeper
@@ -69,6 +82,48 @@ targets:
       path: Sources/App/InfoOhHell.plist
       properties:
         CFBundleDisplayName: Oh Hell Keeper
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  TrashTalkKeeper:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+        excludes:
+          - "App/Resources/Announcer/**"
+          - "App/Resources/AnnouncerSpicy/**"
+          - "ConfigWizard/**"
+          - "ConfigOhHell/**"
+          - "App/Info.plist"
+          - "App/InfoOhHell.plist"
+      # Same shared clean-tier clip folder as the other two apps, plus the
+      # spicy-bucket folder reference below — TrashTalk is the only target
+      # that bundles AnnouncerSpicy. Both are folder references (blue
+      # folder), not enumerated groups, so clips generated after
+      # `xcodegen generate` still land in the bundle.
+      - path: Sources/App/Resources/Announcer
+        type: folder
+      - path: Sources/App/Resources/AnnouncerSpicy
+        type: folder
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.levelup.trashtalk
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "0.1.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIconTrashTalk
+    info:
+      path: Sources/App/InfoTrashTalk.plist
+      properties:
+        CFBundleDisplayName: Trash Talk
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:

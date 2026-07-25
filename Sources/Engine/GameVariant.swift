@@ -1,10 +1,12 @@
 import Foundation
 
-/// Everything that differs between the two apps built from this codebase —
-/// Wizard Keeper and Oh Hell Keeper. Each app target compiles in exactly
-/// one `AppGame.swift` (see Sources/ConfigWizard / Sources/ConfigOhHell)
-/// exposing a `GameVariant` as `AppGame.config`; every shared file reads
-/// game-specific behavior through it instead of hardcoding Wizard rules.
+/// Everything that differs between the three apps built from this codebase
+/// — Wizard Keeper, Oh Hell Keeper, and Trash Talk (TrashTalkKeeper, the
+/// 18+ target). Each app target compiles in exactly one `AppGame.swift`
+/// (see Sources/ConfigWizard / Sources/ConfigOhHell / Sources/
+/// ConfigTrashTalk) exposing a `GameVariant` as `AppGame.config`; every
+/// shared file reads game-specific behavior through it instead of
+/// hardcoding Wizard rules.
 ///
 /// Scoring and schedules are PURE functions living here in the Engine so
 /// the swiftc smoke suite covers both variants without an app target.
@@ -45,6 +47,18 @@ public struct GameVariant {
     /// gain. Wizard: 40+ (a made 2-bid). Oh Hell: 12+ (a made 2-bid).
     public let bigRoundThreshold: Int
 
+    /// Whether this app target may offer the Spicy announcer tier
+    /// (`AnnouncerStyle.spicy`, adults-only profanity). `false` for the
+    /// two clean, all-ages targets (WizardKeeper, OhHellKeeper) — Spicy is
+    /// hidden from Settings and never selectable there, even if a stored
+    /// value predates the flag. `true` only for the TrashTalkKeeper target,
+    /// which is the sole app that bundles the Spicy clip pack
+    /// (`Sources/App/Resources/AnnouncerSpicy/`). Purely a UI/behavior
+    /// gate — it does not affect scoring or schedules — but it lives here
+    /// alongside the rest of the per-app config so every app-specific
+    /// switch is in one place.
+    public let allowsSpicyTier: Bool
+
     public init(
         id: String,
         displayName: String,
@@ -53,7 +67,8 @@ public struct GameVariant {
         hookDefaultOn: Bool,
         missScoresTricksDefault: Bool,
         announcerUsesTensClips: Bool,
-        bigRoundThreshold: Int
+        bigRoundThreshold: Int,
+        allowsSpicyTier: Bool
     ) {
         self.id = id
         self.displayName = displayName
@@ -63,6 +78,7 @@ public struct GameVariant {
         self.missScoresTricksDefault = missScoresTricksDefault
         self.announcerUsesTensClips = announcerUsesTensClips
         self.bigRoundThreshold = bigRoundThreshold
+        self.allowsSpicyTier = allowsSpicyTier
     }
 }
 
@@ -80,7 +96,8 @@ public extension GameVariant {
         hookDefaultOn: false,
         missScoresTricksDefault: false,
         announcerUsesTensClips: true,
-        bigRoundThreshold: 40
+        bigRoundThreshold: 40,
+        allowsSpicyTier: false
     )
 
     /// Oh Hell, most-common rules (locked with Justin 2026-07-18): exact
@@ -105,12 +122,31 @@ public extension GameVariant {
         hookDefaultOn: true,
         missScoresTricksDefault: true,
         announcerUsesTensClips: false,
-        bigRoundThreshold: 12
+        bigRoundThreshold: 12,
+        allowsSpicyTier: false
     )
 
     /// Oh Hell round scoring, exposed directly for the smoke suite.
     static func ohHellRoundScore(bid: Int, tricksTaken: Int, missScoresTricks: Bool) -> Int {
         if bid == tricksTaken { return 10 + tricksTaken }
         return missScoresTricks ? tricksTaken : 0
+    }
+
+    /// Returns a copy of this variant with a different `allowsSpicyTier` —
+    /// lets `ConfigTrashTalk` reuse Wizard's game config verbatim (same
+    /// scoring, schedule, threshold) while flipping on the 18+ announcer
+    /// tier, without duplicating every other field.
+    func allowingSpicyTier(_ allowed: Bool) -> GameVariant {
+        GameVariant(
+            id: id,
+            displayName: displayName,
+            roundScore: roundScore,
+            schedule: schedule,
+            hookDefaultOn: hookDefaultOn,
+            missScoresTricksDefault: missScoresTricksDefault,
+            announcerUsesTensClips: announcerUsesTensClips,
+            bigRoundThreshold: bigRoundThreshold,
+            allowsSpicyTier: allowed
+        )
     }
 }

@@ -101,6 +101,11 @@ struct FinalResultsView: View {
                         .padding(.horizontal)
                     header
                     hearTheCallButton
+                    // "Share the Call": exports the wrap-up broadcast as a
+                    // vertical MP4 once it's been played. Self-gating (see
+                    // `ShareCallButton`) — invisible until there's a
+                    // shareable broadcast and nothing is playing.
+                    ShareCallButton()
                     VStack(spacing: 10) {
                         ForEach(standings) { standing in
                             resultRow(standing)

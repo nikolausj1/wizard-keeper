@@ -116,7 +116,13 @@ struct ScorepadGridView: View {
                 style: settings.announcerStyleSelection
             )
         } else {
+            // Standings are already sorted best to worst (see
+            // `StandingsCalculator`) — the Score Rundown broadcast reads
+            // them in that exact order, so it never disagrees with what's
+            // on screen.
             announcer.toggleRoundUpdate(
+                roundNumber: completedRoundCount,
+                standings: standings.map { (name: $0.name, total: $0.total) },
                 insights: displayedInsights,
                 voice: settings.announcerVoiceSelection,
                 style: settings.announcerStyleSelection

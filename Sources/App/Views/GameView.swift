@@ -108,7 +108,13 @@ struct GameView: View {
                 style: settings.announcerStyleSelection
             )
         } else {
+            // Standings are already sorted best to worst (see
+            // `StandingsCalculator`) — the Score Rundown broadcast reads
+            // them in that exact order, so it never disagrees with what's
+            // on screen.
             announcer.toggleRoundUpdate(
+                roundNumber: completedRoundCount,
+                standings: standings.map { (name: $0.name, total: $0.total) },
                 insights: displayedInsights,
                 voice: settings.announcerVoiceSelection,
                 style: settings.announcerStyleSelection
@@ -158,6 +164,21 @@ struct GameView: View {
                 Section {
                     AnnounceHeroButton(isPlaying: announcer.isPlaying, roundNumber: completedRoundCount, action: toggleAnnounce)
                         .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
+            }
+
+            // "Share the Call" — export the just-played broadcast as a
+            // vertical MP4. Sits just under the Announce hero, smaller and
+            // secondary; self-gates on `hasShareableBroadcast && !isPlaying`,
+            // so the whole section only appears once there's a broadcast to
+            // share and it isn't mid-playback.
+            if announcer.hasShareableBroadcast && !announcer.isPlaying {
+                Section {
+                    ShareCallButton()
+                        .frame(maxWidth: .infinity)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                 }

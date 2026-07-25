@@ -96,26 +96,25 @@ struct RootView: View {
     }
 
     /// Verification hook for the announcer feature: `-announcerTest`
-    /// (combinable with any `-uiScreen`) fires a synthetic three-insight
-    /// round-update broadcast one second after launch and prints the
-    /// resolved/missing segment counts, so the lead can confirm clip
-    /// resolution ran from `simctl` console logs alone — no tapping
-    /// required. The third insight is `.freshGame` (empty `playerName`, no
-    /// stat clip) so the always-available pregame path's segment
-    /// resolution — including the empty-name-slug skip — gets exercised
-    /// too, not just the engine-trend kinds.
+    /// (combinable with any `-uiScreen`) fires a synthetic Score Rundown
+    /// broadcast (round stamp + standings + one punchline) one second
+    /// after launch and prints the resolved/missing segment counts, so the
+    /// lead can confirm clip resolution ran from `simctl` console logs
+    /// alone — no tapping required. `standings` is already sorted best to
+    /// worst, same contract `GameView`/`ScorepadGridView` uphold via
+    /// `StandingsCalculator`. The `.perfect` insight for Kelly (the
+    /// leader) is the punchline candidate; the `.freshGame` insight
+    /// (empty `playerName`, no juice kind, not `.leadChange`) is there to
+    /// prove a non-qualifying insight is correctly ignored for the
+    /// punchline slot.
     private func fireAnnouncerTestIfNeeded() {
         guard ProcessInfo.processInfo.arguments.contains("-announcerTest") else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            let standings: [(name: String, total: Int)] = [
+                (name: "Kelly", total: 130),
+                (name: "Justin", total: 90),
+            ]
             let insights = [
-                GameInsights.Insight(
-                    icon: "snowflake",
-                    text: "Announcer test",
-                    priority: 0,
-                    kind: .coldStreak,
-                    playerName: "Justin",
-                    value: 3
-                ),
                 GameInsights.Insight(
                     icon: "checkmark.seal.fill",
                     text: "Announcer test",
@@ -125,15 +124,25 @@ struct RootView: View {
                     value: 7
                 ),
                 GameInsights.Insight(
-                    icon: "sparkles",
+                    icon: "snowflake",
                     text: "Announcer test",
                     priority: 1,
+                    kind: .coldStreak,
+                    playerName: "Justin",
+                    value: 3
+                ),
+                GameInsights.Insight(
+                    icon: "sparkles",
+                    text: "Announcer test",
+                    priority: 2,
                     kind: .freshGame,
                     playerName: "",
                     value: nil
                 ),
             ]
-            let segments = AnnouncerPlayer.shared.announceRoundUpdate(insights: insights, voice: .charlie, style: .fun)
+            let segments = AnnouncerPlayer.shared.announceRoundUpdate(
+                roundNumber: 3, standings: standings, insights: insights, voice: .charlie, style: .fun
+            )
             print("announcer test fired, segments: \(segments)")
         }
     }
